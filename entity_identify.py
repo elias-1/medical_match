@@ -10,6 +10,14 @@ import pinyin_match.mm
 import pypinyin
 
 
+def preprocess_chinese_sentence(sent):
+    pass
+
+def chinese_word2pinyin(word_list):
+    pass
+
+
+
 def questions_from_json(filename):
     """
     从json文件中将所有问题生成一个list
