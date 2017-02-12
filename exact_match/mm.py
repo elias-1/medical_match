@@ -1,25 +1,38 @@
 # coding: utf-8
-#!/usr/bin/env python
+
+# In[ ]:
+
+# !/usr/bin/env python
 
 ########################################################################
 #
 # Copyright (c) 2016 www.drcubic.com, Inc. All Rights Reserved
 #
 ########################################################################
-
+# -*- coding: utf-8 -*-
+# PyCi
+#
+# Copyright (c) 2009, The PyCi Project
+# Authors: Wu Ke <ngu.kho@gmail.com>
+#          Chen Xing <cxcxcxcx@gmail.com>
+# URL: <http://code.google.com/p/pyci>
+# For license information, see COPYING
+"""Forward and Backward Maximum Matching word segmentor. Mainly used
+as a baseline segmentor.
+"""
 __all__ = ["FMMSeg", "BMMSeg"]
 
 import json
 import sys
 from copy import deepcopy
 
-from trie import Trie
+from trie import Trie, encode_word
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-# In[ ]:
-
+"""Note: the sentence and token is a list of single word.
+"""
 
 class FMMSeg(object):
     """A forward maximum matching Chinese word segmentor.
@@ -49,88 +62,100 @@ class FMMSeg(object):
         if train:
             self.add_words(train, value=value, reverse=reverse)
 
-    def add_words(self, train, value=lambda x: 0):
+    def add_words(self, train, value=lambda x, y: 0, reverse=False):
         """Add train words into the trie.
 
         @type train: an iterable of words
         @param train: (possibly) new words
         """
         for word in train:
-            self._trie[word[len(value(word)):]] = value(word)
+            if reverse:
+                self._trie[encode_word(word[:-1])] = value(word, reverse)
+            else:
+                self._trie[encode_word(word[1:])] = value(word)
 
-    def entity_identify(self, sent, reverse=False):
+
+    def entity_identify(self, sent):
         """Replace medical entity in sent with common words.
 
         @type sent: unicode string
         @param sent: the sentence to be processed.
         @param reverse: for BMMseg
+
         @return: sentence with common words.
         """
-        entities = []
         offset = 0
         idx = self._trie.longest_prefix(sent, offset)
+        entity_location_with_types = []
         while offset < len(sent):
             if idx is not None:
-                entity_type = self._trie[sent[offset:idx]]
-                entity = sent[offset:idx]
+                word = encode_word(sent[offset:idx])
+                entity_type = self._trie[word]
+                entity_location_with_types.append([offset, idx-1, entity_type])
                 offset = idx
-                entity_with_type = entity + entity_type
-                entities.append(entity_with_type[0:len(entity_with_type) - 1])
             else:
                 offset += 1
             idx = self._trie.longest_prefix(sent, offset)
-        return entities
+        return entity_location_with_types
+
+    def get_token_value(self, token):
+        """Get the token value from self._trie
+        """
+        return self.__trie[encode_word(token)]
 
 
 class BMMSeg(FMMSeg):
     """A backward maximum matching Chinese word segmentor.
     """
 
-    def get_word_list(self, entity_name_file):
-        words = []
-        word = {}
-        with open(entity_name_file, 'r') as f:
-            name_dict = json.load(f)
-            for key in name_dict:
-                entity_type = self.encode_entity_type(name_dict[key])
-                words.append(entity_type + key)
-        return words
+    def add_words(self, train, value=lambda x: 0):
+        """Add train words into the trie.
 
-    def add_words(self, train):
+        @type train: an iterable of words
+        @param train: (possibly) new words
+        """
+        # just reverse everything
         train = [i[::-1] for i in train]
-        FMMSeg.add_words(self, train, value=self.decode_entity_type)
+        FMMSeg.add_words(self, train, value=value, reverse=True)
 
-    def entity_identify(self, sentence):
+    def entity_identify(self, sent):
+        """Replace medical entity in sent with common words.
+
+        @type sent: unicode string
+        @param sent: the sentence to be processed.
+
+        @return: sentence with common words.
         """
+        sent = sent[::-1]
+        entity_location_with_types = FMMSeg.entity_identify(
+            self, sent)
+        return entity_location_with_types
 
-        :param sentence:
-        :param reverse:
-        :return:
+    def get_token_value(self, token):
+        """Get the token value from self._trie
         """
-        sentence = sentence[::-1]
-        FMM_entities = FMMSeg.entity_identify(self, sentence)
-        entities = []
-        for entity in FMM_entities:
-            entity = entity[::-1].split("@")
+        token = token[::-1]
+        return FMMSeg.get_token_value(token)
 
-            entities.append(entity[1] + '@' + entity[0][::-1])
-        return entities
 
-    def decode_entity_type(self, word, reverse=False):
-        if reverse:
-            word = word[::-1]
-        i = 1
-        while (word[i] != '@'):
-            i += 1
-        return word[:i + 1]
+# In[ ]:
 
-    def encode_entity_type(self, id_list):
-        entity_types = []
-        for entity_id in id_list:
-            if entity_id[1].isdigit():
-                if entity_id[0] not in entity_types:
-                    entity_types.append(entity_id[0])
-            else:
-                if entity_id[:2] not in entity_types:
-                    entity_types.append(entity_id[:2])
-        return '@' + '+'.join(sorted(entity_types)) + '@'
+
+def decode_entity_type(word, reverse=False):
+    if reverse:
+        word = word[::-1]
+    return word[0]
+
+
+def encode_entity_type(id_list):
+    entity_types = []
+    for entity_id in id_list:
+        if entity_id[1].isdigit():
+            if entity_id[0] not in entity_types:
+                entity_types.append(entity_id[0])
+        else:
+            if entity_id[:2] not in entity_types:
+                entity_types.append(entity_id[:2])
+
+    return '@' + '-'.join(sorted(entity_types)) + '@'
+

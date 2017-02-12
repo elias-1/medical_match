@@ -31,10 +31,12 @@ class Trie(object):
                 self[i] = value(i)
 
     def __getitem__(self, key):
-        return self._trie_root.lookup(key, 0)
+        key_item_list = key.split('##')
+        return self._trie_root.lookup(key_item_list, 0)
 
     def __setitem__(self, key, value):
-        return self._trie_root.insert(key, 0, value)
+        key_item_list = key.split('##')
+        return self._trie_root.insert(key_item_list, 0, value)
 
     def longest_prefix(self, seq, offset=0):
         """Find the longest prefix of seq starting at offset that is
@@ -149,6 +151,8 @@ class TrieNode(object):
     def __repr__(self):
         return "<Trie: 0x%08x>" % id(self)
 
+def encode_word(word):
+    return '#'.join(word)
 
 def demo():
     """Demo for trie
