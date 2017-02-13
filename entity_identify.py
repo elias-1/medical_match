@@ -49,8 +49,8 @@ def get_word_list(entity_name_file):
         pinyin_list.extend(hanzi_list2pinyin(word_list))
         hanzi_list_result.append(hanzi_list)
         pinyin_list_result.append(pinyin_list)
-    return hanzi_list_result, pinyin_list_result
     f.close()
+    return hanzi_list_result, pinyin_list_result
 
 
 def encode_entity_type(id_list):
@@ -74,7 +74,6 @@ def entity_extract(entity_info, question_hanzi_list):
     for loc_with_type in entity_info:
         entity_type = loc_with_type[2]
         entity = question_hanzi_list[loc_with_type[0]:loc_with_type[1] + 1]
-        print ''.join(entity)
         entity_with_type.append(''.join(entity) + '/' + entity_type)
     return entity_with_type
 
@@ -92,15 +91,16 @@ def entity_identify(argc, argv):
     question_file_name = 'data/qa3.json'
 
     hanzi_list, pinyin_list = get_word_list(entity_name_file)
+    # print hanzi_list
     hanzi_bseg = exact_match.mm.BMMSeg()
     hanzi_bseg.add_words(hanzi_list, decode_entity_type)
 
     pinyin_bseg = exact_match.mm.BMMSeg()
     pinyin_bseg.add_words(pinyin_list, decode_entity_type)
 
-    # fuzzy = fuzzy_match.fuzzy_match.FuzzyMatch()
-    # words_fuzzy = fuzzy.get_word_list(entity_name_file)
-    # fuzzy.add_words(words_fuzzy)
+    fuzzy = fuzzy_match.fuzzy_match.FuzzyMatch()
+    words_fuzzy = fuzzy.get_word_list(entity_name_file)
+    fuzzy.add_words(words_fuzzy)
 
     csvfile = open(output_file_name, 'wb')
     csvfile.write(codecs.BOM_UTF8)
@@ -111,18 +111,19 @@ def entity_identify(argc, argv):
         one_line = []
         question_hanzi_list = list(question)
         hanzi_entity_info = hanzi_bseg.entity_identify(question_hanzi_list)
+
         question_pinyin_list = hanzi_list2pinyin(question_hanzi_list)
-        # print "question:",question_pinyin_list
-        # print question_hanzi_list
         pinyin_entity_info = pinyin_bseg.entity_identify(question_pinyin_list)
+
         hanzi_entity_result = entity_extract(hanzi_entity_info,
                                              question_hanzi_list)
+        # print '%s   %s' % (question, '##'.join(hanzi_entity_result))
         pinyin_entity_result = entity_extract(pinyin_entity_info,
                                               question_hanzi_list)
 
-        # fuzzy_entities_result = fuzzy.entity_identify(question)
+        fuzzy_entities_result = fuzzy.entity_identify(question)
 
-        # print fuzzy_entities_result
+        print '%s   %s' % (question, '\t'.join(fuzzy_entities_result))
         # print pinyin_entity_result
         # print hanzi_entity_result
         one_line_with_question = [question]

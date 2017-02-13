@@ -63,7 +63,7 @@ class FMMSeg(object):
             else:
                 self._trie[encode_word(word[1:])] = value(word)
 
-    def entity_identify(self, sent):
+    def entity_identify(self, sent, reverse=False):
         """Replace medical entity in sent with common words.
 
         @type sent: unicode string
@@ -75,16 +75,26 @@ class FMMSeg(object):
         offset = 0
         idx = self._trie.longest_prefix(sent, offset)
         entity_location_with_types = []
+        sent_len = len(sent)
         while offset < len(sent):
             if idx is not None:
                 word = encode_word(sent[offset:idx])
                 entity_type = self._trie[word]
-                entity_location_with_types.append([offset, idx - 1, entity_type
-                                                   ])
+                if reverse:
+                    entity_location_with_types.append([
+                        sent_len - idx, sent_len - 1 - offset, entity_type
+                    ])
+                else:
+                    entity_location_with_types.append([
+                        offset, idx - 1, entity_type
+                    ])
+
                 offset = idx
             else:
                 offset += 1
             idx = self._trie.longest_prefix(sent, offset)
+        if reverse:
+            entity_location_with_types = entity_location_with_types[::-1]
         return entity_location_with_types
 
     def get_token_value(self, token):
@@ -116,7 +126,8 @@ class BMMSeg(FMMSeg):
         @return: sentence with common words.
         """
         sent = sent[::-1]
-        entity_location_with_types = FMMSeg.entity_identify(self, sent)
+        entity_location_with_types = FMMSeg.entity_identify(
+            self, sent, reverse=True)
         return entity_location_with_types
 
     def get_token_value(self, token):

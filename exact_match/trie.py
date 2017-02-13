@@ -151,8 +151,10 @@ class TrieNode(object):
     def __repr__(self):
         return "<Trie: 0x%08x>" % id(self)
 
+
 def encode_word(word):
-    return '#'.join(word)
+    return '##'.join(word)
+
 
 def demo():
     """Demo for trie
