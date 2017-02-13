@@ -3,6 +3,7 @@
 import codecs
 import csv
 import json
+import sys
 
 import exact_match.mm
 import fuzzy_match.fuzzy_match
@@ -69,7 +70,7 @@ def entity_extract(entity_info, question_hanzi_list):
     for loc_with_type in entity_info:
         entity_type = loc_with_type[2]
         entity = question_hanzi_list[entity_info[0]:entity_info[1] + 1]
-        entity_with_type.append(entity + '/' + entity_type)
+        entity_with_type.append(''.join(entity) + '/' + entity_type)
     return entity_with_type
 
 
@@ -106,17 +107,14 @@ def entity_identify(argc, argv):
         hanzi_entity_info = hanzi_bseg.entity_identify(question_hanzi_list)
         question_pinyin_list = hanzi_list2pinyin(question_hanzi_list)
         pinyin_entity_info = pinyin_bseg.entity_identify(question_pinyin_list)
-        fuzzy_entities = fuzzy.entity_identify(question)
-
-        one_line = []
         hanzi_entity_result = entity_extract(hanzi_entity_info,
                                              question_hanzi_list)
-        pinyin_entity_result = entity_extract(hanzi_entity_info,
+        pinyin_entity_result = entity_extract(pinyin_entity_info,
                                               question_hanzi_list)
 
-        for entity in fuzzy_entities:
-            if entity not in one_line:
-                one_line.append(entity)
+        fuzzy_entities_result = fuzzy.entity_identify(question)
+
+        one_line = []
 
         one_line_with_question = [question]
         one_line_with_question.extend(one_line)
