@@ -9,8 +9,6 @@ import fuzzy_match.fuzzy_match
 import pypinyin
 
 
-
-
 def questions_from_json(filename):
     """
     从json文件中将所有问题生成一个list
@@ -25,14 +23,15 @@ def questions_from_json(filename):
                 yield question
 
 
-
 def decode_entity_type(word, reverse=False):
     if reverse:
         word = word[::-1]
     return word[0]
 
+
 def hanzi_list2pinyin(hanzi_list):
-    return [pypinyin.pinyin(word, style=pypinyin.NORMAL)[0][0] for word in hanzi_list]
+    return [pypinyin.pinyin(word, style=pypinyin.NORMAL)[0][0]
+            for word in hanzi_list]
 
 
 def get_word_list(entity_name_file):
@@ -40,8 +39,8 @@ def get_word_list(entity_name_file):
     json_file = json.load(f)
     for word in json_file:
         entity_type = encode_entity_type(json_file[word])
-        hanzi_list = [entity_type,]
-        pinyin_list = [entity_type,]
+        hanzi_list = [entity_type, ]
+        pinyin_list = [entity_type, ]
         word_list = list(word)
         hanzi_list.extend(word_list)
         pinyin_list.extend(hanzi_list2pinyin(word_list))
@@ -69,18 +68,26 @@ def entity_extract(entity_info, question_hanzi_list):
     entity_with_type = []
     for loc_with_type in entity_info:
         entity_type = loc_with_type[2]
-        entity = question_hanzi_list[entity_info[0]:entity_info[1]+1]
+        entity = question_hanzi_list[entity_info[0]:entity_info[1] + 1]
         entity_with_type.append(entity + '/' + entity_type)
     return entity_with_type
 
 
-def entity_identify():
-    entity_name_file = 'data/name-idlist-dict-all.json'
+def entity_identify(argc, argv):
+    if argc < 4:
+        print(
+            "Usage:%s <entity_name_file> <output_file_name> <question_file_name>"
+            % (argv[0]))
+    # entity_name_file = 'data/name-idlist-dict-all.json'
+    # output_file_name = 'data/entity_identify.csv'
+    # question_file_name = 'data/qa3.json'
+    entity_name_file = argv[1]
+    output_file_name = argv[2]
+    question_file_name = argv[3]
 
     words_exact = get_word_list(entity_name_file)
     hanzi_bseg = exact_match.mm.BMMSeg()
     hanzi_bseg.add_words(words_exact[0], decode_entity_type)
-
 
     pinyin_bseg = exact_match.mm.BMMSeg()
     pinyin_bseg.add_words(words_exact[1], decode_entity_type)
@@ -89,12 +96,10 @@ def entity_identify():
     words_fuzzy = fuzzy.get_word_list(entity_name_file)
     fuzzy.add_words(words_fuzzy)
 
-    output_file_name = 'data/entity_identify.csv'
     csvfile = open(output_file_name, 'wb')
     csvfile.write(codecs.BOM_UTF8)
     csvwriter = csv.writer(csvfile)
 
-    question_file_name = 'data/qa3.json'
     questions = questions_from_json(question_file_name)
     for question in questions:
         question_hanzi_list = list(question)
@@ -104,8 +109,10 @@ def entity_identify():
         fuzzy_entities = fuzzy.entity_identify(question)
 
         one_line = []
-        hanzi_entity_result = entity_extract(hanzi_entity_info, question_hanzi_list)
-        pinyin_entity_result = entity_extract(hanzi_entity_info, question_hanzi_list)
+        hanzi_entity_result = entity_extract(hanzi_entity_info,
+                                             question_hanzi_list)
+        pinyin_entity_result = entity_extract(hanzi_entity_info,
+                                              question_hanzi_list)
 
         for entity in fuzzy_entities:
             if entity not in one_line:
@@ -119,6 +126,4 @@ def entity_identify():
 
 
 if __name__ == "__main__":
-    entity_identify()
-
-
+    entity_identify(len(sys.argv), sys.argv)
