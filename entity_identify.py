@@ -24,11 +24,14 @@ def questions_from_json(filename):
             for question in questions_json[key]:
                 yield question
 
+# def decode_entity_type(word, reverse=False):
+#     if reverse:
+#         word = word[::-1]
+#     return word[0]
 
-def decode_entity_type(word, reverse=False):
-    if reverse:
-        word = word[::-1]
-    return word[0]
+
+def decode_entity_type(word):
+    return word
 
 
 def hanzi_list2pinyin(hanzi_list):
@@ -41,8 +44,10 @@ def get_word_list(entity_name_file):
     json_file = json.load(f)
     hanzi_list_result = []
     pinyin_list_result = []
+    entity_with_types = []
     for word in json_file:
         entity_type = encode_entity_type(json_file[word])
+        entity_with_types.append(entity_type + word)
         hanzi_list = [entity_type, ]
         pinyin_list = [entity_type, ]
         word_list = list(word)
@@ -51,7 +56,7 @@ def get_word_list(entity_name_file):
         hanzi_list_result.append(hanzi_list)
         pinyin_list_result.append(pinyin_list)
     f.close()
-    return hanzi_list_result, pinyin_list_result
+    return hanzi_list_result, pinyin_list_result, entity_with_types
 
 
 def get_common_word(filename):
@@ -80,14 +85,18 @@ def encode_entity_type(id_list):
     return '@' + '-'.join(sorted(entity_types)) + '@'
 
 
-def entity_extract(entity_info, question_hanzi_list):
+def sent_entity_extract(entity_info, question_hanzi_list):
 
     entity_with_type = []
     for loc_with_type in entity_info:
-        entity_type = loc_with_type[2]
+        entity_type = loc_with_type[3]
         entity = question_hanzi_list[loc_with_type[0]:loc_with_type[1] + 1]
         entity_with_type.append(''.join(entity) + '/' + entity_type)
     return entity_with_type
+
+
+def exact_entity_extract(entity_info):
+    return [i[2] + '/' + i[3] for i in entity_info]
 
 
 def entity_identify(argc, argv):
@@ -104,12 +113,15 @@ def entity_identify(argc, argv):
     # question_file_name = 'data/qa3.json'
     # common_words_file='data/merge_split2.json'
 
-    hanzi_list, pinyin_list = get_word_list(entity_name_file)
+    hanzi_list, pinyin_list, entity_with_types = get_word_list(
+        entity_name_file)
     hanzi_bseg = exact_match.mm.BMMSeg()
-    hanzi_bseg.add_words(hanzi_list, decode_entity_type)
+    hanzi_bseg.add_words(
+        zip(hanzi_list, entity_with_types), decode_entity_type)
 
     pinyin_bseg = exact_match.mm.BMMSeg()
-    pinyin_bseg.add_words(pinyin_list, decode_entity_type)
+    pinyin_bseg.add_words(
+        zip(pinyin_list, entity_with_types), decode_entity_type)
 
     fuzzy = fuzzy_match.fuzzy_match.FuzzyMatch(threshold=80)
     common_words = get_common_word(common_words_file)
@@ -117,6 +129,7 @@ def entity_identify(argc, argv):
 
     words_fuzzy = fuzzy.get_word_list(entity_name_file)
     fuzzy.add_words(words_fuzzy)
+    del hanzi_list, pinyin_list, entity_with_types, words_fuzzy
 
     csvfile = open(output_file_name, 'wb')
     csvfile.write(codecs.BOM_UTF8)
@@ -129,10 +142,8 @@ def entity_identify(argc, argv):
         hanzi_entity_info = hanzi_bseg.entity_identify(question_hanzi_list)
         question_pinyin_list = hanzi_list2pinyin(question_hanzi_list)
         pinyin_entity_info = pinyin_bseg.entity_identify(question_pinyin_list)
-        hanzi_entity_result = entity_extract(hanzi_entity_info,
-                                             question_hanzi_list)
-        pinyin_entity_result = entity_extract(pinyin_entity_info,
-                                              question_hanzi_list)
+        hanzi_entity_result = exact_entity_extract(hanzi_entity_info)
+        pinyin_entity_result = exact_entity_extract(pinyin_entity_info)
 
         fuzzy_entity_result = fuzzy.entity_identify(question)
         fuzzy_pinyin_entity_result = fuzzy.pinyin_entity_identify(question)

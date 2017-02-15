@@ -59,9 +59,9 @@ class FMMSeg(object):
         """
         for word in train:
             if reverse:
-                self._trie[encode_word(word[:-1])] = value(word, reverse)
+                self._trie[encode_word(word[0][:-1])] = value(word[1])
             else:
-                self._trie[encode_word(word[1:])] = value(word)
+                self._trie[encode_word(word[0][1:])] = value(word[1])
 
     def entity_identify(self, sent, reverse=False):
         """Replace medical entity in sent with common words.
@@ -70,7 +70,7 @@ class FMMSeg(object):
         @param sent: the sentence to be processed.
         @param reverse: for BMMseg
 
-        @return: sentence with common words.
+        @return: [(loc[0], loc[1], entity, type), ...]
         """
         offset = 0
         idx = self._trie.longest_prefix(sent, offset)
@@ -79,14 +79,15 @@ class FMMSeg(object):
         while offset < len(sent):
             if idx is not None:
                 word = encode_word(sent[offset:idx])
-                entity_type = self._trie[word]
+                entity_with_type = self._trie[word]
+                entity, type = self._get_entity_type(entity_with_type)
                 if reverse:
                     entity_location_with_types.append([
-                        sent_len - idx, sent_len - 1 - offset, entity_type
+                        sent_len - idx, sent_len - 1 - offset, entity, type
                     ])
                 else:
                     entity_location_with_types.append([
-                        offset, idx - 1, entity_type
+                        offset, idx - 1, entity, type
                     ])
 
                 offset = idx
@@ -102,6 +103,12 @@ class FMMSeg(object):
         """
         return self.__trie[encode_word(token)]
 
+    def _get_entity_type(entity_with_type):
+        i = 1
+        while (entity_with_type[i] != '@'):
+            i += 1
+        return entity_with_type[i + 1:], entity_with_type[:i + 1]
+
 
 class BMMSeg(FMMSeg):
     """A backward maximum matching Chinese word segmentor.
@@ -114,7 +121,7 @@ class BMMSeg(FMMSeg):
         @param train: (possibly) new words
         """
         # just reverse everything
-        train = [i[::-1] for i in train]
+        train = [(i[0][::-1], i[1]) for i in train]
         FMMSeg.add_words(self, train, value=value, reverse=True)
 
     def entity_identify(self, sent):
