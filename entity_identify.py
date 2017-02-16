@@ -24,6 +24,7 @@ def questions_from_json(filename):
             for question in questions_json[key]:
                 yield question
 
+
 # def decode_entity_type(word, reverse=False):
 #     if reverse:
 #         word = word[::-1]
@@ -35,8 +36,10 @@ def decode_entity_type(word):
 
 
 def hanzi_list2pinyin(hanzi_list):
-    return [pypinyin.pinyin(word, style=pypinyin.NORMAL)[0][0]
-            for word in hanzi_list]
+    return [
+        pypinyin.pinyin(
+            word, style=pypinyin.NORMAL)[0][0] for word in hanzi_list
+    ]
 
 
 def get_word_list(entity_name_file):
@@ -100,18 +103,18 @@ def exact_entity_extract(entity_info):
 
 
 def entity_identify(argc, argv):
-    if argc < 4:
-        print(
-            "Usage:%s <entity_name_file> <output_file_name> <question_file_name>"
-            % (argv[0]))
-    entity_name_file = argv[1]
-    output_file_name = argv[2]
-    question_file_name = argv[3]
-    common_words_file = argv[4]
-    # entity_name_file = 'data/name-idlist-dict-all.json'
-    # output_file_name = 'data/entity_identify_80_percentage.csv'
-    # question_file_name = 'data/qa3.json'
-    # common_words_file='data/merge_split2.json'
+    # if argc < 5:
+    #     print(
+    #         "Usage:%s <entity_name_file> <output_file_name> <question_file_name> <common_words_file>"
+    #         % (argv[0]))
+    # entity_name_file = argv[1]
+    # output_file_name = argv[2]
+    # question_file_name = argv[3]
+    # common_words_file = argv[4]
+    entity_name_file = 'data/name-idlist-dict-all.json'
+    output_file_name = 'data/entity_identify_80_percentage.csv'
+    question_file_name = 'data/qa3.json'
+    common_words_file = 'data/merge_split2.json'
 
     hanzi_list, pinyin_list, entity_with_types = get_word_list(
         entity_name_file)

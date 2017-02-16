@@ -82,13 +82,11 @@ class FMMSeg(object):
                 entity_with_type = self._trie[word]
                 entity, type = self._get_entity_type(entity_with_type)
                 if reverse:
-                    entity_location_with_types.append([
-                        sent_len - idx, sent_len - 1 - offset, entity, type
-                    ])
+                    entity_location_with_types.append(
+                        [sent_len - idx, sent_len - 1 - offset, entity, type])
                 else:
-                    entity_location_with_types.append([
-                        offset, idx - 1, entity, type
-                    ])
+                    entity_location_with_types.append(
+                        [offset, idx - 1, entity, type])
 
                 offset = idx
             else:
@@ -103,7 +101,7 @@ class FMMSeg(object):
         """
         return self.__trie[encode_word(token)]
 
-    def _get_entity_type(entity_with_type):
+    def _get_entity_type(self, entity_with_type):
         i = 1
         while (entity_with_type[i] != '@'):
             i += 1
@@ -142,5 +140,6 @@ class BMMSeg(FMMSeg):
         """
         token = token[::-1]
         return FMMSeg.get_token_value(token)
+
 
 # In[ ]:
