@@ -13,6 +13,13 @@ class FuzzyMatch(object):
         self._word_list = None
         self._threshold = threshold
         self._common_list = None
+        self.limit = 1
+
+    def set_limit(self, limit=1):
+        self.limit = limit
+
+    def get_limit(self):
+        return self.limit
 
     @staticmethod
     def get_word_list(filename):
@@ -33,8 +40,8 @@ class FuzzyMatch(object):
                 name_with_type['type'] = entity_names[entity_name]
                 name_with_type['pinyin'] = " ".join(
                     a[0]
-                    for a in pypinyin.pinyin(entity_name,
-                                             style=pypinyin.NORMAL))
+                    for a in pypinyin.pinyin(
+                        entity_name, style=pypinyin.NORMAL))
                 names_with_type.append(name_with_type)
             return names_with_type
 
@@ -42,7 +49,7 @@ class FuzzyMatch(object):
         self._word_list = word_list
 
     def add_common_words(self, common_word_list):
-        self._common_list = common_word_list
+        self._common_list = set(common_word_list)
 
     def _most_similar_words(self, key_word, pinyin=False):
         """
@@ -59,22 +66,43 @@ class FuzzyMatch(object):
 
         """
         result = []
+        words_with_ratio = []
         if pinyin:
             key_word = " ".join(a[0]
                                 for a in pypinyin.pinyin(
                                     key_word, style=pypinyin.NORMAL))
             for word in self._word_list:
+
                 word_ratio = ratio(key_word, word['pinyin'])
                 if word_ratio > self._threshold:
-                    result.append(word['name'] + '/' +
-                                  self._encode_entity_type(word['type']))
+                    word['ratio'] = word_ratio
+                    words_with_ratio.append(word)
+            words_with_ratio.sort(key=lambda word: word['ratio'], reverse=True)
+            words_with_ratio = words_with_ratio[0:self.limit] \
+                if len(words_with_ratio) > self.limit else words_with_ratio
+            # print(len(words_with_ratio))
+            # for word in words_with_ratio:
+            #     print word['name']
+            return [
+                word['name'] + '/' + self._encode_entity_type(word['type'])
+                for word in words_with_ratio
+            ]
         else:
             for word in self._word_list:
                 word_ratio = ratio(key_word, word['name'])
                 if word_ratio > self._threshold:
-                    result.append(word['name'] + '/' +
-                                  self._encode_entity_type(word['type']))
-        return None if len(result) == 0 else result
+                    word['ratio'] = word_ratio
+                    words_with_ratio.append(word)
+            words_with_ratio.sort(key=lambda word: word['ratio'], reverse=True)
+            words_with_ratio = words_with_ratio[0:self.limit] \
+                if len(words_with_ratio)>self.limit else words_with_ratio
+            # print(len(words_with_ratio))
+            # for word in words_with_ratio:
+            #     print word['name']
+            return [
+                word['name'] + '/' + self._encode_entity_type(word['type'])
+                for word in words_with_ratio
+            ]
 
     def _encode_entity_type(self, id_list):
         entity_types = []
@@ -98,13 +126,14 @@ class FuzzyMatch(object):
         :return:
         """
         sentence_word = jieba.cut(sentence)
-        sentence_word = [word for word in sentence_word
-                         if word not in self._common_list]
+        sentence_word = [
+            word for word in sentence_word if word not in self._common_list
+        ]
         entities_with_type = []
         for word in sentence_word:
             if len(word) > 1:
-                word_matched = self._most_similar_words(word, pinyin=True)
-                if word_matched:
+                word_matched = self._most_similar_words(word, pinyin=pinyin)
+                if len(word_matched) > 0:
                     entities_with_type.extend(word_matched)
         return entities_with_type
 
