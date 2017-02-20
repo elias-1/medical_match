@@ -93,3 +93,6 @@ ENV/
 
 # hook
 .pre-commit-config.yaml
+
+#model data
+runs

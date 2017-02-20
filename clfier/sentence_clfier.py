@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 ########################################################################
 #
@@ -27,7 +28,7 @@ sys.setdefaultencoding('utf8')
 tf.flags.DEFINE_string("data", "data", "Data source for the data.")
 
 # Eval Parameters
-tf.flags.DEFINE_string("run_dir", "runs/1484040202", "Dir of training run")
+tf.flags.DEFINE_string("run_dir", "runs/1487590765", "Dir of training run")
 
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True,
@@ -62,8 +63,8 @@ def sentence_clfier(sentence):
 
     # Evaluation
     # ==================================================
-    checkpoint_file = tf.train.latest_checkpoint(
-        os.path.join(FLAGS.run_dir, 'checkpoints'))
+    checkpoint_file = tf.train.latest_checkpoint(os.path.join(FLAGS.run_dir,
+                                                              'checkpoints'))
     graph = tf.Graph()
     with graph.as_default():
         session_conf = tf.ConfigProto(
