@@ -125,7 +125,7 @@ def _load_data_and_labels():
     # Load data from file
     x_text = []
     y = []
-    with open(os.path.join(FLAGS.data, 'qa3.json'), 'r') as f:
+    with open(os.path.join(FLAGS.data, 'qa_data.json'), 'r') as f:
         data = json.load(f)
 
     num_classes = 0
