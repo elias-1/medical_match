@@ -25,7 +25,6 @@ import datetime
 import json
 import os
 import random
-import struct
 import sys
 import time
 from copy import deepcopy
@@ -50,7 +49,7 @@ tf.flags.DEFINE_string('split_rate', '7,2,1',
 tf.flags.DEFINE_string('data', 'data', 'Data source')
 tf.flags.DEFINE_integer('min_examples_per_class', 100,
                         'Minimal examples numbers per class')
-tf.flags.DEFINE_string('pre_train_data', 'pretrain-word2vec', 'Data source')
+tf.flags.DEFINE_string('pre_train_data', 'data', 'pretrain word2vec')
 
 # Model Hyperparameters
 tf.flags.DEFINE_integer('embedding_dim', 128,
@@ -360,16 +359,6 @@ def build_dataset(x, y):
     return x_train, y_train, x_validate, y_validate, x_test, y_test
 
 
-# In[ ]:
-
-# get_ipython().magic(u'pdb')
-
-# In[ ]:
-
-# Training
-# ==================================================
-
-
 def training():
     """Train the model.
     """
@@ -652,9 +641,3 @@ def main(argv=None):
 
 if __name__ == '__main__':
     tf.app.run()
-
-# In[ ]:
-
-# get_ipython().magic(u'pinfo tf.concat')
-
-# In[ ]:
