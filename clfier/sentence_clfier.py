@@ -28,7 +28,8 @@ sys.setdefaultencoding('utf8')
 tf.flags.DEFINE_string("data", "data", "Data source for the data.")
 
 # Eval Parameters
-tf.flags.DEFINE_string("run_dir", "runs/1487590765", "Dir of training run")
+tf.flags.DEFINE_string("run_dir", "clfier/runs/1487590765",
+                       "Dir of training run")
 
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True,
@@ -42,15 +43,16 @@ FLAGS = tf.flags.FLAGS
 
 jieba.load_userdict(os.path.join(FLAGS.data, 'words.txt'))
 
-# def tokenizer(iterator):
-#     """Tokenizer generator.
-#     Args:
-#         iterator: Input iterator with strings.
-#     Yields:
-#         array of tokens per each value in the input.
-#     """
-#     for value in iterator:
-#         yield jieba.lcut(value, cut_all=False)
+
+def tokenizer(iterator):
+    """Tokenizer generator.
+    Args:
+        iterator: Input iterator with strings.
+    Yields:
+        array of tokens per each value in the input.
+    """
+    for value in iterator:
+        yield jieba.lcut(value, cut_all=False)
 
 
 def sentence_clfier(sentence):
@@ -98,8 +100,7 @@ def sentence_clfier(sentence):
                 label_to_int[key]: key
                 for key in label_to_int.keys()
             }
-
-            return int_to_label[predictions[0]]
+            return int_to_label[predictions[0][0]]
 
 
 def main(argv=None):
