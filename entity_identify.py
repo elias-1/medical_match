@@ -5,30 +5,15 @@ import csv
 import json
 import pprint
 import sys
+import time
 
 import exact_match.mm
 import fuzzy_match.fuzzy_match
+import jieba
+import jieba.posseg
 import pypinyin
-
-
-def questions_from_json(filename):
-    """
-    从json文件中将所有问题生成一个list
-    :param filename:
-    :return:
-    """
-    result = []
-    with open(filename) as jsonfile:
-        questions_json = json.load(jsonfile)
-        for key in questions_json.keys():
-            for question in questions_json[key]:
-                yield question
-
-
-# def decode_entity_type(word, reverse=False):
-#     if reverse:
-#         word = word[::-1]
-#     return word[0]
+from clfier import sentence_clfier
+from clfier.sentence_clfier import tokenizer
 
 
 def decode_entity_type(word):
@@ -37,8 +22,8 @@ def decode_entity_type(word):
 
 def hanzi_list2pinyin(hanzi_list):
     return [
-        pypinyin.pinyin(
-            word, style=pypinyin.NORMAL)[0][0] for word in hanzi_list
+        pypinyin.pinyin(word,
+                        style=pypinyin.NORMAL)[0][0] for word in hanzi_list
     ]
 
 
@@ -73,6 +58,7 @@ def get_common_word(filename):
     return common_word_list['data']
 
 
+#输入为id列表，如果id的第二位是数字，那么加入id第一位;反之将前两位加入。返回格式‘@type-...-type@'
 def encode_entity_type(id_list):
     entity_types = []
     for entity_id in id_list:
@@ -88,34 +74,39 @@ def encode_entity_type(id_list):
     return '@' + '-'.join(sorted(entity_types)) + '@'
 
 
-def sent_entity_extract(entity_info, question_hanzi_list):
-
-    entity_with_type = []
-    for loc_with_type in entity_info:
-        entity_type = loc_with_type[3]
-        entity = question_hanzi_list[loc_with_type[0]:loc_with_type[1] + 1]
-        entity_with_type.append(''.join(entity) + '/' + entity_type)
-    return entity_with_type
-
-
 def exact_entity_extract(entity_info):
     return [i[2] + '/' + i[3] for i in entity_info]
 
 
-def entity_identify(argc, argv):
-    # if argc < 5:
-    #     print(
-    #         "Usage:%s <entity_name_file> <output_file_name> <question_file_name> <common_words_file>"
-    #         % (argv[0]))
-    # entity_name_file = argv[1]
-    # output_file_name = argv[2]
-    # question_file_name = argv[3]
-    # common_words_file = argv[4]
+def en_candidate(segs, common_words):
+    s = []
+    for i in segs:
+        if i.word not in common_words and not i.flag == u't' and not i.flag == u'm':
+            s.append(i.word)
+    name_index = 0
+    en_sets = set([])
+    '''
+    如果分词结果有一个字的词，那就与其上一个的词合并
+    '''
+    for sname in s:
+        if len(sname) == 1 and name_index > 0:
+            en_sets.add(s[name_index - 1] + sname)
+            if s[name_index - 1] in en_sets:
+                en_sets.remove(s[name_index - 1])
+        else:
+            en_sets.add(sname)
+        name_index += 1
+    return en_sets
+
+
+def entity_identify(sentence):
+    #print sentence_clfier.sentence_clfier(sentence)
+
     entity_name_file = 'data/name-idlist-dict-all.json'
     output_file_name = 'data/entity_identify_80_percentage.csv'
-    question_file_name = 'data/qa3.json'
     common_words_file = 'data/merge_split2.json'
 
+    jieba.load_userdict('data/words.txt')
     hanzi_list, pinyin_list, entity_with_types = get_word_list(
         entity_name_file)
     hanzi_bseg = exact_match.mm.BMMSeg()
@@ -134,13 +125,12 @@ def entity_identify(argc, argv):
     fuzzy.add_words(words_fuzzy)
     del hanzi_list, pinyin_list, entity_with_types, words_fuzzy
 
-    csvfile = open(output_file_name, 'wb')
-    csvfile.write(codecs.BOM_UTF8)
-    csvwriter = csv.writer(csvfile)
-    # #
-    questions = questions_from_json(question_file_name)
+    questions = [sentence]
+    result_json = {}
+    result_json[u'type'] = sentence_clfier.sentence_clfier(sentence)
+
     for question in questions:
-        one_line = []
+
         question_hanzi_list = list(question)
         hanzi_entity_info = hanzi_bseg.entity_identify(question_hanzi_list)
         question_pinyin_list = hanzi_list2pinyin(question_hanzi_list)
@@ -148,39 +138,88 @@ def entity_identify(argc, argv):
         hanzi_entity_result = exact_entity_extract(hanzi_entity_info)
         pinyin_entity_result = exact_entity_extract(pinyin_entity_info)
 
-        fuzzy_entity_result = fuzzy.entity_identify(question)
-        fuzzy_pinyin_entity_result = fuzzy.pinyin_entity_identify(question)
+        seg = jieba.posseg.cut(question)
+        en_candis = en_candidate(seg, common_words)
 
-        one_line_with_question = [question]
-        oneline = []
-        #########################################################################
-        print question
-        print "hanzi:",
-        for i in hanzi_entity_result:
-            print i
-        print 'pinyin:',
-        for i in pinyin_entity_result:
-            print i
-        print "fuzzy",
-        for i in fuzzy_entity_result:
-            print i
-        print "fuzzy_pinyin",
-        for i in fuzzy_pinyin_entity_result:
-            print i
-        #########################################################################
+        fuzzy_entity_result = []
+        for name in en_candis:
+            #print name
+            fuzzy_hanzi = fuzzy.entity_identify(name)
+            fuzzy_pinyin = fuzzy.pinyin_entity_identify(name)
+            if len(fuzzy_hanzi) == 0 or len(fuzzy_pinyin) == 0:
+                for item in fuzzy_hanzi:
+                    fuzzy_entity_result.append(item)
+                for item in fuzzy_pinyin:
+                    p_list = []
+                    p_list.extend(item['name'])
+                    for sn in p_list:
+                        if sn in name:
+                            fuzzy_entity_result.append(item)
+                            break
+            else:
+                if fuzzy_hanzi[0]['ratio'] < fuzzy_pinyin[0]['ratio']:
+                    fuzzy_entity_result.append(fuzzy_pinyin[0])
+                else:
+                    fuzzy_entity_result.append(fuzzy_hanzi[0])
+        final_enti = []
+        final_enti_dict = []
+        # print 'hanzi'
+        for enitem in hanzi_entity_result:
+            items = enitem.split('/')
+            item = items[0]
+            item_dict = {}
+            item_dict[u'name'] = items[0]
+            item_dict[u'type'] = items[1]
+            item_dict[u'ratio'] = 100
+            if item not in final_enti and len(item) > 1:
+                for en in pinyin_entity_result:
+                    pen = en.split('/')
+                    if item in pen[0]:
+                        item = pen[0]
+                final_enti.append(item)
+                final_enti_dict.append(item_dict)
+                print item
+        #print 'pinyin'
+        for enitem in pinyin_entity_result:
+            items = enitem.split('/')
+            item = items[0]
+            item_dict = {}
+            item_dict[u'name'] = items[0]
+            item_dict[u'type'] = items[1]
+            item_dict[u'ratio'] = 100
+            if item not in final_enti and len(item) > 2:
+                final_enti.append(item)
+                final_enti_dict.append(item_dict)
+                #print item
+                #print 'fu_hanzi'
+        for enitem in fuzzy_entity_result:
+            items = enitem[u'name'].split('/')
+            item = items[0]
+            item_dict = {}
+            item_dict[u'name'] = items[0]
+            item_dict[u'type'] = items[1]
+            item_dict[u'ratio'] = enitem[u'ratio']
+            if item not in final_enti:
+                for enname in final_enti:
+                    if item in enname:
+                        item = enname
+                        break
+                if item not in final_enti:
+                    final_enti.append(item)
+                    final_enti_dict.append(item_dict)
+                    #print item
 
-        one_line.extend(hanzi_entity_result)
-        one_line.extend(pinyin_entity_result)
-        one_line.extend(fuzzy_entity_result)
-        one_line.extend(fuzzy_pinyin_entity_result)
-        one_line = set(one_line)
-        one_line_with_question.extend(list(one_line))
-        for i in one_line_with_question:
-            print i,
-        print ''
-        csvwriter.writerow(one_line_with_question)
-    csvfile.close()
+        result_json[u'entity'] = final_enti_dict
+
+    return result_json
 
 
 if __name__ == "__main__":
-    entity_identify(len(sys.argv), sys.argv)
+    stime = time.clock()
+    result = entity_identify(u'感冒，发骚，咳嗽吃什么药？')
+    dstr = json.dumps(result, ensure_ascii=False, indent=4)
+    dstr = unicode.encode(dstr, 'utf-8')
+    with open('qa_result.json', 'wb') as f:
+        f.write(dstr)
+    etime = time.clock()
+    print "read: %f s" % (etime - stime)

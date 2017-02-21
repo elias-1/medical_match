@@ -40,8 +40,8 @@ class FuzzyMatch(object):
                 name_with_type['type'] = entity_names[entity_name]
                 name_with_type['pinyin'] = " ".join(
                     a[0]
-                    for a in pypinyin.pinyin(
-                        entity_name, style=pypinyin.NORMAL))
+                    for a in pypinyin.pinyin(entity_name,
+                                             style=pypinyin.NORMAL))
                 names_with_type.append(name_with_type)
             return names_with_type
 
@@ -68,6 +68,7 @@ class FuzzyMatch(object):
         result = []
         words_with_ratio = []
         if pinyin:
+
             key_word = " ".join(a[0]
                                 for a in pypinyin.pinyin(
                                     key_word, style=pypinyin.NORMAL))
@@ -76,33 +77,42 @@ class FuzzyMatch(object):
                 word_ratio = ratio(key_word, word['pinyin'])
                 if word_ratio > self._threshold:
                     word['ratio'] = word_ratio
-                    words_with_ratio.append(word)
+                    ret_json = {}
+                    ret_json['name'] = word[
+                        'name'] + '/' + self._encode_entity_type(word['type'])
+                    ret_json['ratio'] = word_ratio
+                    words_with_ratio.append(ret_json)
             words_with_ratio.sort(key=lambda word: word['ratio'], reverse=True)
             words_with_ratio = words_with_ratio[0:self.limit] \
                 if len(words_with_ratio) > self.limit else words_with_ratio
             # print(len(words_with_ratio))
-            # for word in words_with_ratio:
-            #     print word['name']
-            return [
-                word['name'] + '/' + self._encode_entity_type(word['type'])
-                for word in words_with_ratio
-            ]
+            #for word in words_with_ratio:
+            #    print word['ratio']
+
+            return words_with_ratio
         else:
             for word in self._word_list:
                 word_ratio = ratio(key_word, word['name'])
                 if word_ratio > self._threshold:
                     word['ratio'] = word_ratio
-                    words_with_ratio.append(word)
+                    ret_json = {}
+                    ret_json['name'] = word[
+                        'name'] + '/' + self._encode_entity_type(word['type'])
+                    ret_json['ratio'] = word_ratio
+                    words_with_ratio.append(ret_json)
             words_with_ratio.sort(key=lambda word: word['ratio'], reverse=True)
             words_with_ratio = words_with_ratio[0:self.limit] \
                 if len(words_with_ratio)>self.limit else words_with_ratio
             # print(len(words_with_ratio))
-            # for word in words_with_ratio:
-            #     print word['name']
-            return [
-                word['name'] + '/' + self._encode_entity_type(word['type'])
-                for word in words_with_ratio
-            ]
+            #for word in words_with_ratio:
+            #    print word['ratio']
+
+            return words_with_ratio
+            '''
+            return [word['name'] + '/' + self._encode_entity_type(word['type'])
+                    for word in words_with_ratio
+                    ]
+            '''
 
     def _encode_entity_type(self, id_list):
         entity_types = []
@@ -116,7 +126,7 @@ class FuzzyMatch(object):
 
         return '@' + '-'.join(sorted(entity_types)) + '@'
 
-    def entity_identify(self, sentence, pinyin=False):
+    def entity_identify(self, word, pinyin=False):
         """
         Find entities in a sentence using fuzzy match
         :param sentence:sentence to identify
@@ -125,17 +135,12 @@ class FuzzyMatch(object):
         :param pinyin
         :return:
         """
-        sentence_word = jieba.cut(sentence)
-        sentence_word = [
-            word for word in sentence_word if word not in self._common_list
-        ]
         entities_with_type = []
-        for word in sentence_word:
-            if len(word) > 1:
-                word_matched = self._most_similar_words(word, pinyin=pinyin)
-                if len(word_matched) > 0:
-                    entities_with_type.extend(word_matched)
+        if len(word) > 1:
+            word_matched = self._most_similar_words(word, pinyin=pinyin)
+            if len(word_matched) > 0:
+                entities_with_type.extend(word_matched)
         return entities_with_type
 
-    def pinyin_entity_identify(self, sentence):
-        return self.entity_identify(sentence, pinyin=True)
+    def pinyin_entity_identify(self, word):
+        return self.entity_identify(word, pinyin=True)
