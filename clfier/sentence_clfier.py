@@ -62,8 +62,6 @@ class SentenceClfier:
         self.vocab_processor = learn.preprocessing.VocabularyProcessor.restore(
             vocab_path)
 
-        graph = tf.Graph()
-
         session_conf = tf.ConfigProto(
             allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement)
@@ -76,13 +74,14 @@ class SentenceClfier:
         saver.restore(self.sess, checkpoint_file)
 
         # Get the placeholders from the graph by name
-        self.input_x = graph.get_operation_by_name("input_x").outputs[0]
+        self.input_x = self.sess.graph.get_operation_by_name(
+            "input_x").outputs[0]
 
-        self.dropout_keep_prob = graph.get_operation_by_name(
+        self.dropout_keep_prob = self.sess.graph.get_operation_by_name(
             "dropout_keep_prob").outputs[0]
 
         # Tensors we want to evaluate
-        self.prediction_op = graph.get_operation_by_name(
+        self.prediction_op = self.sess.graph.get_operation_by_name(
             "output/predictions").outputs[0]
 
         label_info_dir = os.path.join(FLAGS.run_dir, 'label_to_int.json')
