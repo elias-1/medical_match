@@ -301,21 +301,6 @@ def data_preparation():
     return x_train, y_train, x_validate, y_validate, x_test, y_test, vocab_size
 
 
-# In[ ]:
-
-# get_ipython().magic(u'pinfo csv.reader')
-# get_ipython().magic(u'pinfo map')
-
-# In[ ]:
-
-# get_ipython().magic(u'pdb')
-
-# In[ ]:
-
-# Training
-# ==================================================
-
-
 def training():
     """Train the model.
     """

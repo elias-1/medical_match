@@ -45,7 +45,7 @@ sys.setdefaultencoding('utf8')
 # ==================================================
 
 # Data loading params
-tf.flags.DEFINE_string('split_rate', '7,2,1',
+tf.flags.DEFINE_string('split_rate', '8,2',
                        'Percentage of the training data to use for validation')
 tf.flags.DEFINE_string('data', '../data', 'Data source')
 tf.flags.DEFINE_integer('min_examples_per_class', 100,
@@ -99,6 +99,7 @@ def tokenizer(iterator):
     """
     for value in iterator:
         yield jieba.lcut(value, cut_all=False)
+
 
 # In[ ]:
 
@@ -171,6 +172,7 @@ def _batch_iter(x_train, y_train, batch_size, num_epochs, shuffle=True):
             yield (x_train[start_index:end_index],
                    y_train[start_index:end_index])
 
+
 # In[ ]:
 
 
@@ -184,8 +186,8 @@ def get_embedding_from_model(baidu_vocab_index):
         f_baidu_embd.seek(baidu_vocab_index[i] * bytes + 16, 0)
         i_embd = np.fromstring(f_baidu_embd.read(bytes), dtype='<f4')
         baidu_embedding_matrix = np.vstack(
-            [baidu_embedding_matrix, i_embd
-             ]) if baidu_embedding_matrix.size else i_embd
+            [baidu_embedding_matrix,
+             i_embd]) if baidu_embedding_matrix.size else i_embd
 
     return baidu_embedding_matrix
 
@@ -215,9 +217,8 @@ def vocabulary_fit_baidu(x_text):
                 known_vocabulary[token]['id'] = token_id
             token_id += 1
 
-    with open(
-            os.path.join(FLAGS.train, TIMESTAMP, 'vocabulary.json'),
-            'w+') as f:
+    with open(os.path.join(FLAGS.train, TIMESTAMP, 'vocabulary.json'),
+              'w+') as f:
         json.dump(known_vocabulary, f)
 
     baidu_vocab_index = [baidu_index[token] for token in baidu_dict]
@@ -281,22 +282,17 @@ def build_dataset(x, y):
 
     def one_label_data_split(x, y):
         split_first_index = int(split_rate[0] * float(len(y)))
-        split_second_index = int((split_rate[1] + split_rate[0]) *
-                                 float(len(y)))
 
         one_label_x_train = x[:split_first_index]
         one_label_y_train = y[:split_first_index]
-        one_label_x_validate = x[split_first_index:split_second_index]
-        one_label_y_validate = y[split_first_index:split_second_index]
-        one_label_x_test = x[split_second_index:]
-        one_label_y_test = y[split_second_index:]
-        return one_label_x_train, one_label_y_train, one_label_x_validate, one_label_y_validate, one_label_x_test, one_label_y_test
 
-    def train_validate_test_split(x, y):
+        one_label_x_test = x[split_first_index:]
+        one_label_y_test = y[split_first_index:]
+        return one_label_x_train, one_label_y_train, one_label_x_test, one_label_y_test
+
+    def train_test_split(x, y):
         x_train = np.array([])
         y_train = np.array([])
-        x_validate = np.array([])
-        y_validate = np.array([])
         x_test = np.array([])
         y_test = np.array([])
 
@@ -307,38 +303,32 @@ def build_dataset(x, y):
                 one_label_x = x[begin:i]
                 one_label_y = y[begin:i]
 
-                one_label_x_train, one_label_y_train, one_label_x_validate, one_label_y_validate, one_label_x_test, one_label_y_test = one_label_data_split(
+                one_label_x_train, one_label_y_train, one_label_x_test, one_label_y_test = one_label_data_split(
                     one_label_x, one_label_y)
 
-                x_train = np.vstack([x_train, one_label_x_train
-                                     ]) if x_train.size else one_label_x_train
+                x_train = np.vstack(
+                    [x_train,
+                     one_label_x_train]) if x_train.size else one_label_x_train
 
-                y_train = np.vstack([y_train, one_label_y_train
-                                     ]) if y_train.size else one_label_y_train
+                y_train = np.vstack(
+                    [y_train,
+                     one_label_y_train]) if y_train.size else one_label_y_train
 
-                x_validate = np.vstack([
-                    x_validate, one_label_x_validate
-                ]) if x_validate.size else one_label_x_validate
+                x_test = np.vstack(
+                    [x_test,
+                     one_label_x_test]) if x_test.size else one_label_x_test
 
-                y_validate = np.vstack([
-                    y_validate, one_label_y_validate
-                ]) if y_validate.size else one_label_y_validate
-
-                x_test = np.vstack([x_test, one_label_x_test
-                                    ]) if x_test.size else one_label_x_test
-
-                y_test = np.vstack([y_test, one_label_y_test
-                                    ]) if y_test.size else one_label_y_test
+                y_test = np.vstack(
+                    [y_test,
+                     one_label_y_test]) if y_test.size else one_label_y_test
 
                 begin = i
             last_label = np.argmax(y[i])
-        return x_train, y_train, x_validate, y_validate, x_test, y_test
+        return x_train, y_train, x_test, y_test
 
-    x_train, y_train, x_validate, y_validate, x_test, y_test = train_validate_test_split(
-        x, y)
+    x_train, y_train, x_test, y_test = train_test_split(x, y)
 
     x_train, y_train = data_shuffle(x_train, y_train)
-    x_validate, y_validate = data_shuffle(x_validate, y_validate)
     x_test, y_test = data_shuffle(x_test, y_test)
 
     #     def slimming(x, y, rate):
@@ -349,24 +339,20 @@ def build_dataset(x, y):
     #     x_validate, y_validate = slimming(x_validate, y_validate, 0.1)
     #     x_test, y_test = slimming(x_test, y_test, 0.1)
 
-    print('Train/Validate/Test split: {:d}/{:d}/{:d}'.format(
-        len(y_train), len(y_validate), len(y_test)))
+    print('Train/Test split: {:d}/{:d}/{:d}'.format(len(y_train), len(y_test)))
 
-    return x_train, y_train, x_validate, y_validate, x_test, y_test
+    return x_train, y_train, x_test, y_test
 
 
 def training():
     """Train the model.
     """
     x, y, vocab_sizes, baidu_embedding_matrix = adapt_data_with_baidu()
-    x_train, y_train, x_validate, y_validate, x_test, y_test = build_dataset(x,
-                                                                             y)
+    x_train, y_train, x_test, y_test = build_dataset(x, y)
 
     print('---------------------------------------------')
     print(x_train.shape)
     print(y_train.shape)
-    print(x_validate.shape)
-    print(y_validate.shape)
     print(x_test.shape)
     print(y_test.shape)
     print('---------------------------------------------')
@@ -390,8 +376,8 @@ def training():
             global_step = tf.Variable(0, name='global_step', trainable=False)
             optimizer = tf.train.AdamOptimizer(1e-3)
             grads_and_vars = optimizer.compute_gradients(cnn.loss)
-            train_op = optimizer.apply_gradients(grads_and_vars,
-                                                 global_step=global_step)
+            train_op = optimizer.apply_gradients(
+                grads_and_vars, global_step=global_step)
 
             # Keep track of gradient values and sparsity (optional)
             grad_summaries = []
@@ -407,8 +393,8 @@ def training():
             grad_summaries_merged = tf.summary.merge(grad_summaries)
 
             # Output directory for models and summaries
-            out_dir = os.path.abspath(os.path.join(os.path.curdir, FLAGS.train,
-                                                   TIMESTAMP))
+            out_dir = os.path.abspath(
+                os.path.join(os.path.curdir, FLAGS.train, TIMESTAMP))
             print('Writing to {}\n'.format(out_dir))
 
             # Summaries for loss and accuracy
@@ -416,8 +402,8 @@ def training():
             acc_summary = tf.summary.scalar('accuracy', cnn.accuracy)
 
             # Train Summaries
-            train_summary_op = tf.summary.merge([loss_summary, acc_summary,
-                                                 grad_summaries_merged])
+            train_summary_op = tf.summary.merge(
+                [loss_summary, acc_summary, grad_summaries_merged])
             train_summary_dir = os.path.join(out_dir, 'summaries', 'train')
             train_summary_writer = tf.train.SummaryWriter(train_summary_dir,
                                                           sess.graph)
@@ -430,8 +416,8 @@ def training():
 
             # Checkpoint directory. Tensorflow assumes this directory already exists
             # so we need to create it
-            checkpoint_dir = os.path.abspath(os.path.join(out_dir,
-                                                          'checkpoints'))
+            checkpoint_dir = os.path.abspath(
+                os.path.join(out_dir, 'checkpoints'))
             checkpoint_prefix = os.path.join(checkpoint_dir, 'model')
             if not os.path.exists(checkpoint_dir):
                 os.makedirs(checkpoint_dir)
@@ -451,15 +437,15 @@ def training():
                     cnn.input_y: y_batch,
                     cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
                 }
-                _, step, summaries, loss, accuracy = sess.run(
-                    [
-                        train_op, global_step, train_summary_op, cnn.loss,
-                        cnn.accuracy
-                    ], feed_dict)
+                _, step, summaries, loss, accuracy = sess.run([
+                    train_op, global_step, train_summary_op, cnn.loss,
+                    cnn.accuracy
+                ], feed_dict)
                 time_str = datetime.datetime.now().isoformat()
-                print('%s: step %8d, loss %2.6f, acc %2.6f\r' %
-                      (time_str, step, loss, accuracy),
-                      end='')
+                print(
+                    '%s: step %8d, loss %2.6f, acc %2.6f\r' %
+                    (time_str, step, loss, accuracy),
+                    end='')
 
                 train_summary_writer.add_summary(summaries, step)
 
@@ -578,21 +564,20 @@ def training():
                             cnn.dropout_keep_prob: 1.0
                         }
 
-                    summaries, step, accuracy, batch_predictions = sess.run(
-                        [
-                            dev_summary_op, global_step, cnn.accuracy,
-                            cnn.predictions
-                        ], feed_dict)
+                    summaries, step, accuracy, batch_predictions = sess.run([
+                        dev_summary_op, global_step, cnn.accuracy,
+                        cnn.predictions
+                    ], feed_dict)
 
-                    all_predictions = np.concatenate([all_predictions,
-                                                      batch_predictions])
+                    all_predictions = np.concatenate(
+                        [all_predictions, batch_predictions])
                     accuracies.append(accuracy)
                     if writer:
                         writer.add_summary(summaries, step)
 
-                class_accuracy_stat(all_predictions,
-                                    np.argmax(y, axis=1),
-                                    all_data)
+                class_accuracy_stat(
+                    all_predictions, np.argmax(
+                        y, axis=1), all_data)
                 accuracy = sum(accuracies) / len(accuracies)
                 time_str = datetime.datetime.now().isoformat()
                 print('%s: step %8d, acc %2.6f' % (time_str, step, accuracy))
@@ -607,34 +592,31 @@ def training():
                 current_step = tf.train.global_step(sess, global_step)
                 if current_step % FLAGS.evaluate_every == 0:
                     print('\nValidation:')
-                    validate_step(x_validate,
-                                  y_validate,
-                                  writer=dev_summary_writer)
+                    validate_step(x_test, x_test, writer=dev_summary_writer)
                     print('')
                 if current_step % FLAGS.checkpoint_every == 0:
-                    path = saver.save(sess,
-                                      checkpoint_prefix,
-                                      global_step=current_step)
+                    path = saver.save(
+                        sess, checkpoint_prefix, global_step=current_step)
                     print('Saved model checkpoint to {}\n'.format(path))
 
             print('\nTest:')
             test_step(x_test, y_test, writer=dev_summary_writer)
             test_step(
                 np.concatenate(
-                    (x_train, x_validate, x_test),
-                    axis=0),
+                    (x_train, x_test), axis=0),
                 np.concatenate(
-                    (y_train, y_validate, y_test),
-                    axis=0),
+                    (y_train, y_test), axis=0),
                 writer=dev_summary_writer,
                 all_data=True)
             print('')
+
 
 # In[ ]:
 
 
 def main(argv=None):
     training()
+
 
 # In[ ]:
 
