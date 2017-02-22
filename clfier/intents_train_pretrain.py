@@ -339,7 +339,7 @@ def build_dataset(x, y):
     #     x_validate, y_validate = slimming(x_validate, y_validate, 0.1)
     #     x_test, y_test = slimming(x_test, y_test, 0.1)
 
-    print('Train/Test split: {:d}/{:d}/{:d}'.format(len(y_train), len(y_test)))
+    print('Train/Test split: {:d}/{:d}'.format(len(y_train), len(y_test)))
 
     return x_train, y_train, x_test, y_test
 
