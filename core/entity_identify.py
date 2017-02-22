@@ -22,8 +22,8 @@ def decode_entity_type(word):
 
 def hanzi_list2pinyin(hanzi_list):
     return [
-        pypinyin.pinyin(word,
-                        style=pypinyin.NORMAL)[0][0] for word in hanzi_list
+        pypinyin.pinyin(
+            word, style=pypinyin.NORMAL)[0][0] for word in hanzi_list
     ]
 
 
