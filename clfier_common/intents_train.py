@@ -25,13 +25,14 @@ import datetime
 import json
 import os
 import random
+import re
 import time
 from copy import deepcopy
 
 import jieba
 import numpy as np
 import tensorflow as tf
-from mm import medical_to_common
+# from core.entity_identify import sentence_to_common
 from tensorflow.contrib import learn
 from text_cnn import TextCNN
 
@@ -191,7 +192,14 @@ def data_preparation():
     print('\n'.join(x_text[:10]))
     print()
 
-    x_text, medical_entity_types = medical_to_common(x_text)
+    x_text = [sentence_to_common(sentence) for sentence in x_text]
+
+    medical_entity_types = set()
+    entity_regex = re.compile('(@.*?@)', re.IGNORECASE)
+    for sentence in x_text:
+        for entity_type in entity_regex.findall(sentence):
+            if entity_type not in medical_entity_types:
+                medical_entity_types.add(entity_type)
 
     print('\n'.join(x_text[:10]))
 
@@ -222,22 +230,16 @@ def data_preparation():
 
     def one_label_data_split(x, y):
         split_first_index = int(split_rate[0] * float(len(y)))
-        split_second_index = int(
-            (split_rate[1] + split_rate[0]) * float(len(y)))
 
         one_label_x_train = x[:split_first_index]
         one_label_y_train = y[:split_first_index]
-        one_label_x_validate = x[split_first_index:split_second_index]
-        one_label_y_validate = y[split_first_index:split_second_index]
-        one_label_x_test = x[split_second_index:]
-        one_label_y_test = y[split_second_index:]
-        return one_label_x_train, one_label_y_train, one_label_x_validate, one_label_y_validate, one_label_x_test, one_label_y_test
+        one_label_x_test = x[split_first_index:]
+        one_label_y_test = y[split_first_index:]
+        return one_label_x_train, one_label_y_train, one_label_x_test, one_label_y_test
 
     def train_dev_test_split(x, y):
         x_train = np.array([])
         y_train = np.array([])
-        x_validate = np.array([])
-        y_validate = np.array([])
         x_test = np.array([])
         y_test = np.array([])
 
@@ -248,7 +250,7 @@ def data_preparation():
                 one_label_x = x[begin:i]
                 one_label_y = y[begin:i]
 
-                one_label_x_train, one_label_y_train, one_label_x_validate, one_label_y_validate, one_label_x_test, one_label_y_test = one_label_data_split(
+                one_label_x_train, one_label_y_train, one_label_x_test, one_label_y_test = one_label_data_split(
                     one_label_x, one_label_y)
 
                 x_train = np.vstack(
@@ -258,14 +260,6 @@ def data_preparation():
                 y_train = np.vstack(
                     [y_train,
                      one_label_y_train]) if y_train.size else one_label_y_train
-
-                x_validate = np.vstack([
-                    x_validate, one_label_x_validate
-                ]) if x_validate.size else one_label_x_validate
-
-                y_validate = np.vstack([
-                    y_validate, one_label_y_validate
-                ]) if y_validate.size else one_label_y_validate
 
                 x_test = np.vstack(
                     [x_test,
@@ -277,13 +271,11 @@ def data_preparation():
 
                 begin = i
             last_label = np.argmax(y[i])
-        return x_train, y_train, x_validate, y_validate, x_test, y_test
+        return x_train, y_train, x_test, y_test
 
-    x_train, y_train, x_validate, y_validate, x_test, y_test = train_dev_test_split(
-        x, y)
+    x_train, y_train, x_test, y_test = train_dev_test_split(x, y)
 
     x_train, y_train = data_shuffle(x_train, y_train)
-    x_validate, y_validate = data_shuffle(x_validate, y_validate)
     x_test, y_test = data_shuffle(x_test, y_test)
 
     #     def slimming(x, y, rate):
@@ -295,23 +287,19 @@ def data_preparation():
     #     x_test, y_test = slimming(x_test, y_test, 0.1)
 
     print('Vocabulary Size: {:d}'.format(vocab_size))
-    print('Train/Validate/Test split: {:d}/{:d}/{:d}'.format(
-        len(y_train), len(y_validate), len(y_test)))
+    print('Train/Test split: {:d}/{:d}'.format(len(y_train), len(y_test)))
 
-    return x_train, y_train, x_validate, y_validate, x_test, y_test, vocab_size
+    return x_train, y_train, x_test, y_test, vocab_size
 
 
 def training():
     """Train the model.
     """
-    x_train, y_train, x_validate, y_validate, x_test, y_test, vocab_size = data_preparation(
-    )
+    x_train, y_train, x_test, y_test, vocab_size = data_preparation()
 
     print('---------------------------------------------')
     print(x_train.shape)
     print(y_train.shape)
-    print(x_validate.shape)
-    print(y_validate.shape)
     print(x_test.shape)
     print(y_test.shape)
     print('---------------------------------------------')
@@ -547,8 +535,7 @@ def training():
                 current_step = tf.train.global_step(sess, global_step)
                 if current_step % FLAGS.evaluate_every == 0:
                     print('\nValidation:')
-                    validate_step(
-                        x_validate, y_validate, writer=dev_summary_writer)
+                    validate_step(x_test, y_test, writer=dev_summary_writer)
                     print('')
                 if current_step % FLAGS.checkpoint_every == 0:
                     path = saver.save(
@@ -559,28 +546,17 @@ def training():
             test_step(x_test, y_test, writer=dev_summary_writer)
             test_step(
                 np.concatenate(
-                    (x_train, x_validate, x_test), axis=0),
+                    (x_train, x_test), axis=0),
                 np.concatenate(
-                    (y_train, y_validate, y_test), axis=0),
+                    (y_train, y_test), axis=0),
                 writer=dev_summary_writer,
                 all_data=True)
             print('')
-
-
-# In[ ]:
 
 
 def main(argv=None):
     training()
 
 
-# In[ ]:
-
 if __name__ == '__main__':
     tf.app.run()
-
-# In[ ]:
-
-# get_ipython().magic(u'pinfo np.concatenate')
-
-# In[ ]:
