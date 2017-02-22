@@ -592,7 +592,7 @@ def training():
                 current_step = tf.train.global_step(sess, global_step)
                 if current_step % FLAGS.evaluate_every == 0:
                     print('\nValidation:')
-                    validate_step(x_test, x_test, writer=dev_summary_writer)
+                    validate_step(x_test, y_test, writer=dev_summary_writer)
                     print('')
                 if current_step % FLAGS.checkpoint_every == 0:
                     path = saver.save(
