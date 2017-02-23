@@ -45,7 +45,7 @@ def process_line(sentence, output_file):
 def main(argv):
     argv = sys.argv
     if len(argv) < 3:
-        print 'usage:', argv[0], ' <inputfile> <outputfile>'
+        print 'usage: %s <inputfile> <outputfile>' % argv[0]
         sys.exit(0)
     input_file = argv[1]
     output_file = argv[2]
@@ -57,8 +57,8 @@ def main(argv):
         process_line(sentence, output_file)
     output_file.close()
     input_file.close()
-    print 'long_line:', LONG_LEN
-    print 'count_line:', count_line
+    print 'long_line: %d' % LONG_LEN
+    print 'count_line: %d' % count_line
 
 
 if __name__ == '__main__':
