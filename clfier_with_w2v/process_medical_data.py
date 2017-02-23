@@ -11,6 +11,7 @@ Date: 17-2-22 下午8:06
 
 import codecs
 import os
+import re
 import sys
 
 import jieba
@@ -18,18 +19,23 @@ import jieba
 LONG_LEN = 0
 MAX_LEN = 80
 LINE_NUM = 0
+MIN_LEN = 6
 
 jieba.load_userdict(os.path.join('../data', 'words.txt'))
+
+PUNCTUATION_DUP_RM = re.compile(ur'([\?|？|\!|！|。|，|\,])\1+', re.IGNORECASE)
 
 
 def process_line(sentence, output_file):
     global LONG_LEN
     global MAX_LEN
     global LINE_NUM
-    LINE_NUM += 1
 
     sentence = ''.join(sentence.split(':')[1:])
-
+    sentence = re.sub(ur'([\?|？|\!|！|。|，|\,])\1+', r'\1', sentence)
+    if len(sentence) < MIN_LEN:
+        return
+    LINE_NUM += 1
     if len(sentence) > MAX_LEN:
         LONG_LEN += 1
     tokens = jieba.lcut(sentence.encode('utf-8'), cut_all=False)
