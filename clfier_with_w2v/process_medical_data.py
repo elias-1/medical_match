@@ -23,7 +23,8 @@ MIN_LEN = 6
 
 jieba.load_userdict(os.path.join('../data', 'words.txt'))
 
-PUNCTUATION_DUP_RM = re.compile(ur'([\?|？|\!|！|。|，|\,])\1+', re.IGNORECASE)
+PUNCTUATION_DUP_RM = re.compile(ur'([\?|？|\!|！|。|，|\,|\(|\)|（|）|\*|×])\1+',
+                                re.IGNORECASE)
 
 
 def process_line(sentence, output_file):
@@ -31,15 +32,15 @@ def process_line(sentence, output_file):
     global MAX_LEN
     global LINE_NUM
 
-    sentence = ''.join(sentence.split(':')[1:])
     sentence = re.sub(ur'([\?|？|\!|！|。|，|\,])\1+', r'\1', sentence)
     if len(sentence) < MIN_LEN:
         return
     LINE_NUM += 1
     if len(sentence) > MAX_LEN:
         LONG_LEN += 1
-    tokens = jieba.lcut(sentence.encode('utf-8'), cut_all=False)
-    output_file.writer(' '.join(tokens) + '\n')
+    tokens = jieba.lcut(sentence, cut_all=False)
+    #     print ' '.join(tokens)
+    output_file.write(' '.join(tokens) + '\n')
 
 
 def main(argv):
@@ -52,9 +53,11 @@ def main(argv):
     count_line = 0
     input_file = open(input_file, 'r')
     output_file = codecs.open(output_file, 'w', 'utf-8')
+    i = 0
     for sentence in input_file:
-
-        process_line(sentence, output_file)
+        i += 1
+        print 'procossing line %d' % i
+        process_line(sentence.decode('utf-8'), output_file)
     output_file.close()
     input_file.close()
     print 'long_line: %d' % LONG_LEN
