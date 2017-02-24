@@ -55,56 +55,63 @@ def tokenizer(iterator):
         yield jieba.lcut(value, cut_all=False)
 
 
-def sentence_clfier(sentence):
+class SentenceClfier:
+    def __init__(self):
+        # Map data into vocabulary
+        vocab_path = os.path.join(FLAGS.run_dir, "vocab")
+        self.vocab_processor = learn.preprocessing.VocabularyProcessor.restore(
+            vocab_path)
 
-    # Map data into vocabulary
-    vocab_path = os.path.join(FLAGS.run_dir, "vocab")
-    vocab_processor = learn.preprocessing.VocabularyProcessor.restore(
-        vocab_path)
-    x_test = np.array(list(vocab_processor.transform([sentence])))
-
-    # Evaluation
-    # ==================================================
-    checkpoint_file = tf.train.latest_checkpoint(
-        os.path.join(FLAGS.run_dir, 'checkpoints'))
-    graph = tf.Graph()
-    with graph.as_default():
         session_conf = tf.ConfigProto(
             allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement)
-        sess = tf.Session(config=session_conf)
-        with sess.as_default():
-            # Load the saved meta graph and restore variables
-            saver = tf.train.import_meta_graph("{}.meta".format(
-                checkpoint_file))
-            saver.restore(sess, checkpoint_file)
+        self.sess = tf.Session(config=session_conf)
 
-            # Get the placeholders from the graph by name
-            input_x = graph.get_operation_by_name("input_x").outputs[0]
+        checkpoint_file = tf.train.latest_checkpoint(
+            os.path.join(FLAGS.run_dir, 'checkpoints'))
+        # Load the saved meta graph and restore variables
+        saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
+        saver.restore(self.sess, checkpoint_file)
 
-            dropout_keep_prob = graph.get_operation_by_name(
-                "dropout_keep_prob").outputs[0]
+        # Get the placeholders from the graph by name
+        self.input_x = self.sess.graph.get_operation_by_name(
+            "input_x").outputs[0]
 
-            # Tensors we want to evaluate
-            prediction_op = graph.get_operation_by_name(
-                "output/predictions").outputs[0]
+        self.dropout_keep_prob = self.sess.graph.get_operation_by_name(
+            "dropout_keep_prob").outputs[0]
 
-            feed_dict = {input_x: x_test, dropout_keep_prob: 1.0}
-            predictions = sess.run([prediction_op], feed_dict)
+        # Tensors we want to evaluate
+        self.prediction_op = self.sess.graph.get_operation_by_name(
+            "output/predictions").outputs[0]
 
-            label_info_dir = os.path.join(FLAGS.run_dir, 'label_to_int.json')
-            with open(label_info_dir, 'r') as f:
-                label_to_int = json.load(f)
+        label_info_dir = os.path.join(FLAGS.run_dir, 'label_to_int.json')
+        with open(label_info_dir, 'r') as f:
+            label_to_int = json.load(f)
 
-            int_to_label = {
-                label_to_int[key]: key
-                for key in label_to_int.keys()
-            }
-            return int_to_label[predictions[0][0]]
+        self.int_to_label = {
+            label_to_int[key]: key
+            for key in label_to_int.keys()
+        }
+        medical_entity_types_dir = os.path.join(FLAGS.run_dir,
+                                                'medical_entity_types.json')
+
+        with open(medical_entity_types_dir, 'r') as f:
+            medical_entity_types = json.load(f)
+            for token in medical_entity_types:
+                jieba.add_word(word=token)
+
+    def __call__(self, sentence):
+
+        x_test = np.array(list(self.vocab_processor.transform([sentence])))
+        feed_dict = {self.input_x: x_test, self.dropout_keep_prob: 1.0}
+        predictions = self.sess.run([self.prediction_op], feed_dict)
+
+        return self.int_to_label[predictions[0][0]]
 
 
 def main(argv=None):
-    sentence_clfier(u'得了糖尿病应该吃什么药？')
+    sentence_clfier = SentenceClfier()
+    print sentence_clfier(u'得了糖尿病应该吃什么药？')
 
 
 if __name__ == '__main__':

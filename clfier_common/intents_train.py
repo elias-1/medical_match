@@ -204,12 +204,12 @@ def data_preparation():
     print('\n'.join(x_text[:10]))
 
     for token in medical_entity_types:
-        jieba.add_word(word=token, freq=10000)
+        jieba.add_word(word=token)
 
     with open(
             os.path.join(FLAGS.train, TIMESTAMP, 'medical_entity_types.json'),
             'w+') as f:
-        json.dump(medical_entity_types, f)
+        json.dump(list(medical_entity_types), f)
 
     # Build vocabulary
     max_document_length = max([len(tokens) for tokens in tokenizer(x_text)])

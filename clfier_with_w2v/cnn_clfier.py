@@ -16,8 +16,11 @@ import time
 
 import numpy as np
 import tensorflow as tf
-from utils import (ASPECT, CHARACTERS, MAX_SENTENCE_LEN, MAX_WORD_LEN,
-                   do_load_data, load_w2v)
+
+NUM_WORDS_PER_TOKEN = 1000
+MAX_SENTENCE_LEN = 50
+MAX_WORD_LEN = 10
+NUM_ENTITIES = 11
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -32,7 +35,7 @@ tf.app.flags.DEFINE_string("word_word2vec_path", "data/glove.6B.100d.txt",
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
-tf.app.flags.DEFINE_integer("embedding_char_size", 20, "second embedding size")
+tf.app.flags.DEFINE_integer("embedding_char_size", 50, "second embedding size")
 tf.app.flags.DEFINE_integer("char_window_size", 2,
                             "the window size of char convolution")
 tf.app.flags.DEFINE_integer("max_chars_per_word", MAX_WORD_LEN,
@@ -55,25 +58,55 @@ tf.flags.DEFINE_float('l2_reg_lambda', 1,
 TIMESTAMP = str(int(time.time()))
 
 
+def do_load_data(path, max_sentence_len, max_chars_per_word):
+    wx = []
+    cx = []
+    y = []
+    fp = open(path, "r")
+    ln = 0
+    for line in fp.readlines():
+        line = line.rstrip()
+        ln += 1
+        if not line:
+            continue
+        ss = line.split(" ")
+        if len(ss) != (max_sentence_len * (1 + max_chars_per_word) + 1):
+            print("[line:%d]len ss:%d,origin len:%d\n%s" %
+                  (ln, len(ss), len(line), line))
+        assert (len(ss) == (max_sentence_len * (1 + max_chars_per_word) + 1))
+        lwx = []
+        lcx = []
+        for i in range(max_sentence_len):
+            lwx.append(int(ss[i]))
+            for k in range(max_chars_per_word):
+                lcx.append(
+                    int(ss[max_sentence_len + i * max_chars_per_word + k]))
+
+        wx.append(lwx)
+        cx.append(lcx)
+        y.append(int(ss[max_sentence_len * (1 + max_chars_per_word)]))
+    fp.close()
+    return np.array(wx), np.array(cx), np.array(y)
+
+
 class TextCNN(object):
     """
     A CNN for text classification.
     Uses an embedding layer, followed by a convolutional, max-pooling and softmax layer.
     """
 
-    def __init__(self, w2vPath):
-        self.w2v = load_w2v(w2vPath, FLAGS.embedding_word_size)
+    def __init__(self, w2vPath, c2vPath):
+        self.w2v = self.load_w2v(w2vPath, FLAGS.embedding_word_size)
+        self.c2v = self.load_w2v(c2vPath, FLAGS.embedding_char_size)
         self.words = tf.Variable(self.w2v, name="words")
+        self.chars = tf.Variable(self.c2v, name="chars")
+
         self.common_id_embedding = tf.Variable(
-            tf.random_uniform([len(ASPECT), FLAGS.embedding_word_size], -1.0,
-                              1.0),
+            tf.random_uniform([len(NUM_ENTITIES), FLAGS.embedding_word_size],
+                              -1.0, 1.0),
             name="common_id_embedding")
         self.words_emb = tf.concat(
             0, [self.words, self.common_id_embedding], name='concat')
-        self.chars = tf.Variable(
-            tf.random_uniform([len(CHARACTERS) + 1, FLAGS.embedding_char_size],
-                              -1.0, 1.0),
-            name="chars")
 
         with tf.variable_scope('CNN_Layer') as scope:
             self.char_filter = tf.get_variable(
@@ -133,6 +166,42 @@ class TextCNN(object):
             tf.int32,
             shape=[None, FLAGS.max_sentence_len * FLAGS.max_chars_per_word],
             name="input_chars")
+
+    def load_w2v(path, expectDim):
+        fp = open(path, "r")
+        print("load data from:", path)
+        line = fp.readline().strip()
+        ss = line.split(" ")
+        total = int(ss[0])
+        dim = int(ss[1])
+        assert (dim == expectDim)
+        ws = []
+        mv = [0 for i in range(dim)]
+        second = -1
+        for t in range(total):
+            if ss[0] == '<UNK>':
+                second = t
+            line = fp.readline().strip()
+            ss = line.split(" ")
+            assert (len(ss) == (dim + 1))
+            vals = []
+            for i in range(1, dim + 1):
+                fv = float(ss[i])
+                mv[i - 1] += fv
+                vals.append(fv)
+            ws.append(vals)
+        for i in range(dim):
+            mv[i] = mv[i] / total
+        assert (second != -1)
+        # if UNK don't exist, append one more token.(This assuame that the unk is not in the last line.)
+        if second == -1:
+            ws.append(mv)
+        if second != 1:
+            t = ws[1]
+            ws[1] = ws[second]
+            ws[second] = t
+        fp.close()
+        return np.asarray(ws, dtype=np.float32)
 
     def char_convolution(self, vecs):
         conv1 = tf.nn.conv2d(
