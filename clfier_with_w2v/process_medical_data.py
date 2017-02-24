@@ -63,8 +63,8 @@ def main(argv):
         print 'procossing line %d' % i
         process_line(
             sentence.decode('utf-8'), word_output_file, char_output_file)
-        word_output_file.close()
-        char_output_file.close()
+    word_output_file.close()
+    char_output_file.close()
     input_file.close()
     print 'long_line: %d' % LONG_LEN
     print 'count_line: %d' % count_line
