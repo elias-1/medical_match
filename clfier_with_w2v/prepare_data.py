@@ -10,7 +10,6 @@ Date: 17-2-4 下午8:51
 """
 import json
 import os
-import re
 import sys
 from copy import deepcopy
 
