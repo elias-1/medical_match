@@ -14,7 +14,7 @@ import sys
 from copy import deepcopy
 
 import jieba
-import np
+import numpy as np
 import w2v
 
 MAX_SENTENCE_LEN = 50
