@@ -27,7 +27,7 @@ PUNCTUATION_DUP_RM = re.compile(ur'([\?|？|\!|！|。|，|\,|\(|\)|（|）|\*|�
                                 re.IGNORECASE)
 
 
-def process_line(sentence, output_file):
+def process_line(sentence, word_output_file, char_output_file):
     global LONG_LEN
     global MAX_LEN
     global LINE_NUM
@@ -36,29 +36,35 @@ def process_line(sentence, output_file):
     if len(sentence) < MIN_LEN:
         return
     LINE_NUM += 1
+    char_output_file.write(' '.join(list(sentence)) + '\n')
     if len(sentence) > MAX_LEN:
         LONG_LEN += 1
     tokens = jieba.lcut(sentence, cut_all=False)
     #     print ' '.join(tokens)
-    output_file.write(' '.join(tokens) + '\n')
+    word_output_file.write(' '.join(tokens) + '\n')
 
 
 def main(argv):
     argv = sys.argv
-    if len(argv) < 3:
-        print 'usage: %s <inputfile> <outputfile>' % argv[0]
+    if len(argv) < 4:
+        print 'usage: %s <inputfile> <word_output_file> <char_output_file>' % argv[
+            0]
         sys.exit(0)
     input_file = argv[1]
-    output_file = argv[2]
+    word_output_file = argv[2]
+    char_output_file = argv[3]
     count_line = 0
     input_file = open(input_file, 'r')
-    output_file = codecs.open(output_file, 'w', 'utf-8')
+    word_output_file = codecs.open(word_output_file, 'w', 'utf-8')
+    char_output_file = codecs.open(char_output_file, 'w', 'utf-8')
     i = 0
     for sentence in input_file:
         i += 1
         print 'procossing line %d' % i
-        process_line(sentence.decode('utf-8'), output_file)
-    output_file.close()
+        process_line(
+            sentence.decode('utf-8'), word_output_file, char_output_file)
+        word_output_file.close()
+        char_output_file.close()
     input_file.close()
     print 'long_line: %d' % LONG_LEN
     print 'count_line: %d' % count_line
