@@ -30,8 +30,10 @@ tf.app.flags.DEFINE_string('test_data_path', "clfier_test.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('cnn_clfier_log_dir', "cnn_clfier_logs",
                            'The log  dir')
-tf.app.flags.DEFINE_string("word_word2vec_path", "data/glove.6B.100d.txt",
+tf.app.flags.DEFINE_string("word2vec_path", "data/glove.6B.100d.txt",
                            "the word2vec data path")
+tf.app.flags.DEFINE_string("char2vec_path", "data/glove.6B.100d.txt",
+                           "the char2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
@@ -101,12 +103,12 @@ class TextCNN(object):
         self.words = tf.Variable(self.w2v, name="words")
         self.chars = tf.Variable(self.c2v, name="chars")
 
-        self.common_id_embedding = tf.Variable(
-            tf.random_uniform([len(NUM_ENTITIES), FLAGS.embedding_word_size],
-                              -1.0, 1.0),
-            name="common_id_embedding")
-        self.words_emb = tf.concat(
-            0, [self.words, self.common_id_embedding], name='concat')
+        # self.common_id_embedding = tf.Variable(
+        #     tf.random_uniform([len(NUM_ENTITIES), FLAGS.embedding_word_size],
+        #                       -1.0, 1.0),
+        #     name="common_id_embedding")
+        # self.words_emb = tf.concat(
+        #     0, [self.words, self.common_id_embedding], name='concat')
 
         with tf.variable_scope('CNN_Layer') as scope:
             self.char_filter = tf.get_variable(
@@ -221,8 +223,9 @@ class TextCNN(object):
         pool1 = tf.squeeze(pool1, [1, 2])
         return pool1
 
-    def inference(self, clfier_X, clfier_cX, reuse=None, trainMode=True):
-        word_vectors = tf.nn.embedding_lookup(self.words_emb, clfier_X)
+    def inference(self, clfier_X, clfier_cX):
+        # word_vectors = tf.nn.embedding_lookup(self.words_emb, clfier_X)
+        word_vectors = tf.nn.embedding_lookup(self.words, clfier_X)
         char_vectors = tf.nn.embedding_lookup(self.chars, clfier_cX)
         char_vectors = tf.reshape(char_vectors, [
             -1, FLAGS.max_sentence_len, FLAGS.embedding_char_size,
@@ -285,8 +288,7 @@ class TextCNN(object):
         return loss + regularization_loss * FLAGS.l2_reg_lambda
 
     def test_clfier_score(self):
-        scores = self.inference(
-            self.inp_w, self.inp_c, reuse=True, trainMode=False)
+        scores = self.inference(self.inp_w, self.inp_c)
         return scores
 
 
@@ -358,7 +360,7 @@ def main(unused_argv):
         trainDataPath = curdir + "/../../" + trainDataPath
     graph = tf.Graph()
     with graph.as_default():
-        model = TextCNN(FLAGS.word_word2vec_path)
+        model = TextCNN(FLAGS.word2vec_path, FLAGS.char2vec_path)
         print("train data path:", trainDataPath)
         clfier_X, clfier_cX, clfier_Y = inputs(trainDataPath)
         clfier_tX, clfier_tcX, clfier_tY = do_load_data(
@@ -368,7 +370,8 @@ def main(unused_argv):
         train_op = train(total_loss)
         test_clfier_score = model.test_clfier_score()
 
-        sv = tf.train.Supervisor(graph=graph, logdir=FLAGS.cnn_clfier_log_dir)
+        logdir = os.path.join(FLAGS.cnn_clfier_log_dir, TIMESTAMP)
+        sv = tf.train.Supervisor(graph=graph, logdir=logdir)
 
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
         with sv.managed_session(
@@ -393,12 +396,9 @@ def main(unused_argv):
                                       clfier_tY)
                 except KeyboardInterrupt, e:
                     sv.saver.save(
-                        sess,
-                        FLAGS.cnn_clfier_log_dir + '/model',
-                        global_step=(step + 1))
+                        sess, logdir + '/model', global_step=(step + 1))
                     raise e
-                    sv.saver.save(sess,
-                                  FLAGS.cnn_clfier_log_dir + '/finnal-model')
+                    sv.saver.save(sess, logdir + '/finnal-model')
 
 
 if __name__ == '__main__':

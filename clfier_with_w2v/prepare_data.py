@@ -15,7 +15,7 @@ from copy import deepcopy
 
 import jieba
 import numpy as np
-import w2v
+# import w2v
 
 MAX_SENTENCE_LEN = 50
 MAX_WORD_LEN = 6
@@ -76,34 +76,39 @@ def build_dataset(data):
     return zip(x_train_data, y_train_data), zip(x_test_data, y_test_data)
 
 
+def process_line(x_text, word_vob, char_vob):
+    words = tokenizer(x_text)
+    nl = len(words)
+    wordi = []
+    chari = []
+    if nl > MAX_SENTENCE_LEN:
+        nl = MAX_SENTENCE_LEN
+    for ti in range(nl):
+        word = words[ti]
+        word_idx = word_vob.GetWordIndex(word)
+        wordi.append(str(word_idx))
+        chars = list(word)
+        nc = len(chars)
+        if nc > MAX_WORD_LEN:
+            lc = chars[nc - 1]
+            chars[MAX_WORD_LEN - 1] = lc
+            nc = MAX_WORD_LEN
+        for i in range(nc):
+            char_idx = char_vob.GetWordIndex(word)
+            chari.append(str(char_idx))
+        for i in range(nc, MAX_WORD_LEN):
+            chari.append("0")
+    for i in range(nl, MAX_SENTENCE_LEN):
+        wordi.append("0")
+        for ii in range(MAX_WORD_LEN):
+            chari.append('0')
+    return wordi, chari
+
+
 def generate_net_input(data, out, word_vob, char_vob):
     #vob_size = word_vob.GetTotalWord()
     for x_text, y in data:
-        words = tokenizer(x_text)
-        nl = len(words)
-        wordi = []
-        chari = []
-        if nl > MAX_SENTENCE_LEN:
-            nl = MAX_SENTENCE_LEN
-        for ti in range(nl):
-            word = words[ti]
-            word_idx = word_vob.GetWordIndex(word)
-            wordi.append(str(word_idx))
-            chars = list(word)
-            nc = len(chars)
-            if nc > MAX_WORD_LEN:
-                lc = chars[nc - 1]
-                chars[MAX_WORD_LEN - 1] = lc
-                nc = MAX_WORD_LEN
-            for i in range(nc):
-                char_idx = char_vob.GetWordIndex(word)
-                chari.append(str(char_idx))
-            for i in range(nc, MAX_WORD_LEN):
-                chari.append("0")
-        for i in range(nl, MAX_SENTENCE_LEN):
-            wordi.append("0")
-            for ii in range(MAX_WORD_LEN):
-                chari.append('0')
+        wordi, chari = generate_net_input(x_text, word_vob, char_vob)
         line = " ".join(wordi)
         line += " "
         line += " ".join(chari)
