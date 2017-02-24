@@ -96,3 +96,9 @@ ENV/
 
 #model data
 runs
+
+#data
+*.txt
+
+#bazel
+bazel*
