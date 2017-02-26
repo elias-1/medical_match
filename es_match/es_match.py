@@ -32,7 +32,7 @@ def refresh_index():
     es.indices.refresh(index="entity-index")
 
 
-def search_index(query_string):
+def search_index(query_string, return_number=1):
     query_pinyin = ' '.join(hanzi2pinyin(query_string))
     res1 = es.search(
         index='entity-index',
@@ -75,9 +75,12 @@ def search_index(query_string):
         answers, cmp=(lambda x, y: 1 if x['_score'] < y['_score'] else -1))
     pprint.pprint(answers)
     result_names = []
-    if len(answers) == 1:
-        result_names.append(answers[0]['_source']['name'])
-    elif len(answers) > 1:
-        result_names.append(answers[0]['_source']['name'])
-        result_names.append(answers[1]['_source']['name'])
+    if return_number > 1:
+        if len(answers) == 1:
+            result_names.append(answers[0]['_source']['Name'])
+        elif len(answers) > 1:
+            result_names.append(answers[0]['_source']['Name'])
+            result_names.append(answers[1]['_source']['Name'])
+    else:
+        result_names.append(answers[0]['_source']['Name'])
     return result_names
