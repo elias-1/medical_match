@@ -10,11 +10,10 @@ Date: 17-2-4 下午8:51
 """
 import json
 import os
+import random
 import sys
-from copy import deepcopy
 
 import jieba
-import numpy as np
 import w2v
 
 MAX_SENTENCE_LEN = 30
@@ -33,8 +32,8 @@ def stat_max_len(data):
     max_sentence_len = 0
     for key in data:
         for sentence in data[key]:
-            temp_max_word_len = max([len(word) for word in tokenizer(sentence)
-                                     ])
+            temp_max_word_len = max(
+                [len(word) for word in tokenizer(sentence)])
             temp_max_sentence_len = len(tokenizer(sentence))
             if max_word_len < temp_max_word_len:
                 max_word_len = temp_max_word_len
@@ -45,16 +44,14 @@ def stat_max_len(data):
 
 
 def data_shuffle(x, y=None):
-    # Randomly shuffle data
-    x_temp = deepcopy(x)
+    indexes = range(len(x))
+    random.shuffle(indexes)
+    x_temp = [x[i] for i in indexes]
     if y:
-        y_temp = deepcopy(y)
-    np.random.seed(10)
-    shuffle_indices = np.random.permutation(np.arange(len(x)))
-    if y:
-        return x_temp[shuffle_indices], y_temp[shuffle_indices]
+        y_temp = [x[i] for i in indexes]
+        return x_temp, y_temp
     else:
-        return x_temp[shuffle_indices]
+        return x_temp
 
 
 def build_dataset(data):
