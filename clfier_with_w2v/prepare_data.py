@@ -17,7 +17,7 @@ import jieba
 import numpy as np
 import w2v
 
-MAX_SENTENCE_LEN = 50
+MAX_SENTENCE_LEN = 30
 MAX_WORD_LEN = 6
 SPLIT_RATE = 0.8
 
@@ -33,8 +33,8 @@ def stat_max_len(data):
     max_sentence_len = 0
     for key in data:
         for sentence in data[key]:
-            temp_max_word_len = max(
-                [len(word) for word in tokenizer(sentence)])
+            temp_max_word_len = max([len(word) for word in tokenizer(sentence)
+                                     ])
             temp_max_sentence_len = len(tokenizer(sentence))
             if max_word_len < temp_max_word_len:
                 max_word_len = temp_max_word_len
@@ -50,7 +50,7 @@ def data_shuffle(x, y=None):
     if y:
         y_temp = deepcopy(y)
     np.random.seed(10)
-    shuffle_indices = np.random.permutation(np.arange(len(y)))
+    shuffle_indices = np.random.permutation(np.arange(len(x)))
     if y:
         return x_temp[shuffle_indices], y_temp[shuffle_indices]
     else:
