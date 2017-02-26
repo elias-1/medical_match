@@ -76,11 +76,8 @@ def search_index(query_string, return_number=1):
     pprint.pprint(answers)
     result_names = []
     if return_number > 1:
-        if len(answers) == 1:
-            result_names.append(answers[0]['_source']['Name'])
-        elif len(answers) > 1:
-            result_names.append(answers[0]['_source']['Name'])
-            result_names.append(answers[1]['_source']['Name'])
+        for i in xrange(min(result_names, len(answers))):
+            result_names.append(answers[i]['_source']['Name'])
     else:
         result_names.append(answers[0]['_source']['Name'])
     return result_names
