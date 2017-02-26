@@ -32,8 +32,8 @@ def stat_max_len(data):
     max_sentence_len = 0
     for key in data:
         for sentence in data[key]:
-            temp_max_word_len = max(
-                [len(word) for word in tokenizer(sentence)])
+            temp_max_word_len = max([len(word) for word in tokenizer(sentence)
+                                     ])
             temp_max_sentence_len = len(tokenizer(sentence))
             if max_word_len < temp_max_word_len:
                 max_word_len = temp_max_word_len
@@ -112,7 +112,8 @@ def generate_net_input(data, out, word_vob, char_vob):
         line += " ".join(chari)
         line += " "
         input_line = line + y
-        out.write("%s\n" % (input_line))
+        print input_line
+        out.write("%s\n" % input_line)
 
 
 def main(argc, argv):
