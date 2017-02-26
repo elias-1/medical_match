@@ -14,7 +14,7 @@ import pprint
 import pypinyin
 from elasticsearch import Elasticsearch
 
-es = Elasticsearch([{"host": "59.110.52.133", "port": 9200}])
+es = Elasticsearch([{"host": "localhost", "port": 9200}])
 
 
 def hanzi2pinyin(word):
