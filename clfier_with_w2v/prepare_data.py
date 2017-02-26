@@ -105,7 +105,7 @@ def process_line(x_text, word_vob, char_vob):
 def generate_net_input(data, out, word_vob, char_vob):
     #vob_size = word_vob.GetTotalWord()
     for x_text, y in data:
-        wordi, chari = generate_net_input(x_text, word_vob, char_vob)
+        wordi, chari = process_line(x_text, word_vob, char_vob)
         line = " ".join(wordi)
         line += " "
         line += " ".join(chari)
