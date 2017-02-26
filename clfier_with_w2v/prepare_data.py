@@ -63,9 +63,9 @@ def build_dataset(data):
         one_label_data = data[key]
         one_label_data = data_shuffle(one_label_data)
         split_index = int(SPLIT_RATE * len(one_label_data))
-        x_train_data.append(one_label_data[:split_index])
+        x_train_data.extend(one_label_data[:split_index])
         y_train_data = [key] * split_index
-        x_test_data.append(one_label_data[split_index:])
+        x_test_data.extend(one_label_data[split_index:])
         y_test_data = [key] * (len(one_label_data) - split_index)
 
     x_train_data, y_train_data = data_shuffle(x_train_data, y_train_data)
