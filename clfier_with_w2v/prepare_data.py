@@ -60,13 +60,14 @@ def build_dataset(data):
     y_train_data = []
     y_test_data = []
     for key in data:
+        y = str(int(key) - 1)
         one_label_data = data[key]
         one_label_data = data_shuffle(one_label_data)
         split_index = int(SPLIT_RATE * len(one_label_data))
         x_train_data.extend(one_label_data[:split_index])
-        y_train_data = [key] * split_index
+        y_train_data = [y] * split_index
         x_test_data.extend(one_label_data[split_index:])
-        y_test_data = [key] * (len(one_label_data) - split_index)
+        y_test_data = [y] * (len(one_label_data) - split_index)
 
     x_train_data, y_train_data = data_shuffle(x_train_data, y_train_data)
     x_test_data, y_test_data = data_shuffle(x_test_data, y_test_data)
