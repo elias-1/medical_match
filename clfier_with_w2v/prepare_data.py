@@ -4,7 +4,7 @@
 # Copyright (c) 2016 www.drcubic.com, Inc. All Rights Reserved
 #
 """
-File: sentiment_data_preprocess.py
+File: prepare_data.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 17-2-4 下午8:51
 """
@@ -15,7 +15,7 @@ from copy import deepcopy
 
 import jieba
 import numpy as np
-# import w2v
+import w2v
 
 MAX_SENTENCE_LEN = 50
 MAX_WORD_LEN = 6

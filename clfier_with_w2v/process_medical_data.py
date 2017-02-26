@@ -4,7 +4,7 @@
 # Copyright (c) 2016 www.drcubic.com, Inc. All Rights Reserved
 #
 """
-File: process_medical_data.py.py
+File: process_medical_data.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 17-2-22 下午8:06
 """

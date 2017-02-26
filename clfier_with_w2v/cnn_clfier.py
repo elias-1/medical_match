@@ -24,15 +24,15 @@ NUM_ENTITIES = 11
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "clfier_train.txt",
+tf.app.flags.DEFINE_string('train_data_path', "../data/clfier_train.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "clfier_test.txt",
+tf.app.flags.DEFINE_string('test_data_path', "../data/clfier_test.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('cnn_clfier_log_dir', "cnn_clfier_logs",
                            'The log  dir')
-tf.app.flags.DEFINE_string("word2vec_path", "data/glove.6B.100d.txt",
+tf.app.flags.DEFINE_string("word2vec_path", "words_vec_100.txt",
                            "the word2vec data path")
-tf.app.flags.DEFINE_string("char2vec_path", "data/glove.6B.100d.txt",
+tf.app.flags.DEFINE_string("char2vec_path", "chars_vec_50.txt",
                            "the char2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
