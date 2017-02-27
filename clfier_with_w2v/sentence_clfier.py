@@ -24,7 +24,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 # Eval Parameters
-tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1487590765",
+tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1488122912",
                        "Dir of training run")
 
 
