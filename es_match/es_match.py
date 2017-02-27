@@ -72,6 +72,7 @@ def search_index(query_string, return_number=1):
     answers = sorted(
         answers, cmp=(lambda x, y: 1 if x['_score'] < y['_score'] else -1))
     # pprint.pprint(answers)
+
     result_names = []
     entity_types = []
     if return_number >= 1:
