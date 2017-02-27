@@ -18,16 +18,17 @@ import numpy as np
 import tensorflow as tf
 
 NUM_WORDS_PER_TOKEN = 1000
-MAX_SENTENCE_LEN = 50
-MAX_WORD_LEN = 10
+MAX_SENTENCE_LEN = 30
+MAX_WORD_LEN = 6
 NUM_ENTITIES = 11
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "../data/clfier_train.txt",
-                           'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "../data/clfier_test.txt",
-                           'Test data dir')
+tf.app.flags.DEFINE_string(
+    'train_data_path',
+    "/home/drcubic/code/medical_match/clfier_with_w2v/train.txt",
+    'Training data dir')
+tf.app.flags.DEFINE_string('test_data_path', "test.txt", 'Test data dir')
 tf.app.flags.DEFINE_string('cnn_clfier_log_dir', "cnn_clfier_logs",
                            'The log  dir')
 tf.app.flags.DEFINE_string("word2vec_path", "words_vec_100.txt",
@@ -50,11 +51,11 @@ tf.app.flags.DEFINE_string('filter_sizes', '3,4,5',
                            'Comma-separated filter sizes (default: \'3,4,5\')')
 tf.app.flags.DEFINE_integer('num_filters', 128,
                             'Number of filters per filter size (default: 128)')
-tf.app.flags.DEFINE_float("num_classes", 65, "Number of classes to classify")
+tf.app.flags.DEFINE_float("num_classes", 11, "Number of classes to classify")
 tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
                           'Dropout keep probability (default: 0.5)')
 
-tf.flags.DEFINE_float('l2_reg_lambda', 1,
+tf.flags.DEFINE_float('l2_reg_lambda', 0.0,
                       'L2 regularization lambda (default: 0.0)')
 
 TIMESTAMP = str(int(time.time()))
@@ -81,8 +82,8 @@ def do_load_data(path, max_sentence_len, max_chars_per_word):
         for i in range(max_sentence_len):
             lwx.append(int(ss[i]))
             for k in range(max_chars_per_word):
-                lcx.append(
-                    int(ss[max_sentence_len + i * max_chars_per_word + k]))
+                lcx.append(int(ss[max_sentence_len + i * max_chars_per_word +
+                                  k]))
 
         wx.append(lwx)
         cx.append(lcx)
@@ -162,14 +163,15 @@ class TextCNN(object):
                 initializer=tf.truncated_normal_initializer(stddev=0.01),
                 dtype=tf.float32)
 
-        self.inp_w = tf.placeholder(
-            tf.int32, shape=[None, FLAGS.max_sentence_len], name="input_words")
+        self.inp_w = tf.placeholder(tf.int32,
+                                    shape=[None, FLAGS.max_sentence_len],
+                                    name="input_words")
         self.inp_c = tf.placeholder(
             tf.int32,
             shape=[None, FLAGS.max_sentence_len * FLAGS.max_chars_per_word],
             name="input_chars")
 
-    def load_w2v(path, expectDim):
+    def load_w2v(self, path, expectDim):
         fp = open(path, "r")
         print("load data from:", path)
         line = fp.readline().strip()
@@ -206,10 +208,10 @@ class TextCNN(object):
         return np.asarray(ws, dtype=np.float32)
 
     def char_convolution(self, vecs):
-        conv1 = tf.nn.conv2d(
-            vecs,
-            self.char_filter, [1, 1, FLAGS.embedding_char_size, 1],
-            padding='VALID')
+        conv1 = tf.nn.conv2d(vecs,
+                             self.char_filter,
+                             [1, 1, FLAGS.embedding_char_size, 1],
+                             padding='VALID')
         conv1 = tf.nn.relu(conv1)
         pool1 = tf.nn.max_pool(
             conv1,
@@ -248,11 +250,10 @@ class TextCNN(object):
         pooled_outputs = []
 
         for i, filter_size in enumerate(self.filter_sizes):
-            conv = tf.nn.conv2d(
-                word_vectors_expanded,
-                self.clfier_filters[i],
-                strides=[1, 1, 1, 1],
-                padding='VALID')
+            conv = tf.nn.conv2d(word_vectors_expanded,
+                                self.clfier_filters[i],
+                                strides=[1, 1, 1, 1],
+                                padding='VALID')
             # Apply nonlinearity
             h = tf.nn.relu(tf.nn.bias_add(conv, self.clfier_bs[i]))
             # Maxpooling over the outputs
@@ -283,8 +284,8 @@ class TextCNN(object):
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             self.scores, clfier_Y)
         loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
-        regularization_loss = tf.add_n(
-            tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
+        regularization_loss = tf.add_n(tf.get_collection(
+            tf.GraphKeys.REGULARIZATION_LOSSES))
         return loss + regularization_loss * FLAGS.l2_reg_lambda
 
     def test_clfier_score(self):
@@ -307,22 +308,19 @@ def read_csv(batch_size, file_name):
                              FLAGS.max_chars_per_word + 1) + 1)])
 
     # batch actually reads the file and loads "batch_size" rows in a single tensor
-    return tf.train.shuffle_batch(
-        decoded,
-        batch_size=batch_size,
-        capacity=batch_size * 4,
-        min_after_dequeue=batch_size)
+    return tf.train.shuffle_batch(decoded,
+                                  batch_size=batch_size,
+                                  capacity=batch_size * 4,
+                                  min_after_dequeue=batch_size)
 
 
 def inputs(path):
     whole = read_csv(FLAGS.batch_size, path)
     features = tf.transpose(tf.stack(whole[0:FLAGS.max_sentence_len]))
-    char_features = tf.transpose(
-        tf.stack(whole[FLAGS.max_sentence_len:(FLAGS.max_chars_per_word + 1) *
-                       FLAGS.max_sentence_len]))
-    label = tf.transpose(
-        tf.concat(0, whole[FLAGS.max_sentence_len * (FLAGS.max_chars_per_word +
-                                                     1):]))
+    char_features = tf.transpose(tf.stack(whole[FLAGS.max_sentence_len:(
+        FLAGS.max_chars_per_word + 1) * FLAGS.max_sentence_len]))
+    label = tf.transpose(tf.concat(0, whole[FLAGS.max_sentence_len * (
+        FLAGS.max_chars_per_word + 1):]))
     return features, char_features, label
 
 
@@ -395,8 +393,9 @@ def main(unused_argv):
                                       model.inp_c, clfier_tX, clfier_tcX,
                                       clfier_tY)
                 except KeyboardInterrupt, e:
-                    sv.saver.save(
-                        sess, logdir + '/model', global_step=(step + 1))
+                    sv.saver.save(sess,
+                                  logdir + '/model',
+                                  global_step=(step + 1))
                     raise e
                     sv.saver.save(sess, logdir + '/finnal-model')
 
