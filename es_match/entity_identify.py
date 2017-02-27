@@ -58,13 +58,11 @@ def entity_identify(sentence):
     fuzzy_entity_result = set([])
     entity_dict = {}
     for name in en_candis:
-        print name + '----'
         es_results, _ = es_match.search_index(name, 1)
-        print len(es_results)
-        print type(es_results)
         for es_result in es_results:
-            print es_result
+            es_result
             fuzzy_entity_result.add(es_result)
+            break
 
     result_json[u'entity'] = list(fuzzy_entity_result)
 
