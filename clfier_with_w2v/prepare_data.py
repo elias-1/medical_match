@@ -48,7 +48,8 @@ def data_shuffle(x, y=None):
     random.shuffle(indexes)
     x_temp = [x[i] for i in indexes]
     if y:
-        y_temp = [x[i] for i in indexes]
+        assert (len(x) == len(y))
+        y_temp = [y[i] for i in indexes]
         return x_temp, y_temp
     else:
         return x_temp
@@ -65,9 +66,9 @@ def build_dataset(data):
         one_label_data = data_shuffle(one_label_data)
         split_index = int(SPLIT_RATE * len(one_label_data))
         x_train_data.extend(one_label_data[:split_index])
-        y_train_data = [y] * split_index
+        y_train_data.extend([y] * split_index)
         x_test_data.extend(one_label_data[split_index:])
-        y_test_data = [y] * (len(one_label_data) - split_index)
+        y_test_data.extend([y] * (len(one_label_data) - split_index))
 
     x_train_data, y_train_data = data_shuffle(x_train_data, y_train_data)
     x_test_data, y_test_data = data_shuffle(x_test_data, y_test_data)
@@ -112,7 +113,6 @@ def generate_net_input(data, out, word_vob, char_vob):
         line += " ".join(chari)
         line += " "
         input_line = line + y
-        print input_line
         out.write("%s\n" % input_line)
 
 

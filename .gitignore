@@ -102,3 +102,6 @@ runs
 
 #bazel
 bazel*
+
+#log
+*logs
