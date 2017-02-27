@@ -19,8 +19,7 @@ es = Elasticsearch([{"host": "localhost", "port": 9200}])
 
 def hanzi2pinyin(word):
     return [
-        pypinyin.pinyin(
-            ch, style=pypinyin.NORMAL)[0][0] for ch in list(word)
+        pypinyin.pinyin(ch, style=pypinyin.NORMAL)[0][0] for ch in list(word)
     ]
 
 
@@ -34,31 +33,29 @@ def refresh_index():
 
 def search_index(query_string, return_number=1):
     query_pinyin = ' '.join(hanzi2pinyin(query_string))
-    res1 = es.search(
-        index='entity-index',
-        doc_type='search',
-        body={
-            'size': 2,
-            'query': {
-                "query_string": {
-                    'fields': ['Name'],
-                    "query": query_string
-                }
-            }
-        })
+    res1 = es.search(index='entity-index',
+                     doc_type='search',
+                     body={
+                         'size': 2,
+                         'query': {
+                             "query_string": {
+                                 'fields': ['Name'],
+                                 "query": query_string
+                             }
+                         }
+                     })
 
-    res2 = es.search(
-        index='entity-index',
-        doc_type='search',
-        body={
-            'size': 2,
-            'query': {
-                "query_string": {
-                    'fields': ['Pinyin'],
-                    "query": query_pinyin
-                }
-            }
-        })
+    res2 = es.search(index='entity-index',
+                     doc_type='search',
+                     body={
+                         'size': 2,
+                         'query': {
+                             "query_string": {
+                                 'fields': ['Pinyin'],
+                                 "query": query_pinyin
+                             }
+                         }
+                     })
 
     # res3 = es.search(index='entity-index', doc_type='search',
     #                  body={'size': 2, 'query': {
@@ -71,9 +68,9 @@ def search_index(query_string, return_number=1):
 
     answers = res1['hits']['hits'] + res2['hits']['hits']
 
-    answers = sorted(
-        answers, cmp=(lambda x, y: 1 if x['_score'] < y['_score'] else -1))
-    pprint.pprint(answers)
+    answers = sorted(answers,
+                     cmp=(lambda x, y: 1 if x['_score'] < y['_score'] else -1))
+    #pprint.pprint(answers)
     result_names = []
     if return_number > 1:
         for i in xrange(min(result_names, len(answers))):
