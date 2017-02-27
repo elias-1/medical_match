@@ -15,16 +15,20 @@ import es_match
 import jieba
 import jieba.posseg
 import pypinyin
+from clfier_with_w2v.sentence_clfier import SentenceClfier
 
 with open('../data/merge_split2.json', 'rb') as f:
     data = f.read()
 common_data = json.loads(data)
 common_words = common_data['data']
 
+sentence_clfier = SentenceClfier()
 jieba.load_userdict('../data/words.txt')
-dp_data = ["喉", "肋", "心", "脑", "脚", "肝", "肠", "肚", "肩", "骨", "耳", "足", "头",
-           "脸", "鼻", "肺", "咽", "眼", "肾", "胃", "胆", "手", "筋", "背", "舌", "牙",
-           "口", "腰", "腹", "胸", "脾", "嘴", "腿"]
+dp_data = [
+    "喉", "肋", "心", "脑", "脚", "肝", "肠", "肚", "肩", "骨", "耳", "足", "头", "脸", "鼻",
+    "肺", "咽", "眼", "肾", "胃", "胆", "手", "筋", "背", "舌", "牙", "口", "腰", "腹", "胸",
+    "脾", "嘴", "腿"
+]
 
 
 def en_candidate(segs, common_words):
@@ -52,7 +56,8 @@ def en_candidate(segs, common_words):
 def entity_identify(sentence):
     question = sentence
     result_json = {}
-    #result_json[u'type'] = sentence_clfier.sentence_clfier(sentence)
+
+    result_json[u'label'] = sentence_clfier(sentence)
     seg = jieba.posseg.cut(question)
     en_candis = en_candidate(seg, common_words)
     fuzzy_entity_result = set([])
