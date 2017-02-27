@@ -44,7 +44,7 @@ tf.app.flags.DEFINE_integer("char_window_size", 2,
 tf.app.flags.DEFINE_integer("max_chars_per_word", MAX_WORD_LEN,
                             "max number of characters per word ")
 tf.app.flags.DEFINE_integer('batch_size', 64, 'Batch Size (default: 64)')
-tf.app.flags.DEFINE_integer("train_steps", 2000, "trainning steps")
+tf.app.flags.DEFINE_integer("train_steps", 1000, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 tf.app.flags.DEFINE_string('filter_sizes', '3,4,5',
@@ -52,10 +52,10 @@ tf.app.flags.DEFINE_string('filter_sizes', '3,4,5',
 tf.app.flags.DEFINE_integer('num_filters', 128,
                             'Number of filters per filter size (default: 128)')
 tf.app.flags.DEFINE_float("num_classes", 11, "Number of classes to classify")
-tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
+tf.app.flags.DEFINE_float('dropout_keep_prob', 0.6,
                           'Dropout keep probability (default: 0.5)')
 
-tf.flags.DEFINE_float('l2_reg_lambda', 0.0,
+tf.flags.DEFINE_float('l2_reg_lambda', 1,
                       'L2 regularization lambda (default: 0.0)')
 
 TIMESTAMP = str(int(time.time()))

@@ -25,8 +25,10 @@ MAX_SENTENCE_LEN = 30
 MAX_WORD_LEN = 6
 
 # Eval Parameters
-tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1488122912",
+tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1488196736",
                        "Dir of training run")
+
+UNK = '<UNK>'
 
 
 def tokenizer(sentence):
@@ -35,8 +37,9 @@ def tokenizer(sentence):
 
 class SentenceClfier:
     def __init__(self):
-        graph = tf.Graph()
-        self.sess = tf.Session(graph=graph)
+        #         graph = tf.Graph()
+        #         self.sess = tf.Session(graph=graph)
+        self.sess = tf.Session()
         self.model = TextCNN(FLAGS.word2vec_path, FLAGS.char2vec_path)
         checkpoint_file = tf.train.latest_checkpoint(FLAGS.run_dir)
         saver = tf.train.Saver()
@@ -50,11 +53,7 @@ class SentenceClfier:
         vob = []
         with open(vob_path, 'r') as f:
             f.readline()
-            i = 0
             for row in f.readlines():
-                if i == 0:
-                    print row
-                i += 1
                 vob.append(row.split()[0].decode('utf-8'))
         return vob
 
@@ -67,7 +66,11 @@ class SentenceClfier:
             nl = MAX_SENTENCE_LEN
         for ti in range(nl):
             word = words[ti]
-            word_idx = self.word_vob.index(word)
+            try:
+                word_idx = self.word_vob.index(word)
+            except ValueError:
+                word_idx = self.word_vob.index(UNK)
+
             wordi.append(str(word_idx))
             chars = list(word)
             nc = len(chars)
@@ -76,7 +79,10 @@ class SentenceClfier:
                 chars[MAX_WORD_LEN - 1] = lc
                 nc = MAX_WORD_LEN
             for i in range(nc):
-                char_idx = self.char_vob.index(word)
+                try:
+                    char_idx = self.char_vob.index(chars[i])
+                except ValueError:
+                    char_idx = self.char_vob.index(UNK)
                 chari.append(str(char_idx))
             for i in range(nc, MAX_WORD_LEN):
                 chari.append("0")
@@ -92,18 +98,18 @@ class SentenceClfier:
         chari = map(int, chari)
 
         feed_dict = {
-            self.model.inp_w: [np.array(wordi)],
-            self.model.inp_c: [np.array(chari)]
+            self.model.inp_w: np.array([wordi]),
+            self.model.inp_c: np.array([chari])
         }
         clfier_score_val = self.sess.run([self.test_clfier_score], feed_dict)
         predictions = np.argmax(clfier_score_val[0], 1)
 
-        return predictions[0][0] + 1
+        return predictions[0] + 1
 
 
 def main(argv=None):
     sentence_clfier = SentenceClfier()
-    print sentence_clfier(u'得了糖尿病应该吃什么药？')
+    print sentence_clfier(u'得了糖尿病，该吃什么药')
 
 
 if __name__ == '__main__':
