@@ -16,16 +16,15 @@ import jieba
 import jieba.posseg
 import pypinyin
 
+with open('../data/merge_split2.json', 'rb') as f:
+    data = f.read()
+common_data = json.loads(data)
+common_words = common_data['data']
 
-def get_common_word(filename):
-    """
-    从文件中获取common word词表
-    :param filename: common word文件，一个json文件
-    :return: 一个包含common word词表的list，每个词是unicode形式
-    """
-    json_file = open(filename, 'r')
-    common_word_list = json.load(json_file)
-    return set(common_word_list['data'])
+jieba.load_userdict('../data/words.txt')
+dp_data = ["喉", "肋", "心", "脑", "脚", "肝", "肠", "肚", "肩", "骨", "耳", "足", "头",
+           "脸", "鼻", "肺", "咽", "眼", "肾", "胃", "胆", "手", "筋", "背", "舌", "牙",
+           "口", "腰", "腹", "胸", "脾", "嘴", "腿"]
 
 
 def en_candidate(segs, common_words):
@@ -38,8 +37,9 @@ def en_candidate(segs, common_words):
     '''
     如果分词结果有一个字的词，那就与其上一个的词合并
     '''
+
     for sname in s:
-        if len(sname) == 1 and name_index > 0:
+        if len(sname) == 1 and name_index > 0 and sname not in dp_data:
             en_sets.add(s[name_index - 1] + sname)
             if s[name_index - 1] in en_sets:
                 en_sets.remove(s[name_index - 1])
@@ -50,37 +50,23 @@ def en_candidate(segs, common_words):
 
 
 def entity_identify(sentence):
-    #print sentence_clfier.sentence_clfier(sentence)
-    entity_name_file = '../data/name-idlist-dict-all.json'
-    common_words_file = '../data/merge_split2.json'
-    common_words = get_common_word(common_words_file)
-
-    jieba.load_userdict('../data/words.txt')
-
-    questions = [sentence]
+    question = sentence
     result_json = {}
     #result_json[u'type'] = sentence_clfier.sentence_clfier(sentence)
+    seg = jieba.posseg.cut(question)
+    en_candis = en_candidate(seg, common_words)
+    fuzzy_entity_result = set([])
+    entity_dict = {}
+    for name in en_candis:
+        print name + '----'
+        es_results, _ = es_match.search_index(name, 1)
+        print len(es_results)
+        print type(es_results)
+        for es_result in es_results:
+            print es_result
+            fuzzy_entity_result.add(es_result)
 
-    for question in questions:
-        #精确匹配
-        #question_hanzi_list = list(question)
-        #hanzi_entity_info = hanzi_bseg.entity_identify(question_hanzi_list)
-        #question_pinyin_list = hanzi_list2pinyin(question_hanzi_list)
-        #pinyin_entity_info = pinyin_bseg.entity_identify(question_pinyin_list)
-        #hanzi_entity_result = exact_entity_extract(hanzi_entity_info)
-        #pinyin_entity_result = exact_entity_extract(pinyin_entity_info)
-
-        seg = jieba.posseg.cut(question)
-        en_candis = en_candidate(seg, common_words)
-
-        fuzzy_entity_result = set([])
-        for name in en_candis:
-            #print name
-            es_results = es_match.search_index(name, 2)
-            for es_result in es_results:
-                fuzzy_entity_result.add(es_result)
-
-        result_json[u'entity'] = list(fuzzy_entity_result)
+    result_json[u'entity'] = list(fuzzy_entity_result)
 
     return result_json
 
