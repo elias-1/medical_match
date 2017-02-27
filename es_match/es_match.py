@@ -27,7 +27,7 @@ def encode_pinyin(word):
     pinyin_ = []
     pinyin = hanzi2pinyin(word)
     for ch in pinyin:
-        pinyin_.append('@'.join(list(pinyin)))
+        pinyin_.append('@'.join(list(ch)))
     return '@@'.join(pinyin_)
 
 
