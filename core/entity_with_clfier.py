@@ -1,25 +1,20 @@
 # encoding:UTF-8
 
-import codecs
-import csv
 import json
-import pprint
-import sys
 import time
 
 import jieba
 import jieba.posseg
-import pypinyin
 from clfier_with_w2v.sentence_clfier import SentenceClfier
 from es_match import es_match
 
-with open('../data/merge_split2.json', 'rb') as f:
+with open('data/merge_split2.json', 'rb') as f:
     data = f.read()
 common_data = json.loads(data)
 common_words = common_data['data']
 
 sentence_clfier = SentenceClfier()
-jieba.load_userdict('../data/words.txt')
+jieba.load_userdict('data/words.txt')
 dp_data = [
     "喉", "肋", "心", "脑", "脚", "肝", "肠", "肚", "肩", "骨", "耳", "足", "头", "脸", "鼻",
     "肺", "咽", "眼", "肾", "胃", "胆", "手", "筋", "背", "舌", "牙", "口", "腰", "腹", "胸",

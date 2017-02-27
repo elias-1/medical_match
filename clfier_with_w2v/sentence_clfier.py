@@ -12,6 +12,7 @@ Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2016/12/28 16:49:22
 """
 
+import os
 import sys
 
 import jieba
@@ -26,8 +27,9 @@ MAX_WORD_LEN = 6
 
 # Eval Parameters
 tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1488196736",
-                       "Dir of training run")
+                       "Dir of training run using for ckpt")
 
+tf.flags.DEFINE_string("exec_dir", "clfier_with_w2v", "execute env dir")
 UNK = '<UNK>'
 
 
@@ -40,12 +42,16 @@ class SentenceClfier:
         #         graph = tf.Graph()
         #         self.sess = tf.Session(graph=graph)
         self.sess = tf.Session()
-        self.model = TextCNN(FLAGS.word2vec_path, FLAGS.char2vec_path)
-        checkpoint_file = tf.train.latest_checkpoint(FLAGS.run_dir)
+        word2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
+        char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.char2vec_path)
+        run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
+        self.model = TextCNN(word2vec_path, char2vec_path)
+        checkpoint_file = tf.train.latest_checkpoint(run_dir)
         saver = tf.train.Saver()
         saver.restore(self.sess, checkpoint_file)
-        self.word_vob = self.get_vob(FLAGS.word2vec_path)
-        self.char_vob = self.get_vob(FLAGS.char2vec_path)
+
+        self.word_vob = self.get_vob(word2vec_path)
+        self.char_vob = self.get_vob(char2vec_path)
 
         self.test_clfier_score = self.model.test_clfier_score()
 
