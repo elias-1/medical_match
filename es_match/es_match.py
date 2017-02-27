@@ -76,7 +76,7 @@ def search_index(query_string, return_number=1):
     result_names = []
     entity_types = []
     if return_number >= 1:
-        for i in xrange(min(result_names, len(answers))):
+        for i in xrange(min(return_number, len(answers))):
             result_names.append(answers[i]['_source']['Name'])
             entity_types.append(answers[i]['_source']['Entity_type'])
     else:
