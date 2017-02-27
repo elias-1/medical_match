@@ -93,7 +93,7 @@ def process_line(x_text, word_vob, char_vob):
             chars[MAX_WORD_LEN - 1] = lc
             nc = MAX_WORD_LEN
         for i in range(nc):
-            char_idx = char_vob.GetWordIndex(word)
+            char_idx = char_vob.GetWordIndex(chars[i])
             chari.append(str(char_idx))
         for i in range(nc, MAX_WORD_LEN):
             chari.append("0")
