@@ -39,18 +39,21 @@ def tokenizer(sentence):
 
 class SentenceClfier:
     def __init__(self):
-#         graph = tf.Graph()
-#         self.sess = tf.Session(graph=graph)
         self.sess = tf.Session()
         word2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
         char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.char2vec_path)
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         self.model = TextCNN(word2vec_path, char2vec_path)
-        checkpoint_file = tf.train.latest_checkpoint(run_dir)
-        saver = tf.train.Saver()
-        self.sess.run(tf.initialize_all_variables())
-        saver.restore(self.sess, checkpoint_file)
-
+#        checkpoint_file = tf.train.latest_checkpoint(run_dir)
+#        saver = tf.train.Saver()
+#        saver.restore(self.sess, checkpoint_file)
+        ckpt = tf.train.get_checkpoint_state(run_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            saver = tf.train.import_meta_graph(run_dir)
+            saver.restore(self.sess, ckpt.model_checkpoint_path)
+        else:
+            print("No model found, exit now")
+            exit()
         self.word_vob = self.get_vob(word2vec_path)
         self.char_vob = self.get_vob(char2vec_path)
 
