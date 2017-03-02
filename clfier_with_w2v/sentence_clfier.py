@@ -53,9 +53,9 @@ class SentenceClfier:
 
             with sv.managed_session(master='') as sess:
 
-                checkpoint_file = tf.train.latest_checkpoint(run_dir)
-                saver = tf.train.Saver()
-                saver.restore(sess, checkpoint_file)
+                # checkpoint_file = tf.train.latest_checkpoint(run_dir)
+                # saver = tf.train.Saver()
+                # saver.restore(sess, checkpoint_file)
 
                 clfier_tX, clfier_tcX, clfier_tY = do_load_data(
                     FLAGS.test_data_path, FLAGS.max_sentence_len,
