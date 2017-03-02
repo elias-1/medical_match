@@ -399,7 +399,7 @@ def main(unused_argv):
                     sv.saver.save(
                         sess, logdir + '/model', global_step=(step + 1))
                     raise e
-                sv.saver.save(sess, logdir + '/finnal-model')
+            sv.saver.save(sess, logdir + '/finnal-model')
 
 
 if __name__ == '__main__':
