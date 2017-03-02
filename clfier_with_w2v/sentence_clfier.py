@@ -45,15 +45,16 @@ class SentenceClfier:
         char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.char2vec_path)
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
 
-        checkpoint_file = tf.train.latest_checkpoint(run_dir)
-        saver = tf.train.Saver()
-        saver.restore(self.sess, checkpoint_file)
         with self.graph.as_default():
             self.model = TextCNN(word2vec_path, char2vec_path)
+            self.test_clfier_score = self.model.test_clfier_score()
+
+            checkpoint_file = tf.train.latest_checkpoint(run_dir)
+            saver = tf.train.Saver()
+            saver.restore(self.sess, checkpoint_file)
+
             self.word_vob = self.get_vob(word2vec_path)
             self.char_vob = self.get_vob(char2vec_path)
-
-            self.test_clfier_score = self.model.test_clfier_score()
 
     def get_vob(self, vob_path):
         vob = []
