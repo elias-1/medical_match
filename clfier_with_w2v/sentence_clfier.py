@@ -39,25 +39,30 @@ def tokenizer(sentence):
 
 class SentenceClfier:
     def __init__(self):
-        self.sess = tf.Session()
-        word2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
-        char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.char2vec_path)
-        run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
-        self.model = TextCNN(word2vec_path, char2vec_path)
-#        checkpoint_file = tf.train.latest_checkpoint(run_dir)
-#        saver = tf.train.Saver()
-#        saver.restore(self.sess, checkpoint_file)
-        ckpt = tf.train.get_checkpoint_state(run_dir)
-        if ckpt and ckpt.model_checkpoint_path:
-            saver = tf.train.import_meta_graph(run_dir)
-            saver.restore(self.sess, ckpt.model_checkpoint_path)
-        else:
-            print("No model found, exit now")
-            exit()
-        self.word_vob = self.get_vob(word2vec_path)
-        self.char_vob = self.get_vob(char2vec_path)
+        self.graph = tf.Graph()
+        with self.graph.as_default():
+            self.sess = tf.Session()
+            with self.sess as sess:
+                word2vec_path = os.path.join(FLAGS.exec_dir,
+                                             FLAGS.word2vec_path)
+                char2vec_path = os.path.join(FLAGS.exec_dir,
+                                             FLAGS.char2vec_path)
+                run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
+                self.model = TextCNN(word2vec_path, char2vec_path)
+                checkpoint_file = tf.train.latest_checkpoint(run_dir)
+                saver = tf.train.Saver()
+                saver.restore(self.sess, checkpoint_file)
+                # ckpt = tf.train.get_checkpoint_state(run_dir)
+                # if ckpt and ckpt.model_checkpoint_path:
+                #     saver = tf.train.import_meta_graph(run_dir)
+                #     saver.restore(sess, ckpt.model_checkpoint_path)
+                # else:
+                #     print("No model found, exit now")
+                #     exit()
+                self.word_vob = self.get_vob(word2vec_path)
+                self.char_vob = self.get_vob(char2vec_path)
 
-        self.test_clfier_score = self.model.test_clfier_score()
+                self.test_clfier_score = self.model.test_clfier_score()
 
     def get_vob(self, vob_path):
         vob = []
@@ -117,11 +122,14 @@ class SentenceClfier:
         return predictions[0] + 1
 
     def test(self):
-        clfier_tX, clfier_tcX, clfier_tY = do_load_data(
-            FLAGS.test_data_path, FLAGS.max_sentence_len,
-            FLAGS.max_chars_per_word)
-        test_evaluate(self.sess, self.test_clfier_score, self.model.inp_w,
-                      self.model.inp_c, clfier_tX, clfier_tcX, clfier_tY)
+        with self.graph.as_default():
+            with self.sess as sess:
+                clfier_tX, clfier_tcX, clfier_tY = do_load_data(
+                    FLAGS.test_data_path, FLAGS.max_sentence_len,
+                    FLAGS.max_chars_per_word)
+                test_evaluate(sess, self.test_clfier_score, self.model.inp_w,
+                              self.model.inp_c, clfier_tX, clfier_tcX,
+                              clfier_tY)
 
 
 def main(argv=None):
