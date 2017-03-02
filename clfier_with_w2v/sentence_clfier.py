@@ -39,22 +39,33 @@ def tokenizer(sentence):
 
 class SentenceClfier:
     def __init__(self):
-        self.graph = tf.Graph()
-        self.sess = tf.Session(graph=self.graph)
+
         word2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
         char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.char2vec_path)
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
 
+        self.graph = tf.Graph()
         with self.graph.as_default():
             self.model = TextCNN(word2vec_path, char2vec_path)
             self.test_clfier_score = self.model.test_clfier_score()
 
-            checkpoint_file = tf.train.latest_checkpoint(run_dir)
-            saver = tf.train.Saver()
-            saver.restore(self.sess, checkpoint_file)
+            sv = tf.train.Supervisor(graph=self.graph, logdir=run_dir)
 
-            self.word_vob = self.get_vob(word2vec_path)
-            self.char_vob = self.get_vob(char2vec_path)
+            with sv.managed_session(master='') as sess:
+
+                checkpoint_file = tf.train.latest_checkpoint(run_dir)
+                saver = tf.train.Saver()
+                saver.restore(sess, checkpoint_file)
+
+                clfier_tX, clfier_tcX, clfier_tY = do_load_data(
+                    FLAGS.test_data_path, FLAGS.max_sentence_len,
+                    FLAGS.max_chars_per_word)
+                test_evaluate(sess, self.test_clfier_score, self.model.inp_w,
+                              self.model.inp_c, clfier_tX, clfier_tcX,
+                              clfier_tY)
+
+                self.word_vob = self.get_vob(word2vec_path)
+                self.char_vob = self.get_vob(char2vec_path)
 
     def get_vob(self, vob_path):
         vob = []
@@ -125,7 +136,7 @@ class SentenceClfier:
 def main(argv=None):
     sentence_clfier = SentenceClfier()
     # print sentence_clfier(u'得了糖尿病，该吃什么药')
-    sentence_clfier.test()
+    # sentence_clfier.test()
 
 
 if __name__ == '__main__':
