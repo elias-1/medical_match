@@ -39,8 +39,8 @@ def tokenizer(sentence):
 
 class SentenceClfier:
     def __init__(self):
-        #         graph = tf.Graph()
-        #         self.sess = tf.Session(graph=graph)
+#         graph = tf.Graph()
+#         self.sess = tf.Session(graph=graph)
         self.sess = tf.Session()
         word2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
         char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.char2vec_path)
@@ -48,6 +48,7 @@ class SentenceClfier:
         self.model = TextCNN(word2vec_path, char2vec_path)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
         saver = tf.train.Saver()
+        self.sess.run(tf.initialize_all_variables())
         saver.restore(self.sess, checkpoint_file)
 
         self.word_vob = self.get_vob(word2vec_path)
