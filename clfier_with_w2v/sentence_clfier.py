@@ -29,7 +29,7 @@ MAX_WORD_LEN = 6
 tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1488196736",
                        "Dir of training run using for ckpt")
 
-tf.flags.DEFINE_string("exec_dir", "clfier_with_w2v", "execute env dir")
+tf.flags.DEFINE_string("exec_dir", ".", "execute env dir")
 UNK = '<UNK>'
 
 
