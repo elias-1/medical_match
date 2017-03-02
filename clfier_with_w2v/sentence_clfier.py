@@ -18,7 +18,7 @@ import sys
 import jieba
 import numpy as np
 import tensorflow as tf
-from cnn_clfier import FLAGS, TextCNN
+from cnn_clfier import FLAGS, TextCNN, do_load_data, test_evaluate
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -112,10 +112,18 @@ class SentenceClfier:
 
         return predictions[0] + 1
 
+    def test(self):
+        clfier_tX, clfier_tcX, clfier_tY = do_load_data(
+            FLAGS.test_data_path, FLAGS.max_sentence_len,
+            FLAGS.max_chars_per_word)
+        test_evaluate(self.sess, self.test_clfier_score, self.model.inp_w,
+                      self.model.inp_c, clfier_tX, clfier_tcX, clfier_tY)
+
 
 def main(argv=None):
     sentence_clfier = SentenceClfier()
-    print sentence_clfier(u'得了糖尿病，该吃什么药')
+    # print sentence_clfier(u'得了糖尿病，该吃什么药')
+    sentence_clfier.test()
 
 
 if __name__ == '__main__':
