@@ -26,7 +26,7 @@ MAX_SENTENCE_LEN = 30
 MAX_WORD_LEN = 6
 
 # Eval Parameters
-tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1488196736",
+tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1488455612",
                        "Dir of training run using for ckpt")
 
 tf.flags.DEFINE_string("exec_dir", ".", "execute env dir")
