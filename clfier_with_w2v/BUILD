@@ -20,3 +20,10 @@ py_binary(
     ],
 )
 
+py_binary(
+    name = "prepare_ner_data",
+    srcs = ["prepare_ner_data.py"],
+    data = ["//utils:w2v.so"],
+    imports = ["utils"],
+)
+
