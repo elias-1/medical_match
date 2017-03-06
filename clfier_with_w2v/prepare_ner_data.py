@@ -36,7 +36,6 @@ def stat_max_len(data):
 
 
 def words2labels(words, entity_with_types):
-    entity_location = []
     entity_labels = ['1'] * len(words) + ['0'] * (MAX_SENTENCE_LEN - len(words)
                                                   )
     # 得了手足病，手坏了咋办。,手足病/@d@,手/@bp@  排序后对处理过得实体替换掉可以避免手被替换两次
