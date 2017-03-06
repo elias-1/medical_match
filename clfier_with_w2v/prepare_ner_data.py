@@ -92,10 +92,7 @@ def generate_ner_train_line(ner_out, char_vob, words, labeli):
 
 
 def processLine(ner_out, row, char_vob):
-    row = [
-        row[item].strip().decode('utf-8') for item in row
-        if row[item].strip() != ''
-    ]
+    row = [item.decode('utf-8') for item in row if item.strip() != '']
     entity_with_types = {
         entity_with_type.split('/')[0]: entity_with_type.split('/')[1]
         for entity_with_type in row[1:]

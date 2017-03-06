@@ -18,16 +18,15 @@ def processLine(data, sent2label, new_entity_out):
     error_rows = []
     know_sent = set()
     for row in data:
-        new_row = [
-            row[item].strip().decode('utf-8') for item in row
-            if row[item].strip() != ''
-        ]
+        new_row = [item for item in row if item.strip()]
+
         if new_row[0] in know_sent:
             continue
         else:
             know_sent.add(new_row[0])
             if new_row[0] in sent2label:
                 new_row = [sent2label[new_row[0]]] + new_row
+                print new_row
                 new_entity_out.writerow(new_row)
             else:
                 error_rows.append(new_row)
@@ -61,7 +60,6 @@ def main(argc, argv):
     if error_rows:
         new_entity_out.writerow(['Error: No class found:'])
         new_entity_out.writerows(error_rows)
-    new_entity_out.close()
 
 
 if __name__ == '__main__':
