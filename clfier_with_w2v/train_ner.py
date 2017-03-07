@@ -16,8 +16,10 @@ from utils import MAX_SENTENCE_LEN, load_w2v
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "ner_train.txt",
-                           'Training data dir')
+tf.app.flags.DEFINE_string(
+    'train_data_path',
+    "/home/elias/code/medical_match/clfier_with_w2v/ner_train.txt",
+    'Training data dir')
 tf.app.flags.DEFINE_string('test_data_path', "ner_test.txt", 'Test data dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
 tf.app.flags.DEFINE_string("word_word2vec_path", "chars_vec_50.txt",
