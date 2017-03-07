@@ -111,10 +111,10 @@ def build_dataset(data):
     train_data = []
     test_data = []
     for row in data:
-        if data[0] in class_data:
-            class_data[data[0]].append(row)
+        if row[0] in class_data:
+            class_data[row[0]].append(row)
         else:
-            class_data[data[0]] = [row]
+            class_data[row[0]] = [row]
     for key in class_data:
         split_index = int(SPLIT_RATE * len(class_data[key]))
         train_data.extend(class_data[key][:split_index])
