@@ -10,13 +10,14 @@ Date: 17-3-3 下午9:59
 '''
 
 import csv
+import pprint
 import random
 import sys
 
 import w2v
 
-MAX_SENTENCE_LEN = 30
-ENTITY_TYPES = []
+MAX_SENTENCE_LEN = 80
+ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
 """ENTITY_TYPES
 len([PAD, O]) + len(ENTITY_TYPES) * len([S B M E])
 """
@@ -76,9 +77,11 @@ def words2labels(words, entity_with_types):
                     entity_location.append([entity, (i, i + entity_len - 1)])
             words = words.replace(entity, '@' * entity_len)
 
+    print entity_location
     for i, entity_loc in enumerate(entity_location):
-        # print entities_with_aspects[entities[i]]
-        entity_index = ENTITY_TYPES.index(entity_with_types[entity_loc[0]])
+        print entity_loc[0]
+        entity_index = ENTITY_TYPES.index(entity_with_types[entity_loc[0]]
+                                          .decode('utf-8'))
         loc = entity_loc[1]
 
         if loc[0] == loc[1]:
