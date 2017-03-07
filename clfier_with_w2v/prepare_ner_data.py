@@ -147,7 +147,8 @@ def main(argc, argv):
     ner_test_out = open(argv[4], 'w')
 
     with open(argv[1], 'r') as f:
-        data = csv.reader(f, delimiter=',')
+        csv_reader = csv.reader(f, delimiter=',')
+        data = [row for row in csv_reader]
         stat_max_len(data)
         train_data, test_data = build_dataset(data)
         processLine(ner_train_out, train_data, char_vob)
