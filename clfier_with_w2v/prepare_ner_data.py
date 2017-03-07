@@ -25,10 +25,10 @@ SPLIT_RATE = 0.8
 
 
 def stat_max_len(data):
-    max_sentence_len = max([len(row[0].strip()) for row in data])
+    max_sentence_len = max([len(row[1].strip()) for row in data])
     entity_tags = []
     for row in data:
-        for entity_with_type in row[-1]:
+        for entity_with_type in row[2:]:
             if '@' not in entity_with_type:
                 continue
             type = entity_with_type.split('/')[1].strip()
