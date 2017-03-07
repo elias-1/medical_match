@@ -10,6 +10,7 @@ Date: 17-3-3 下午9:59
 '''
 
 import csv
+import random
 import sys
 
 import w2v
@@ -19,6 +20,8 @@ ENTITY_TYPES = []
 """ENTITY_TYPES
 len([PAD, O]) + len(ENTITY_TYPES) * len([S B M E])
 """
+
+SPLIT_RATE = 0.8
 
 
 def stat_max_len(data):
@@ -72,7 +75,7 @@ def words2labels(words, entity_with_types):
     return entity_labels, entity_location
 
 
-def generate_ner_train_line(ner_out, char_vob, words, labeli):
+def generate_ner_line(ner_out, char_vob, words, labeli):
     nl = len(words)
     chari = []
     if nl > MAX_SENTENCE_LEN:
@@ -91,32 +94,66 @@ def generate_ner_train_line(ner_out, char_vob, words, labeli):
     return ner_line
 
 
-def processLine(ner_out, row, char_vob):
-    row = [item.decode('utf-8') for item in row if item.strip() != '']
-    entity_with_types = {
-        entity_with_type.split('/')[0]: entity_with_type.split('/')[1]
-        for entity_with_type in row[1:]
-    }
-    entity_labels, _ = words2labels(row[0], entity_with_types)
-    generate_ner_train_line(ner_out, char_vob, row[0], entity_labels)
+def data_shuffle(x, y=None):
+    indexes = range(len(x))
+    random.shuffle(indexes)
+    x_temp = [x[i] for i in indexes]
+    if y:
+        assert (len(x) == len(y))
+        y_temp = [y[i] for i in indexes]
+        return x_temp, y_temp
+    else:
+        return x_temp
+
+
+def build_dataset(data):
+    class_data = {}
+    train_data = []
+    test_data = []
+    for row in data:
+        if data[0] in class_data:
+            class_data[data[0]].append(row)
+        else:
+            class_data[data[0]] = [row]
+    for key in class_data:
+        split_index = int(SPLIT_RATE * len(class_data[key]))
+        train_data.extend(class_data[key][:split_index])
+        test_data.extend(class_data[key][split_index:])
+
+    return data_shuffle(train_data), data_shuffle(test_data)
+
+
+def processLine(ner_out, data, char_vob):
+    for row in data:
+        row = [item.decode('utf-8') for item in row if item.strip() != '']
+        entity_with_types = {
+            entity_with_type.split('/')[0]: entity_with_type.split('/')[1]
+            for entity_with_type in row[1:]
+        }
+        entity_labels, _ = words2labels(row[0], entity_with_types)
+        generate_ner_line(ner_out, char_vob, row[0], entity_labels)
 
 
 def main(argc, argv):
-    if argc < 4:
-        print('Usage:%s <data> <char_vob> <ner_output>' % (argv[0]))
+    if argc < 5:
+        print('Usage:%s <data> <char_vob> <ner_train_output> <ner_test_output>'
+              % (argv[0]))
         exit(1)
 
     char_vob = w2v.Word2vecVocab()
     char_vob.Load(argv[2])
 
-    ner_out = open(argv[3], 'w')
+    ner_train_out = open(argv[3], 'w')
+    ner_test_out = open(argv[4], 'w')
 
     with open(argv[1], 'r') as f:
         data = csv.reader(f, delimiter=',')
-        for row in data:
-            processLine(ner_out, row, char_vob)
+        train_data, test_data = build_dataset(data)
+        processLine(ner_train_out, train_data, char_vob)
+        processLine(ner_test_out, test_data, char_vob)
 
-    ner_out.close()
+    ner_train_out.close()
+    ner_test_out.close()
 
 
 if __name__ == '__main__':
