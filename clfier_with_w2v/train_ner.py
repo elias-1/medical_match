@@ -232,10 +232,10 @@ def main(unused_argv):
                     _, trainsMatrix = sess.run(
                         [train_op, model.transition_params])
                     # for debugging and learning purposes, see how the loss gets decremented thru training steps
-                    if (step + 1) % 100 == 0:
+                    if (step + 1) % 10 == 0:
                         print("[%d] loss: [%r]" %
                               (step + 1, sess.run(total_loss)))
-                    if (step + 1) % 500 == 0:
+                    if (step + 1) % 20 == 0:
                         test_evaluate(sess, test_unary_score,
                                       test_sequence_length, trainsMatrix,
                                       model.inp_w, twX, tY)
