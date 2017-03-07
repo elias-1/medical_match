@@ -38,6 +38,23 @@ def stat_max_len(data):
     print 'entity types: %s' % ' '.join(entity_tags)
 
 
+def build_dataset(data):
+    class_data = {}
+    train_data = []
+    test_data = []
+    for row in data:
+        if row[0] in class_data:
+            class_data[row[0]].append(row)
+        else:
+            class_data[row[0]] = [row]
+    for key in class_data:
+        split_index = int(SPLIT_RATE * len(class_data[key]))
+        train_data.extend(class_data[key][:split_index])
+        test_data.extend(class_data[key][split_index:])
+
+    return data_shuffle(train_data), data_shuffle(test_data)
+
+
 def words2labels(words, entity_with_types):
     entity_labels = ['1'] * len(words) + ['0'] * (MAX_SENTENCE_LEN - len(words)
                                                   )
@@ -106,32 +123,15 @@ def data_shuffle(x, y=None):
         return x_temp
 
 
-def build_dataset(data):
-    class_data = {}
-    train_data = []
-    test_data = []
-    for row in data:
-        if row[0] in class_data:
-            class_data[row[0]].append(row)
-        else:
-            class_data[row[0]] = [row]
-    for key in class_data:
-        split_index = int(SPLIT_RATE * len(class_data[key]))
-        train_data.extend(class_data[key][:split_index])
-        test_data.extend(class_data[key][split_index:])
-
-    return data_shuffle(train_data), data_shuffle(test_data)
-
-
 def processLine(ner_out, data, char_vob):
     for row in data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
         entity_with_types = {
             entity_with_type.split('/')[0]: entity_with_type.split('/')[1]
-            for entity_with_type in row[1:]
+            for entity_with_type in row[2:]
         }
-        entity_labels, _ = words2labels(row[0], entity_with_types)
-        generate_ner_line(ner_out, char_vob, row[0], entity_labels)
+        entity_labels, _ = words2labels(row[1], entity_with_types)
+        generate_ner_line(ner_out, char_vob, row[1], entity_labels)
 
 
 def main(argc, argv):
@@ -148,6 +148,7 @@ def main(argc, argv):
 
     with open(argv[1], 'r') as f:
         data = csv.reader(f, delimiter=',')
+        stat_max_len(data)
         train_data, test_data = build_dataset(data)
         processLine(ner_train_out, train_data, char_vob)
         processLine(ner_test_out, test_data, char_vob)
