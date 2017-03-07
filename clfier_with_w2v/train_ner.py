@@ -16,16 +16,16 @@ from utils import MAX_SENTENCE_LEN, load_w2v
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "train.txt", 'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "test.txt", 'Test data dir')
+tf.app.flags.DEFINE_string('train_data_path', "ner_train.txt",
+                           'Training data dir')
+tf.app.flags.DEFINE_string('test_data_path', "ner_test.txt", 'Test data dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
-tf.app.flags.DEFINE_string("word_word2vec_path", "data/glove.6B.100d.txt",
+tf.app.flags.DEFINE_string("word_word2vec_path", "chars_vec_50.txt",
                            "the word2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
-tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
-tf.app.flags.DEFINE_integer("embedding_char_size", 50, "second embedding size")
-tf.app.flags.DEFINE_integer("num_tags", 14, "num pos tags")
+tf.app.flags.DEFINE_integer("embedding_word_size", 50, "embedding size")
+tf.app.flags.DEFINE_integer("num_tags", 30, "num pos tags")
 tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
 tf.app.flags.DEFINE_integer("train_steps", 1500, "trainning steps")
