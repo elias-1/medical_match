@@ -10,12 +10,16 @@ Date: 17-3-3 下午9:59
 '''
 
 import csv
+import os
 import pprint
 import random
 import sys
 
+import jieba
 import w2v
-from utils import ENTITY_TYPES, MAX_SENTENCE_LEN, load_w2v
+from utils import ENTITY_TYPES, MAX_SENTENCE_LEN
+
+jieba.load_userdict(os.path.join('../data', 'words.txt'))
 
 SPLIT_RATE = 0.8
 
@@ -179,7 +183,7 @@ def generate_clfier_line(clfier_cout, char_vob, words_with_class,
     return clfier_line
 
 
-def processLine(ner_out, clfier_cout, data, char_vob):
+def processLine(out, output_type, data, char_vob):
     for row in data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
         entity_with_types = {
@@ -188,38 +192,46 @@ def processLine(ner_out, clfier_cout, data, char_vob):
         }
         entity_labels, entity_location = words2labels(row[1],
                                                       entity_with_types)
-        generate_ner_line(ner_out, char_vob, row[1], entity_labels)
-        generate_clfier_line(clfier_cout, char_vob, row[:2], entity_location,
-                             entity_with_types)
+        if output_type == '1':
+            generate_ner_line(out, char_vob, row[1], entity_labels)
+        elif output_type == '2':
+            generate_clfier_line(out, char_vob, row[:2], entity_location,
+                                 entity_with_types)
+        else:
+            raise ('output type error!')
+
+
+"""
+output_type:
+1   ner
+2   clfier_common
+3   clfier_common2
+"""
 
 
 def main(argc, argv):
-    if argc < 5:
-        print('Usage:%s <data> <char_vob> <ner_train_output> <ner_test_output>'
-              ' <clfier_train_coutput> <clfier_test_coutput>' % (argv[0]))
+    if argc < 6:
+        print(
+            'Usage:%s <data> <char_vob> <ner_train_output> <ner_test_output> <output_type>'
+            % (argv[0]))
         exit(1)
 
     char_vob = w2v.Word2vecVocab()
     char_vob.Load(argv[2])
 
-    ner_train_out = open(argv[3], 'w')
-    ner_test_out = open(argv[4], 'w')
-
-    clfier_train_cout = open(argv[5], 'w')
-    clfier_test_cout = open(argv[6], 'w')
+    train_out = open(argv[3], 'w')
+    test_out = open(argv[4], 'w')
 
     with open(argv[1], 'r') as f:
         csv_reader = csv.reader(f, delimiter=',')
         data = [row for row in csv_reader]
         stat_max_len(data)
         train_data, test_data = build_dataset(data)
-        processLine(ner_train_out, clfier_train_cout, train_data, char_vob)
-        processLine(ner_test_out, clfier_test_cout, test_data, char_vob)
+        processLine(train_out, argv[5], train_data, char_vob)
+        processLine(test_out, argv[5], test_data, char_vob)
 
-    ner_train_out.close()
-    ner_test_out.close()
-    clfier_train_cout.close()
-    clfier_test_cout.close()
+    train_out.close()
+    test_out.close()
 
 
 if __name__ == '__main__':
