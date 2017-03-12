@@ -15,12 +15,7 @@ import random
 import sys
 
 import w2v
-
-MAX_SENTENCE_LEN = 80
-ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
-"""ENTITY_TYPES
-len([PAD, O]) + len(ENTITY_TYPES) * len([S B M E])
-"""
+from utils import ENTITY_TYPES, MAX_SENTENCE_LEN, load_w2v
 
 SPLIT_RATE = 0.8
 
@@ -77,9 +72,9 @@ def words2labels(words, entity_with_types):
                     entity_location.append([entity, (i, i + entity_len - 1)])
             words = words.replace(entity, '@' * entity_len)
 
-    print entity_location
+    # print entity_location
     for i, entity_loc in enumerate(entity_location):
-        print entity_loc[0]
+        # print entity_loc[0]
         entity_index = ENTITY_TYPES.index(entity_with_types[entity_loc[0]]
                                           .decode('utf-8'))
         loc = entity_loc[1]
@@ -126,21 +121,82 @@ def data_shuffle(x, y=None):
         return x_temp
 
 
-def processLine(ner_out, data, char_vob):
+def entity_id_to_common(chari, entity_location, aspects_id_in_vob):
+    sort_index = sorted(
+        range(len(entity_location)),
+        key=lambda index: entity_location[index][0])
+    entity_location = [entity_location[index] for index in sort_index]
+    aspects_id_in_vob = [aspects_id_in_vob[index] for index in sort_index]
+
+    current = 0
+    common_chari = []
+    for i, word_id in enumerate(chari):
+        if current < len(entity_location) and i >= entity_location[current][
+                0] and i <= entity_location[current][1]:
+            if i == entity_location[current][0]:
+                common_chari.append(aspects_id_in_vob[current])
+
+            if i == entity_location[current][1]:
+                current += 1
+        else:
+            common_chari.append(chari[i])
+
+    return common_chari
+
+
+def generate_clfier_line(clfier_cout, char_vob, words_with_class,
+                         entity_location, entity_with_types):
+
+    label_id = str(int(words_with_class[0]) - 1)
+    words = words_with_class[1]
+
+    vob_size = char_vob.GetTotalWord()
+    chari = []
+    nl = len(words)
+    for ti in range(nl):
+        word = words[ti]
+        idx = char_vob.GetWordIndex(word)
+        chari.append(str(idx))
+
+    if entity_location:
+        aspects_id_in_vob = [
+            str(
+                ENTITY_TYPES.index(entity_with_types[' '.join(words[loc[0]:loc[
+                    1] + 1])]) + vob_size) for loc in entity_location
+        ]
+
+        chari = entity_id_to_common(chari, entity_location, aspects_id_in_vob)
+
+    nl = len(chari)
+    if nl > MAX_SENTENCE_LEN:
+        clfier_line = ' '.join(chari[:MAX_SENTENCE_LEN]) + ' ' + label_id
+    else:
+        for i in range(nl, MAX_SENTENCE_LEN):
+            chari.append('0')
+        clfier_line = ' '.join(chari) + ' ' + label_id
+
+    clfier_cout.write("%s\n" % (clfier_line))
+    return clfier_line
+
+
+def processLine(ner_out, clfier_cout, data, char_vob):
     for row in data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
         entity_with_types = {
             entity_with_type.split('/')[0]: entity_with_type.split('/')[1]
             for entity_with_type in row[2:]
         }
-        entity_labels, _ = words2labels(row[1], entity_with_types)
+        entity_labels, entity_location = words2labels(row[1],
+                                                      entity_with_types)
         generate_ner_line(ner_out, char_vob, row[1], entity_labels)
+        generate_clfier_line(clfier_cout, char_vob, row[:2], entity_location,
+                             entity_with_types)
 
 
 def main(argc, argv):
     if argc < 5:
         print('Usage:%s <data> <char_vob> <ner_train_output> <ner_test_output>'
-              % (argv[0]))
+              ' <clfier_train_coutput> <clfier_test_coutput>' % (argv[0]))
         exit(1)
 
     char_vob = w2v.Word2vecVocab()
@@ -149,16 +205,21 @@ def main(argc, argv):
     ner_train_out = open(argv[3], 'w')
     ner_test_out = open(argv[4], 'w')
 
+    clfier_train_cout = open(argv[5], 'w')
+    clfier_test_cout = open(argv[6], 'w')
+
     with open(argv[1], 'r') as f:
         csv_reader = csv.reader(f, delimiter=',')
         data = [row for row in csv_reader]
         stat_max_len(data)
         train_data, test_data = build_dataset(data)
-        processLine(ner_train_out, train_data, char_vob)
-        processLine(ner_test_out, test_data, char_vob)
+        processLine(ner_train_out, clfier_train_cout, train_data, char_vob)
+        processLine(ner_test_out, clfier_test_cout, test_data, char_vob)
 
     ner_train_out.close()
     ner_test_out.close()
+    clfier_train_cout.close()
+    clfier_test_cout.close()
 
 
 if __name__ == '__main__':

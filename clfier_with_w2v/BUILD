@@ -21,8 +21,8 @@ py_binary(
 )
 
 py_binary(
-    name = "prepare_ner_data",
-    srcs = ["prepare_ner_data.py"],
+    name = "prepare_ner_clfier_data",
+    srcs = ["prepare_ner_clfier_data.py"],
     data = ["//utils:w2v.so"],
     imports = ["utils"],
 )
