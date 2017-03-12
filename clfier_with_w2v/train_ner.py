@@ -18,10 +18,11 @@ FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string(
     'train_data_path',
-    "/home/elias/code/medical_match/clfier_with_w2v/ner_train.txt",
+    "/home/elias/code/medical_match/clfier_with_w2v/ner_train_v2.txt",
     'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "ner_test.txt", 'Test data dir')
-tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
+tf.app.flags.DEFINE_string('test_data_path', "ner_test_v2.txt",
+                           'Test data dir')
+tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs_v2", 'The log  dir')
 tf.app.flags.DEFINE_string("word_word2vec_path", "chars_vec_50.txt",
                            "the word2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
@@ -105,8 +106,7 @@ class Model:
                 scope="RNN_forward")
             backward_output_, _ = tf.nn.dynamic_rnn(
                 tf.nn.rnn_cell.BasicLSTMCell(self.numHidden),
-                inputs=tf.reverse_sequence(
-                    word_vectors, length_64, seq_dim=1),
+                inputs=tf.reverse_sequence(word_vectors, length_64, seq_dim=1),
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_backword")
@@ -185,7 +185,9 @@ def test_evaluate(sess, unary_score, test_sequence_length, transMatrix, inp_w,
         if endOff > totalLen:
             endOff = totalLen
         y = tY[i * batchSize:endOff]
-        feed_dict = {inp_w: twX[i * batchSize:endOff], }
+        feed_dict = {
+            inp_w: twX[i * batchSize:endOff],
+        }
         unary_score_val, test_sequence_length_val = sess.run(
             [unary_score, test_sequence_length], feed_dict)
         for tf_unary_scores_, y_, sequence_length_ in zip(
