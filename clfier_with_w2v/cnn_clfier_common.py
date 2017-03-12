@@ -22,7 +22,7 @@ FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string(
     'train_data_path',
-    "/home/drcubic/code/medical_match/clfier_with_w2v/clfier_common1_train.txt",
+    "/home/elias/code/medical_match/clfier_with_w2v/clfier_common1_train.txt",
     'Training data dir')
 tf.app.flags.DEFINE_string('test_data_path', "clfier_common1_test.txt",
                            'Test data dir')
