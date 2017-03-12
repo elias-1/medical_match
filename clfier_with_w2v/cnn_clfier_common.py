@@ -28,7 +28,7 @@ tf.app.flags.DEFINE_string('test_data_path', "clfier_common1_test.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('cnn_clfier_common_log_dir',
                            "cnn_clfier_common_log", 'The log  dir')
-tf.app.flags.DEFINE_string("word2vec_path", "words_vec_100.txt",
+tf.app.flags.DEFINE_string("word2vec_path", "chars_vec_100.txt",
                            "the word2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
@@ -178,7 +178,7 @@ class TextCNN(object):
 
         return scores
 
-    def loss(self, clfier_X, clfier_cX, clfier_Y):
+    def loss(self, clfier_X, clfier_Y):
         self.scores = self.inference(clfier_X)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             self.scores, clfier_Y)
