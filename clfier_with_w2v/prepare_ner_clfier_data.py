@@ -128,19 +128,19 @@ def data_shuffle(x, y=None):
 def entity_id_to_common(chari, entity_location, aspects_id_in_vob):
     sort_index = sorted(
         range(len(entity_location)),
-        key=lambda index: entity_location[index][0])
+        key=lambda index: entity_location[index][1][0])
     entity_location = [entity_location[index] for index in sort_index]
     aspects_id_in_vob = [aspects_id_in_vob[index] for index in sort_index]
 
     current = 0
     common_chari = []
     for i, word_id in enumerate(chari):
-        if current < len(entity_location) and i >= entity_location[current][
-                0] and i <= entity_location[current][1]:
+        if current < len(entity_location) and i >= entity_location[current][1][
+                0] and i <= entity_location[current][1][1]:
             if i == entity_location[current][0]:
                 common_chari.append(aspects_id_in_vob[current])
 
-            if i == entity_location[current][1]:
+            if i == entity_location[current][1][1]:
                 current += 1
         else:
             common_chari.append(chari[i])
@@ -165,8 +165,8 @@ def generate_clfier_line(clfier_cout, char_vob, words_with_class,
     if entity_location:
         aspects_id_in_vob = [
             str(
-                ENTITY_TYPES.index(entity_with_types[' '.join(words[loc[0]:loc[
-                    1] + 1])]) + vob_size) for loc in entity_location
+                ENTITY_TYPES.index(entity_with_types[' '.join(words[loc[1][
+                    0]:loc[1][1] + 1])]) + vob_size) for loc in entity_location
         ]
 
         chari = entity_id_to_common(chari, entity_location, aspects_id_in_vob)
