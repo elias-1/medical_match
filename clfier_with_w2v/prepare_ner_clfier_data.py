@@ -17,15 +17,21 @@ import sys
 
 import jieba
 import w2v
-from utils import ENTITY_TYPES, MAX_SENTENCE_LEN
+from utils import (ENTITY_TYPES, MAX_SENTENCE_LEN, MAX_SENTENCE_LEN2,
+                   MAX_WORD_LEN)
 
 jieba.load_userdict(os.path.join('../data', 'words.txt'))
 
 SPLIT_RATE = 0.8
 
 
+def tokenizer(sentence):
+    return jieba.lcut(sentence, cut_all=False)
+
+
 def stat_max_len(data):
     max_sentence_len = max([len(row[1].strip()) for row in data])
+    max_sentence_len2 = max([len(jieba.lcut(row[1].strip())) for row in data])
     entity_tags = []
     for row in data:
         for entity_with_type in row[2:]:
@@ -34,8 +40,9 @@ def stat_max_len(data):
             type = entity_with_type.split('/')[1].strip()
             if type not in entity_tags:
                 entity_tags.append(type)
-    print 'max sentence len: %d' % max_sentence_len
-    print 'entity types: %s' % ' '.join(entity_tags)
+    print('max sentence len(char level): %d' % max_sentence_len)
+    print('max sentence len(word level): %d' % max_sentence_len2)
+    print('entity types: %s' % ' '.join(entity_tags))
 
 
 def build_dataset(data):
@@ -91,6 +98,11 @@ def words2labels(words, entity_with_types):
         if loc[1] - loc[0] > 1:
             for mid in range(loc[0] + 1, loc[1]):
                 entity_labels[mid] = str(entity_index * 4 + 4)
+
+    sort_index = sorted(
+        range(len(entity_location)),
+        key=lambda index: entity_location[index][1][0])
+    entity_location = [entity_location[index] for index in sort_index]
     return entity_labels, entity_location
 
 
@@ -126,12 +138,6 @@ def data_shuffle(x, y=None):
 
 
 def entity_id_to_common(chari, entity_location, aspects_id_in_vob):
-    sort_index = sorted(
-        range(len(entity_location)),
-        key=lambda index: entity_location[index][1][0])
-    entity_location = [entity_location[index] for index in sort_index]
-    aspects_id_in_vob = [aspects_id_in_vob[index] for index in sort_index]
-
     current = 0
     common_chari = []
     for i, word_id in enumerate(chari):
@@ -152,20 +158,20 @@ def generate_clfier_line(clfier_cout, char_vob, words_with_class,
                          entity_location, entity_with_types):
 
     label_id = str(int(words_with_class[0]) - 1)
-    words = words_with_class[1]
+    chars = words_with_class[1]
 
     vob_size = char_vob.GetTotalWord()
     chari = []
-    nl = len(words)
+    nl = len(chars)
     for ti in range(nl):
-        word = words[ti]
-        idx = char_vob.GetWordIndex(word)
+        char = chars[ti]
+        idx = char_vob.GetWordIndex(char)
         chari.append(str(idx))
 
     if entity_location:
         aspects_id_in_vob = [
             str(
-                ENTITY_TYPES.index(entity_with_types[words[loc[1][0]:loc[1][1]
+                ENTITY_TYPES.index(entity_with_types[chars[loc[1][0]:loc[1][1]
                                                            + 1]]) + vob_size)
             for loc in entity_location
         ]
@@ -184,6 +190,106 @@ def generate_clfier_line(clfier_cout, char_vob, words_with_class,
     return clfier_line
 
 
+def last_index(loc0, loc, current):
+    last_i = 0
+    for i in xrange(current, len(loc)):
+        if loc[i] == loc0:
+            last_i = i
+    return last_i
+
+
+def refine_tokenizer2common(words, entity_location):
+    loc = []
+    i = 0
+    for word in words:
+        loc.extend([i, i + len(word) - 1])
+        i += len(word)
+    for _, entity_loc in entity_location:
+        loc.extend([entity_loc[0], entity_loc[1]])
+
+    loc.sort()
+    current = 0
+    for _, entity_loc in entity_location:
+        loc_index1 = loc.index(entity_loc[0], current)
+        if loc_index1 % 2 == 0:
+            loc_index2 = last_index(entity_loc[1], loc, current + 1)
+            for i in xrange(loc_index2 - loc_index1 - 1):
+                loc.pop(loc_index1 + 1)
+            if loc_index2 % 2 == 0:
+                loc.insert(loc_index1 + 2, entity_loc[1] + 1)
+        else:
+            loc_index2 = last_index(entity_loc[1], loc, current + 1)
+            for i in xrange(loc_index2 - loc_index1 - 1):
+                loc.pop(loc_index1 + 1)
+            loc.insert(loc_index1, entity_loc[0] - 1)
+            if loc_index2 % 2 == 0:
+                loc.insert(loc_index1 + 3, entity_loc[1] + 1)
+        current = loc_index1
+
+    chars = ''.join(words)
+    result_words = []
+    for i in xrange(len(loc) / 2):
+        result_words.append(chars[loc[2 * i]:loc[2 * i + 1] + 1])
+    common_index = []
+    for _, entity_loc in entity_location:
+        common_index.append(loc.index(entity_loc[0]) / 2)
+
+    return result_words, common_index
+
+
+def generate_clfier2_line(clfier_cout2, char_vob, words_with_class,
+                          entity_location, entity_with_types):
+
+    word_vob = w2v.Word2vecVocab()
+    word_vob.Load('words_vec_100.txt')
+    word_vob_size = word_vob.GetTotalWord()
+    label_id = str(int(words_with_class[0]) - 1)
+
+    words = tokenizer(words_with_class[1])
+    words, common_index = refine_tokenizer2common(words, entity_location)
+    nl = len(words)
+    if nl > MAX_SENTENCE_LEN2:
+        nl = MAX_SENTENCE_LEN2
+    wordi = []
+    chari = []
+    current_index = 0
+    for ti in range(nl):
+        if current_index < len(common_index) and ti == common_index[
+                current_index]:
+            idx = ENTITY_TYPES.index(entity_with_types[words[
+                ti]]) + word_vob_size
+            current_index += 1
+        else:
+            idx = char_vob.GetWordIndex(word)
+        wordi.append(str(idx))
+        word = words[ti]
+
+        chars = list(word)
+        nc = len(chars)
+        if nc > MAX_WORD_LEN:
+            lc = chars[nc - 1]
+            chars[MAX_WORD_LEN - 1] = lc
+            nc = MAX_WORD_LEN
+        for i in range(nc):
+            char_idx = char_vob.GetWordIndex(chars[i])
+            chari.append(str(char_idx))
+        for i in range(nc, MAX_WORD_LEN):
+            chari.append("0")
+    for i in range(nl, MAX_SENTENCE_LEN2):
+        wordi.append("0")
+        for ii in range(MAX_WORD_LEN):
+            chari.append('0')
+
+    line = " ".join(wordi)
+    line += " "
+    line += " ".join(chari)
+    line += " "
+    clfier_line = line + label_id
+
+    clfier_cout2.write("%s\n" % (clfier_line))
+    return clfier_line
+
+
 def processLine(out, output_type, data, char_vob):
     for row in data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
@@ -198,6 +304,9 @@ def processLine(out, output_type, data, char_vob):
         elif output_type == '2':
             generate_clfier_line(out, char_vob, row[:2], entity_location,
                                  entity_with_types)
+        elif output_type == '3':
+            generate_clfier2_line(out, char_vob, row[:2], entity_location,
+                                  entity_with_types)
         else:
             raise ('output type error!')
 

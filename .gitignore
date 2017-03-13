@@ -105,3 +105,6 @@ bazel*
 
 #log
 *logs
+
+# test
+*/test.py
