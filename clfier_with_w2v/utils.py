@@ -14,7 +14,7 @@ from copy import deepcopy
 import numpy as np
 
 MAX_SENTENCE_LEN = 80
-MAX_SENTENCE_LEN2 = 80
+MAX_SENTENCE_LEN2 = 25
 MAX_WORD_LEN = 6
 ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
 """ENTITY_TYPES
