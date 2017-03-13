@@ -43,7 +43,7 @@ tf.app.flags.DEFINE_integer("char_window_size", 2,
 tf.app.flags.DEFINE_integer("max_chars_per_word", MAX_WORD_LEN,
                             "max number of characters per word ")
 tf.app.flags.DEFINE_integer('batch_size', 64, 'Batch Size (default: 64)')
-tf.app.flags.DEFINE_integer("train_steps", 2000, "trainning steps")
+tf.app.flags.DEFINE_integer("train_steps", 1000, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 tf.app.flags.DEFINE_string('filter_sizes', '3,4,5',
@@ -328,11 +328,9 @@ def main(unused_argv):
                                       clfier_tY)
                 except KeyboardInterrupt, e:
                     sv.saver.save(
-                        sess,
-                        FLAGS.cnn_clfier_log_dir + '/model',
-                        global_step=(step + 1))
+                        sess, logdir + '/model', global_step=(step + 1))
                     raise e
-            sv.saver.save(sess, FLAGS.cnn_clfier_log_dir + '/finnal-model')
+            sv.saver.save(sess, logdir + '/finnal-model')
 
 
 if __name__ == '__main__':
