@@ -22,13 +22,13 @@ def processLine(data, sent2label, new_entity_out):
     know_sent = set()
     for row in data:
         new_row = [item for item in row[1:] if item.strip()]
-        sent = new_row[1].decode('utf-8').strip()
+        sent = new_row[0].decode('utf-8').strip()
         if sent in know_sent:
             continue
         else:
             know_sent.add(sent)
             if sent in sent2label:
-                new_row = [sent2label[sent].encode('utf-8')] + new_row[1:]
+                new_row = [sent2label[sent].encode('utf-8')] + new_row
                 new_entity_out.writerow(new_row)
                 sent2label.pop(sent)
             else:
