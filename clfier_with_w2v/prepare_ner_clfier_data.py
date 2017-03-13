@@ -237,11 +237,9 @@ def refine_tokenizer2common(words, entity_location):
     return result_words, common_index
 
 
-def generate_clfier2_line(clfier_cout2, char_vob, words_with_class,
+def generate_clfier2_line(clfier_cout2, char_vob, word_vob, words_with_class,
                           entity_location, entity_with_types):
 
-    word_vob = w2v.Word2vecVocab()
-    word_vob.Load('words_vec_100.txt')
     word_vob_size = word_vob.GetTotalWord()
     label_id = str(int(words_with_class[0]) - 1)
 
@@ -289,7 +287,7 @@ def generate_clfier2_line(clfier_cout2, char_vob, words_with_class,
     return clfier_line
 
 
-def processLine(out, output_type, data, char_vob):
+def processLine(out, output_type, data, char_vob, word_vob):
     for row in data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
         entity_with_types = {
@@ -304,8 +302,8 @@ def processLine(out, output_type, data, char_vob):
             generate_clfier_line(out, char_vob, row[:2], entity_location,
                                  entity_with_types)
         elif output_type == '3':
-            generate_clfier2_line(out, char_vob, row[:2], entity_location,
-                                  entity_with_types)
+            generate_clfier2_line(out, char_vob, word_vob, row[:2],
+                                  entity_location, entity_with_types)
         else:
             raise ('output type error!')
 
@@ -328,6 +326,9 @@ def main(argc, argv):
     char_vob = w2v.Word2vecVocab()
     char_vob.Load(argv[2])
 
+    word_vob = w2v.Word2vecVocab()
+    word_vob.Load('words_vec_100.txt')
+
     train_out = open(argv[3], 'w')
     test_out = open(argv[4], 'w')
 
@@ -336,8 +337,8 @@ def main(argc, argv):
         data = [row for row in csv_reader]
         stat_max_len(data)
         train_data, test_data = build_dataset(data)
-        processLine(train_out, argv[5], train_data, char_vob)
-        processLine(test_out, argv[5], test_data, char_vob)
+        processLine(train_out, argv[5], train_data, char_vob, word_vob)
+        processLine(test_out, argv[5], test_data, char_vob, word_vob)
 
     train_out.close()
     test_out.close()
