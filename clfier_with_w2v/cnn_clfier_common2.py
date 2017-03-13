@@ -22,18 +22,22 @@ from utils import (ENTITY_TYPES, MAX_SENTENCE_LEN, MAX_WORD_LEN, do_load_data,
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "clfier_train.txt",
-                           'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "clfier_test.txt",
+tf.app.flags.DEFINE_string(
+    'train_data_path',
+    "/home/elias/code/medical_match/clfier_with_w2v/clfier_common2_train.txt",
+    'Training data dir')
+tf.app.flags.DEFINE_string('test_data_path', "clfier_common2_test.txt",
                            'Test data dir')
-tf.app.flags.DEFINE_string('cnn_clfier_log_dir', "cnn_clfier_logs",
-                           'The log  dir')
-tf.app.flags.DEFINE_string("word_word2vec_path", "data/glove.6B.100d.txt",
+tf.app.flags.DEFINE_string('cnn_clfier_common2_log_dir',
+                           "cnn_clfier_common2_log", 'The log  dir')
+tf.app.flags.DEFINE_string("word2vec_path", "words_vec_100.txt",
                            "the word2vec data path")
+tf.app.flags.DEFINE_string("char2vec_path", "chars_vec_100.txt",
+                           "the char2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
-tf.app.flags.DEFINE_integer("embedding_char_size", 20, "second embedding size")
+tf.app.flags.DEFINE_integer("embedding_char_size", 50, "second embedding size")
 tf.app.flags.DEFINE_integer("char_window_size", 2,
                             "the window size of char convolution")
 tf.app.flags.DEFINE_integer("max_chars_per_word", MAX_WORD_LEN,
@@ -288,7 +292,7 @@ def main(unused_argv):
         trainDataPath = curdir + "/../../" + trainDataPath
     graph = tf.Graph()
     with graph.as_default():
-        model = TextCNN(FLAGS.word_word2vec_path)
+        model = TextCNN(FLAGS.word2vec_path, FLAGS.char2vec_path)
         print("train data path:", trainDataPath)
         clfier_X, clfier_cX, clfier_Y = inputs(trainDataPath)
         clfier_tX, clfier_tcX, clfier_tY = do_load_data(
@@ -298,7 +302,8 @@ def main(unused_argv):
         train_op = train(total_loss)
         test_clfier_score = model.test_clfier_score()
 
-        sv = tf.train.Supervisor(graph=graph, logdir=FLAGS.cnn_clfier_log_dir)
+        logdir = os.path.join(FLAGS.cnn_clfier_common2_log_dir, TIMESTAMP)
+        sv = tf.train.Supervisor(graph=graph, logdir=logdir)
 
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
         with sv.managed_session(
