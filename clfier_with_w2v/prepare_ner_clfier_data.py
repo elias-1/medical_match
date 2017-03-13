@@ -254,15 +254,14 @@ def generate_clfier2_line(clfier_cout2, char_vob, words_with_class,
     chari = []
     current_index = 0
     for ti in range(nl):
+        word = words[ti]
         if current_index < len(common_index) and ti == common_index[
                 current_index]:
-            idx = ENTITY_TYPES.index(entity_with_types[words[
-                ti]]) + word_vob_size
+            idx = ENTITY_TYPES.index(entity_with_types[word]) + word_vob_size
             current_index += 1
         else:
             idx = char_vob.GetWordIndex(word)
         wordi.append(str(idx))
-        word = words[ti]
 
         chars = list(word)
         nc = len(chars)
