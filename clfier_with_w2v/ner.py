@@ -11,7 +11,6 @@ Date: 17-3-14 下午3:05
 import os
 import sys
 
-import jieba
 import numpy as np
 import tensorflow as tf
 from train_ner import FLAGS, Model, do_load_data, inputs, test_evaluate, train
@@ -35,21 +34,28 @@ class Ner:
         char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
         self.char_vob = self.get_vob(char2vec_path)
 
-        self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
-        wX, Y = inputs(FLAGS.train_data_path)
-        total_loss = self.model.loss(wX, Y)
-        self.train_op = train(total_loss)
+        # self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
 
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
         saver = tf.train.Saver()
         saver.restore(self.sess, checkpoint_file)
-        vnames = [v.name for v in tf.global_variables()]
-        print vnames
-        self.test_unary_score, self.test_sequence_length = self.model.test_unary_score(
-        )
-        _, self.trainsMatrix = self.sess.run(
-            [self.train_op, self.model.transition_params])
+
+        self.inp_w = self.sess.graph.get_operation_by_name(
+            "input_words").outputs[0]
+
+        # vnames = [v.name for v in tf.global_variables()]
+        # print vnames
+        # self.test_unary_score, self.test_sequence_length = self.model.test_unary_score(
+        # )
+        self.test_sequence_length = self.sess.graph.get_operation_by_name(
+            "length").outputs[0]
+
+        self.test_unary_score = self.sess.graph.get_operation_by_name(
+            "unary_scores").outputs[0]
+
+        self.trainsMatrix = self.sess.graph.get_operation_by_name(
+            "transitions").outputs[0]
 
     def get_vob(self, vob_path):
         vob = []
@@ -122,7 +128,7 @@ class Ner:
         chari = self.process_line(sentence)
         chari = map(int, chari)
 
-        feed_dict = {self.model.inp_w: np.array([chari]), }
+        feed_dict = {self.inp_w: np.array([chari]), }
         unary_score_val, test_sequence_length_val = self.sess.run(
             [self.test_unary_score, self.test_sequence_length], feed_dict)
 
@@ -146,13 +152,13 @@ class Ner:
         twX, tY = do_load_data(FLAGS.test_data_path)
 
         test_evaluate(self.sess, self.test_unary_score,
-                      self.test_sequence_length, self.trainsMatrix,
-                      self.model.inp_w, twX, tY)
+                      self.test_sequence_length, self.trainsMatrix, self.inp_w,
+                      twX, tY)
 
 
 def main(argv=None):
     ner = Ner()
-    # print sentence_clfier(u'得了糖尿病，该吃什么药')
+    # print ner(u'得了糖尿病，该吃什么药')
     ner.test()
 
 

@@ -23,7 +23,7 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_string('test_data_path', "ner_test_v2.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs_v2", 'The log  dir')
-tf.app.flags.DEFINE_string("word2vec_path", "chars_vec_50.txt",
+tf.app.flags.DEFINE_string("word2vec_path", "chars_vec_100.txt",
                            "the word2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
@@ -93,7 +93,7 @@ class Model:
         word_vectors = tf.nn.embedding_lookup(self.words, wX)
 
         length = self.length(wX)
-        length_64 = tf.cast(length, tf.int64)
+        length_64 = tf.cast(length, tf.int64, name='length')
 
         #if trainMode:
         #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
@@ -124,7 +124,8 @@ class Model:
         # matricized_unary_scores = tf.nn.log_softmax(matricized_unary_scores)
         unary_scores = tf.reshape(
             matricized_unary_scores,
-            [-1, FLAGS.max_sentence_len, self.distinctTagNum])
+            [-1, FLAGS.max_sentence_len, self.distinctTagNum],
+            name='unary_scores')
 
         return unary_scores, length
 
