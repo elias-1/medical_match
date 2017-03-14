@@ -15,8 +15,8 @@ import jieba
 import numpy as np
 import tensorflow as tf
 
-from .train_ner import FLAGS, Model, do_load_data, test_evaluate
-from .utils import ENTITY_TYPES
+from train_ner import FLAGS, Model, do_load_data, test_evaluate
+from utils import ENTITY_TYPES
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -31,17 +31,18 @@ UNK = '<UNK>'
 
 class Ner:
     def __init__(self):
-        #         graph = tf.Graph()
-        #         self.sess = tf.Session(graph=graph)
         self.sess = tf.Session()
 
-        run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
         self.char_vob = self.get_vob(char2vec_path)
+
         self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
+
+        run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
         saver = tf.train.Saver()
         saver.restore(self.sess, checkpoint_file)
+        print(tf.global_variables())
         self.test_unary_score, self.test_sequence_length = self.model.test_unary_score(
         )
         print(tf.global_variables())
