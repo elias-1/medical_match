@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 www.drcubic.com, Inc. All Rights Reserved
+# Copyright (c) 2017 www.drcubic.com, Inc. All Rights Reserved
 #
 """
 File: cnn_clfier.py
@@ -16,10 +16,7 @@ import time
 
 import numpy as np
 import tensorflow as tf
-
-MAX_SENTENCE_LEN = 30
-MAX_WORD_LEN = 6
-NUM_ENTITIES = 11
+from utils import MAX_SENTENCE_LEN2, MAX_WORD_LEN, load_w2v
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -34,7 +31,7 @@ tf.app.flags.DEFINE_string("word2vec_path", "words_vec_100.txt",
                            "the word2vec data path")
 tf.app.flags.DEFINE_string("char2vec_path", "chars_vec_50.txt",
                            "the char2vec data path")
-tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
+tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN2,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
 tf.app.flags.DEFINE_integer("embedding_char_size", 50, "second embedding size")
@@ -98,8 +95,8 @@ class TextCNN(object):
     """
 
     def __init__(self, w2vPath, c2vPath):
-        self.w2v = self.load_w2v(w2vPath, FLAGS.embedding_word_size)
-        self.c2v = self.load_w2v(c2vPath, FLAGS.embedding_char_size)
+        self.w2v = load_w2v(w2vPath, FLAGS.embedding_word_size)
+        self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
         self.words = tf.Variable(self.w2v, name="words")
         self.chars = tf.Variable(self.c2v, name="chars")
 
@@ -168,42 +165,6 @@ class TextCNN(object):
             tf.int32,
             shape=[None, FLAGS.max_sentence_len * FLAGS.max_chars_per_word],
             name="input_chars")
-
-    def load_w2v(self, path, expectDim):
-        fp = open(path, "r")
-        print("load data from:", path)
-        line = fp.readline().strip()
-        ss = line.split(" ")
-        total = int(ss[0])
-        dim = int(ss[1])
-        assert (dim == expectDim)
-        ws = []
-        mv = [0 for i in range(dim)]
-        second = -1
-        for t in range(total):
-            if ss[0] == '<UNK>':
-                second = t
-            line = fp.readline().strip()
-            ss = line.split(" ")
-            assert (len(ss) == (dim + 1))
-            vals = []
-            for i in range(1, dim + 1):
-                fv = float(ss[i])
-                mv[i - 1] += fv
-                vals.append(fv)
-            ws.append(vals)
-        for i in range(dim):
-            mv[i] = mv[i] / total
-        assert (second != -1)
-        # if UNK don't exist, append one more token.(This assuame that the unk is not in the last line.)
-        if second == -1:
-            ws.append(mv)
-        if second != 1:
-            t = ws[1]
-            ws[1] = ws[second]
-            ws[second] = t
-        fp.close()
-        return np.asarray(ws, dtype=np.float32)
 
     def char_convolution(self, vecs):
         conv1 = tf.nn.conv2d(

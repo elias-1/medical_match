@@ -16,8 +16,8 @@ import sys
 import jieba
 import w2v
 
-MAX_SENTENCE_LEN = 30
-MAX_WORD_LEN = 6
+from utils import MAX_SENTENCE_LEN2, MAX_WORD_LEN
+
 SPLIT_RATE = 0.8
 
 jieba.load_userdict(os.path.join('../data', 'words.txt'))
@@ -32,8 +32,8 @@ def stat_max_len(data):
     max_sentence_len = 0
     for key in data:
         for sentence in data[key]:
-            temp_max_word_len = max([len(word) for word in tokenizer(sentence)
-                                     ])
+            temp_max_word_len = max(
+                [len(word) for word in tokenizer(sentence)])
             temp_max_sentence_len = len(tokenizer(sentence))
             if max_word_len < temp_max_word_len:
                 max_word_len = temp_max_word_len
@@ -80,8 +80,8 @@ def process_line(x_text, word_vob, char_vob):
     nl = len(words)
     wordi = []
     chari = []
-    if nl > MAX_SENTENCE_LEN:
-        nl = MAX_SENTENCE_LEN
+    if nl > MAX_SENTENCE_LEN2:
+        nl = MAX_SENTENCE_LEN2
     for ti in range(nl):
         word = words[ti]
         word_idx = word_vob.GetWordIndex(word)
@@ -97,14 +97,14 @@ def process_line(x_text, word_vob, char_vob):
             chari.append(str(char_idx))
         for i in range(nc, MAX_WORD_LEN):
             chari.append("0")
-    for i in range(nl, MAX_SENTENCE_LEN):
+    for i in range(nl, MAX_SENTENCE_LEN2):
         wordi.append("0")
         for ii in range(MAX_WORD_LEN):
             chari.append('0')
     return wordi, chari
 
 
-def generate_net_input(data, out, word_vob, char_vob):
+def generate_net_input(data, out, word_vob, char_vob, output_type):
     #vob_size = word_vob.GetTotalWord()
     for x_text, y in data:
         wordi, chari = process_line(x_text, word_vob, char_vob)

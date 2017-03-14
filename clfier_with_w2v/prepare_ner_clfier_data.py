@@ -285,7 +285,7 @@ def generate_clfier2_line(clfier_cout2,
             idx = ENTITY_TYPES.index(entity_with_types[word]) + word_vob_size
             current_index += 1
         else:
-            idx = char_vob.GetWordIndex(word)
+            idx = word_vob.GetWordIndex(word)
         wordi.append(str(idx))
 
         chars = list(word)
@@ -311,6 +311,45 @@ def generate_clfier2_line(clfier_cout2,
     clfier_line = line + label_id
 
     clfier_cout2.write("%s\n" % (clfier_line))
+    return clfier_line
+
+
+def generate_research_line(out, char_vob, word_vob, words_with_class):
+    label_id = RESEARCH_LABEL[words_with_class[0]]
+    words = tokenizer(words_with_class[1])
+
+    nl = len(words)
+    if nl > MAX_SENTENCE_LEN2:
+        nl = MAX_SENTENCE_LEN2
+    wordi = []
+    chari = []
+    for ti in range(nl):
+        word = words[ti]
+        idx = word_vob.GetWordIndex(word)
+        wordi.append(str(idx))
+        chars = list(word)
+        nc = len(chars)
+        if nc > MAX_WORD_LEN:
+            lc = chars[nc - 1]
+            chars[MAX_WORD_LEN - 1] = lc
+            nc = MAX_WORD_LEN
+        for i in range(nc):
+            char_idx = char_vob.GetWordIndex(chars[i])
+            chari.append(str(char_idx))
+        for i in range(nc, MAX_WORD_LEN):
+            chari.append("0")
+    for i in range(nl, MAX_SENTENCE_LEN2):
+        wordi.append("0")
+        for ii in range(MAX_WORD_LEN):
+            chari.append('0')
+
+    line = " ".join(wordi)
+    line += " "
+    line += " ".join(chari)
+    line += " "
+    clfier_line = line + label_id
+
+    out.write("%s\n" % (clfier_line))
     return clfier_line
 
 
@@ -340,6 +379,9 @@ def processLine(out, output_type, data, char_vob, word_vob):
                 entity_location,
                 entity_with_types,
                 for_research=True)
+        elif output_type == '4':
+            generate_research_line(out, char_vob, word_vob, row[:2])
+
         else:
             raise ('output type error!')
 
@@ -350,6 +392,7 @@ output_type:
 2   clfier_common
 3   clfier_common2
 4   research_common
+5   research_clfier
 """
 
 
