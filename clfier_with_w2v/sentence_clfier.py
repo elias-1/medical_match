@@ -37,31 +37,34 @@ def tokenizer(sentence):
     return jieba.lcut(sentence, cut_all=False)
 
 
+def get_vob(vob_path):
+    vob = []
+    with open(vob_path, 'r') as f:
+        f.readline()
+        for row in f.readlines():
+            vob.append(row.split()[0].decode('utf-8'))
+    return vob
+
+
+word2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
+char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.char2vec_path)
+
+word_vob = get_vob(word2vec_path)
+char_vob = get_vob(char2vec_path)
+
+
 class SentenceClfier:
     def __init__(self):
         #         graph = tf.Graph()
         #         self.sess = tf.Session(graph=graph)
         self.sess = tf.Session()
-        word2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
-        char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.char2vec_path)
+
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         self.model = TextCNN(word2vec_path, char2vec_path)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
         saver = tf.train.Saver()
         saver.restore(self.sess, checkpoint_file)
-
-        self.word_vob = self.get_vob(word2vec_path)
-        self.char_vob = self.get_vob(char2vec_path)
-
         self.test_clfier_score = self.model.test_clfier_score()
-
-    def get_vob(self, vob_path):
-        vob = []
-        with open(vob_path, 'r') as f:
-            f.readline()
-            for row in f.readlines():
-                vob.append(row.split()[0].decode('utf-8'))
-        return vob
 
     def process_line(self, x_text):
         words = tokenizer(x_text)
@@ -73,9 +76,9 @@ class SentenceClfier:
         for ti in range(nl):
             word = words[ti]
             try:
-                word_idx = self.word_vob.index(word)
+                word_idx = word_vob.index(word)
             except ValueError:
-                word_idx = self.word_vob.index(UNK)
+                word_idx = word_vob.index(UNK)
 
             wordi.append(str(word_idx))
             chars = list(word)
@@ -86,9 +89,9 @@ class SentenceClfier:
                 nc = MAX_WORD_LEN
             for i in range(nc):
                 try:
-                    char_idx = self.char_vob.index(chars[i])
+                    char_idx = char_vob.index(chars[i])
                 except ValueError:
-                    char_idx = self.char_vob.index(UNK)
+                    char_idx = char_vob.index(UNK)
                 chari.append(str(char_idx))
             for i in range(nc, MAX_WORD_LEN):
                 chari.append("0")
