@@ -38,7 +38,7 @@ class Ner:
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
         self.char_vob = self.get_vob(char2vec_path)
-        self.model = Model(char2vec_path)
+        self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
         saver = tf.train.Saver()
         saver.restore(self.sess, checkpoint_file)
@@ -61,7 +61,10 @@ class Ner:
             nl = MAX_SENTENCE_LEN
         for ti in range(nl):
             char = x_text[ti]
-            idx = self.char_vob.GetWordIndex(char)
+            try:
+                idx = self.char_vob.index(char)
+            except ValueError:
+                idx = self.char_vob.index(UNK)
             chari.append(str(idx))
         for i in range(nl, MAX_SENTENCE_LEN):
             chari.append("0")
