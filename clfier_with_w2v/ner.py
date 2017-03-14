@@ -37,7 +37,6 @@ class Ner:
 
         self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
         wX, Y = inputs(FLAGS.train_data_path)
-        twX, tY = do_load_data(FLAGS.test_data_path)
         total_loss = self.model.loss(wX, Y)
         self.train_op = train(total_loss)
 
