@@ -54,7 +54,16 @@ def build_dataset(data):
             class_data[row[0]].append(row)
         else:
             class_data[row[0]] = [row]
+    class_stat = {}
     for key in class_data:
+        if len(class_data[key]) < 70:
+            continue
+        class_stat[key] = len(class_data[key])
+
+    pprint.pprint(class_stat)
+    for key in class_data:
+        if len(class_data[key]) < 70:
+            continue
         split_index = int(SPLIT_RATE * len(class_data[key]))
         train_data.extend(class_data[key][:split_index])
         test_data.extend(class_data[key][split_index:])
@@ -319,7 +328,7 @@ output_type:
 def main(argc, argv):
     if argc < 6:
         print(
-            'Usage:%s <data> <char_vob> <ner_train_output> <ner_test_output> <output_type>'
+            'Usage:%s <data> <char_vob> <train_output> <test_output> <output_type>'
             % (argv[0]))
         exit(1)
 
