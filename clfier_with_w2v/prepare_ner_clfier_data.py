@@ -24,6 +24,16 @@ jieba.load_userdict(os.path.join('../data', 'words.txt'))
 
 SPLIT_RATE = 0.8
 
+RESEARCH_LABEL = {
+    '1': '0',
+    '10': '1',
+    '21': '2',
+    '23': '3',
+    '24': '4',
+    '29': '5',
+    '7': '6'
+}
+
 
 def tokenizer(sentence):
     return jieba.lcut(sentence, cut_all=False)
@@ -246,11 +256,19 @@ def refine_tokenizer2common(words, entity_location):
     return result_words, common_index
 
 
-def generate_clfier2_line(clfier_cout2, char_vob, word_vob, words_with_class,
-                          entity_location, entity_with_types):
+def generate_clfier2_line(clfier_cout2,
+                          char_vob,
+                          word_vob,
+                          words_with_class,
+                          entity_location,
+                          entity_with_types,
+                          for_research=False):
 
     word_vob_size = word_vob.GetTotalWord()
-    label_id = str(int(words_with_class[0]) - 1)
+    if for_research:
+        label_id = RESEARCH_LABEL[words_with_class[0]]
+    else:
+        label_id = str(int(words_with_class[0]) - 1)
 
     words = tokenizer(words_with_class[1])
     words, common_index = refine_tokenizer2common(words, entity_location)
@@ -313,6 +331,15 @@ def processLine(out, output_type, data, char_vob, word_vob):
         elif output_type == '3':
             generate_clfier2_line(out, char_vob, word_vob, row[:2],
                                   entity_location, entity_with_types)
+        elif output_type == '4':
+            generate_clfier2_line(
+                out,
+                char_vob,
+                word_vob,
+                row[:2],
+                entity_location,
+                entity_with_types,
+                for_research=True)
         else:
             raise ('output type error!')
 
@@ -322,6 +349,7 @@ output_type:
 1   ner
 2   clfier_common
 3   clfier_common2
+4   research_common
 """
 
 
