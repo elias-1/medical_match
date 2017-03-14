@@ -9,6 +9,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import time
 
 import numpy as np
 import tensorflow as tf
@@ -38,6 +39,8 @@ tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
 
 tf.flags.DEFINE_float('l2_reg_lambda', 1,
                       'L2 regularization lambda (default: 0.0)')
+
+TIMESTAMP = str(int(time.time()))
 
 
 def do_load_data(path):
@@ -218,7 +221,9 @@ def main(unused_argv):
         total_loss = model.loss(wX, Y)
         train_op = train(total_loss)
         test_unary_score, test_sequence_length = model.test_unary_score()
-        sv = tf.train.Supervisor(graph=graph, logdir=FLAGS.ner_log_dir)
+
+        logdir = os.path.join(FLAGS.cnn_clfier_log_dir, TIMESTAMP)
+        sv = tf.train.Supervisor(graph=graph, logdir=logdir)
 
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
         with sv.managed_session(
@@ -242,11 +247,9 @@ def main(unused_argv):
                                       model.inp_w, twX, tY)
                 except KeyboardInterrupt, e:
                     sv.saver.save(
-                        sess,
-                        FLAGS.ner_log_dir + '/model',
-                        global_step=(step + 1))
+                        sess, logdir + '/model', global_step=(step + 1))
                     raise e
-            sv.saver.save(sess, FLAGS.ner_log_dir + '/finnal-model')
+            sv.saver.save(sess, logdir + '/finnal-model')
 
 
 if __name__ == '__main__':
