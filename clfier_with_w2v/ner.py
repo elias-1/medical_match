@@ -39,7 +39,7 @@ class Ner:
         wX, Y = inputs(FLAGS.train_data_path)
         twX, tY = do_load_data(FLAGS.test_data_path)
         total_loss = self.model.loss(wX, Y)
-        self.train_op = self.train(total_loss)
+        self.train_op = train(total_loss)
 
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
