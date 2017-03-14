@@ -23,7 +23,7 @@ tf.app.flags.DEFINE_string(
 tf.app.flags.DEFINE_string('test_data_path', "ner_test_v2.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs_v2", 'The log  dir')
-tf.app.flags.DEFINE_string("word_word2vec_path", "chars_vec_50.txt",
+tf.app.flags.DEFINE_string("word2vec_path", "chars_vec_50.txt",
                            "the word2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
@@ -106,7 +106,8 @@ class Model:
                 scope="RNN_forward")
             backward_output_, _ = tf.nn.dynamic_rnn(
                 tf.nn.rnn_cell.BasicLSTMCell(self.numHidden),
-                inputs=tf.reverse_sequence(word_vectors, length_64, seq_dim=1),
+                inputs=tf.reverse_sequence(
+                    word_vectors, length_64, seq_dim=1),
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_backword")
@@ -185,9 +186,7 @@ def test_evaluate(sess, unary_score, test_sequence_length, transMatrix, inp_w,
         if endOff > totalLen:
             endOff = totalLen
         y = tY[i * batchSize:endOff]
-        feed_dict = {
-            inp_w: twX[i * batchSize:endOff],
-        }
+        feed_dict = {inp_w: twX[i * batchSize:endOff], }
         unary_score_val, test_sequence_length_val = sess.run(
             [unary_score, test_sequence_length], feed_dict)
         for tf_unary_scores_, y_, sequence_length_ in zip(
@@ -211,8 +210,7 @@ def main(unused_argv):
         trainDataPath = curdir + "/../../" + trainDataPath
     graph = tf.Graph()
     with graph.as_default():
-        model = Model(FLAGS.num_tags, FLAGS.word_word2vec_path,
-                      FLAGS.num_hidden)
+        model = Model(FLAGS.num_tags, FLAGS.word2vec_path, FLAGS.num_hidden)
         print("train data path:", trainDataPath)
         wX, Y = inputs(trainDataPath)
         twX, tY = do_load_data(FLAGS.test_data_path)
