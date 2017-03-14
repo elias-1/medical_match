@@ -15,7 +15,6 @@ import jieba
 import numpy as np
 import tensorflow as tf
 
-from .sentence_clfier import char2vec_path, char_vob
 from .train_ner import FLAGS, Model, do_load_data, test_evaluate
 from .utils import ENTITY_TYPES
 
@@ -37,6 +36,8 @@ class Ner:
         self.sess = tf.Session()
 
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
+        char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
+        self.char_vob = self.get_vob(char2vec_path)
         self.model = Model(char2vec_path)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
         saver = tf.train.Saver()
@@ -45,6 +46,14 @@ class Ner:
         )
         print(tf.global_variables())
 
+    def get_vob(self, vob_path):
+        vob = []
+        with open(vob_path, 'r') as f:
+            f.readline()
+            for row in f.readlines():
+                vob.append(row.split()[0].decode('utf-8'))
+        return vob
+
     def process_line(self, x_text):
         nl = len(x_text)
         chari = []
@@ -52,7 +61,7 @@ class Ner:
             nl = MAX_SENTENCE_LEN
         for ti in range(nl):
             char = x_text[ti]
-            idx = char_vob.GetWordIndex(char)
+            idx = self.char_vob.GetWordIndex(char)
             chari.append(str(idx))
         for i in range(nl, MAX_SENTENCE_LEN):
             chari.append("0")
