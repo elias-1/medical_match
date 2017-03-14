@@ -40,6 +40,10 @@ class Ner:
 
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
+
+        my_saver = tf.train.Saver()
+        my_saver.restore(self.sess, checkpoint_file)
+
         saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
         saver.restore(self.sess, checkpoint_file)
 
