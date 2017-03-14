@@ -222,7 +222,7 @@ def main(unused_argv):
         train_op = train(total_loss)
         test_unary_score, test_sequence_length = model.test_unary_score()
 
-        logdir = os.path.join(FLAGS.cnn_clfier_log_dir, TIMESTAMP)
+        logdir = os.path.join(FLAGS.ner_log_dir, TIMESTAMP)
         sv = tf.train.Supervisor(graph=graph, logdir=logdir)
 
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
