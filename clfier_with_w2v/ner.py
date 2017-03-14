@@ -42,10 +42,10 @@ class Ner:
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
         saver = tf.train.Saver()
         saver.restore(self.sess, checkpoint_file)
-        print(tf.global_variables())
+        vnames = [v.name for v in tf.global_variables()]
+        print vnames
         self.test_unary_score, self.test_sequence_length = self.model.test_unary_score(
         )
-        print(tf.global_variables())
 
     def get_vob(self, vob_path):
         vob = []
