@@ -14,8 +14,7 @@ import sys
 import jieba
 import numpy as np
 import tensorflow as tf
-
-from train_ner import FLAGS, Model, do_load_data, test_evaluate
+from train_ner import FLAGS, Model, do_load_data, inputs, test_evaluate
 from utils import ENTITY_TYPES
 
 reload(sys)
@@ -37,6 +36,10 @@ class Ner:
         self.char_vob = self.get_vob(char2vec_path)
 
         self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
+        wX, Y = inputs(FLAGS.train_data_path)
+        twX, tY = do_load_data(FLAGS.test_data_path)
+        total_loss = self.model.loss(wX, Y)
+        self.train_op = self.train(total_loss)
 
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
@@ -46,6 +49,8 @@ class Ner:
         print vnames
         self.test_unary_score, self.test_sequence_length = self.model.test_unary_score(
         )
+        _, self.trainsMatrix = self.sess.run(
+            [self.train_op, self.model.transition_params])
 
     def get_vob(self, vob_path):
         vob = []
@@ -124,8 +129,8 @@ class Ner:
 
         tf_unary_scores_ = unary_score_val[0][:test_sequence_length_val[0]]
 
-        viterbi_sequence, _ = tf.contrib.crf.viterbi_decode(
-            tf_unary_scores_, self.model.transition_params)
+        viterbi_sequence, _ = tf.contrib.crf.viterbi_decode(tf_unary_scores_,
+                                                            self.trainsMatrix)
 
         entity_location, types_id = self.decode_entity_location(
             viterbi_sequence)
@@ -142,7 +147,7 @@ class Ner:
         twX, tY = do_load_data(FLAGS.test_data_path)
 
         test_evaluate(self.sess, self.test_unary_score,
-                      self.test_sequence_length, self.model.transition_params,
+                      self.test_sequence_length, self.trainsMatrix,
                       self.model.inp_w, twX, tY)
 
 

@@ -204,10 +204,10 @@ def test_evaluate(sess, unary_score, test_sequence_length, transMatrix, inp_w,
 
 
 def main(unused_argv):
-    curdir = os.path.dirname(os.path.realpath(__file__))
-    trainDataPath = tf.app.flags.FLAGS.train_data_path
-    if not trainDataPath.startswith("/"):
-        trainDataPath = curdir + "/../../" + trainDataPath
+    # curdir = os.path.dirname(os.path.realpath(__file__))
+    trainDataPath = FLAGS.train_data_path
+    # if not trainDataPath.startswith("/"):
+    #     trainDataPath = curdir + "/../../" + trainDataPath
     graph = tf.Graph()
     with graph.as_default():
         model = Model(FLAGS.num_tags, FLAGS.word2vec_path, FLAGS.num_hidden)
