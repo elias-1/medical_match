@@ -28,7 +28,7 @@ tf.app.flags.DEFINE_string("word2vec_path", "chars_vec_100.txt",
                            "the word2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
-tf.app.flags.DEFINE_integer("embedding_word_size", 50, "embedding size")
+tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
 tf.app.flags.DEFINE_integer("num_tags", 30, "num pos tags")
 tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
