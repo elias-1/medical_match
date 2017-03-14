@@ -41,18 +41,19 @@ class Ner:
         saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
         saver.restore(self.sess, checkpoint_file)
 
-        self.inp_w = self.sess.graph.get_operation_by_name(
-            "input_words").outputs[0]
-
-        # vnames = [v.name for v in tf.global_variables()]
-        # print vnames
-        # self.test_unary_score, self.test_sequence_length = self.model.test_unary_score(
-        # )
-        self.test_sequence_length = self.sess.graph.get_operation_by_name(
-            "length").outputs[0]
-
-        self.test_unary_score = self.sess.graph.get_operation_by_name(
-            "unary_scores").outputs[0]
+        vnames = [v.name for v in tf.global_variables()]
+        print vnames
+        self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
+        self.test_unary_score, self.test_sequence_length = self.model.test_unary_score(
+        )
+        # self.inp_w = self.sess.graph.get_operation_by_name(
+        #     "input_words").outputs[0]
+        #
+        # self.test_sequence_length = self.sess.graph.get_operation_by_name(
+        #     "length").outputs[0]
+        #
+        # self.test_unary_score = self.sess.graph.get_operation_by_name(
+        #     "unary_scores").outputs[0]
 
         self.trainsMatrix = self.sess.graph.get_operation_by_name(
             "transitions").outputs[0]
@@ -128,7 +129,7 @@ class Ner:
         chari = self.process_line(sentence)
         chari = map(int, chari)
 
-        feed_dict = {self.inp_w: np.array([chari]), }
+        feed_dict = {self.model.inp_w: np.array([chari]), }
         unary_score_val, test_sequence_length_val = self.sess.run(
             [self.test_unary_score, self.test_sequence_length], feed_dict)
 
@@ -152,11 +153,13 @@ class Ner:
         twX, tY = do_load_data(FLAGS.test_data_path)
 
         test_evaluate(self.sess, self.test_unary_score,
-                      self.test_sequence_length, self.trainsMatrix, self.inp_w,
-                      twX, tY)
+                      self.test_sequence_length, self.trainsMatrix,
+                      self.model.inp_w, twX, tY)
 
 
 def main(argv=None):
+    # import pdb
+    # pdb.set_trace()
     ner = Ner()
     # print ner(u'得了糖尿病，该吃什么药')
     ner.test()
