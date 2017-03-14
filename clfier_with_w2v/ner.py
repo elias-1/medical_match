@@ -14,7 +14,7 @@ import sys
 import jieba
 import numpy as np
 import tensorflow as tf
-from train_ner import FLAGS, Model, do_load_data, inputs, test_evaluate
+from train_ner import FLAGS, Model, do_load_data, inputs, test_evaluate, train
 from utils import ENTITY_TYPES
 
 reload(sys)
