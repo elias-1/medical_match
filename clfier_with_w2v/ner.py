@@ -59,8 +59,10 @@ class Ner:
         # self.test_unary_score = self.sess.graph.get_operation_by_name(
         #     "unary_scores").outputs[0]
 
-        self.trainsMatrix = self.sess.graph.get_operation_by_name(
+        transitions = self.sess.graph.get_operation_by_name(
             "transitions").outputs[0]
+
+        self.trainsMatrix[0] = self.sess.run([transitions])
 
     def get_vob(self, vob_path):
         vob = []
