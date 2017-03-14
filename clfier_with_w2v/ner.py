@@ -62,7 +62,7 @@ class Ner:
         transitions = self.sess.graph.get_operation_by_name(
             "transitions").outputs[0]
 
-        self.trainsMatrix[0] = self.sess.run([transitions])
+        self.trainsMatrix = self.sess.run([transitions])[0]
 
     def get_vob(self, vob_path):
         vob = []
