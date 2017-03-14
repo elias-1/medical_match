@@ -379,7 +379,7 @@ def processLine(out, output_type, data, char_vob, word_vob):
                 entity_location,
                 entity_with_types,
                 for_research=True)
-        elif output_type == '4':
+        elif output_type == '5':
             generate_research_line(out, char_vob, word_vob, row[:2])
 
         else:
