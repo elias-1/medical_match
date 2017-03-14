@@ -34,7 +34,9 @@ class Ner:
         char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
         self.char_vob = self.get_vob(char2vec_path)
 
-        # self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
+        self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
+        self.test_unary_score, self.test_sequence_length = self.model.inference(
+            self.model.inp_w, trainMode=False)
 
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
@@ -43,9 +45,7 @@ class Ner:
 
         vnames = [v.name for v in tf.global_variables()]
         print vnames
-        self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
-        self.test_unary_score, self.test_sequence_length = self.model.test_unary_score(
-        )
+
         # self.inp_w = self.sess.graph.get_operation_by_name(
         #     "input_words").outputs[0]
         #
