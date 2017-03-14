@@ -20,7 +20,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 # Eval Parameters
 MAX_SENTENCE_LEN = 80
-tf.flags.DEFINE_string("run_dir", "ner_logs_v2",
+tf.flags.DEFINE_string("run_dir", "ner_logs_v2/1489493289",
                        "Dir of training run using for ckpt")
 
 tf.flags.DEFINE_string("exec_dir", ".", "execute env dir")
@@ -38,7 +38,7 @@ class Ner:
 
         run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
-        saver = tf.train.Saver()
+        saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
         saver.restore(self.sess, checkpoint_file)
 
         self.inp_w = self.sess.graph.get_operation_by_name(
