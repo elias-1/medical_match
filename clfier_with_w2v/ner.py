@@ -47,8 +47,9 @@ class Ner:
         ner_run_dir = os.path.join(FLAGS.ner_exec_dir, FLAGS.ner_run_dir)
         checkpoint_file = tf.train.latest_checkpoint(ner_run_dir)
 
-        my_saver = tf.train.Saver()
-        my_saver.restore(self.sess, checkpoint_file)
+        with self.sess.graph.as_default():
+            saver = tf.train.Saver()
+            saver.restore(self.sess, checkpoint_file)
 
         # saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
         # saver.restore(self.sess, checkpoint_file)
@@ -138,9 +139,7 @@ class Ner:
         chari = self.process_line(sentence)
         chari = map(int, chari)
 
-        feed_dict = {
-            self.model.inp_w: np.array([chari]),
-        }
+        feed_dict = {self.model.inp_w: np.array([chari]), }
         unary_score_val, test_sequence_length_val = self.sess.run(
             [self.test_unary_score, self.test_sequence_length], feed_dict)
 
