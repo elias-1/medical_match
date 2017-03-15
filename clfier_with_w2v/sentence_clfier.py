@@ -18,12 +18,12 @@ import sys
 import jieba
 import numpy as np
 import tensorflow as tf
-from cnn_clfier import FLAGS, TextCNN, do_load_data, test_evaluate
+
+from .cnn_clfier import (C_MAX_SENTENCE_LEN, C_MAX_WORD_LEN, FLAGS, TextCNN,
+                         do_load_data, test_evaluate)
 
 reload(sys)
 sys.setdefaultencoding('utf8')
-MAX_SENTENCE_LEN = 30
-MAX_WORD_LEN = 6
 
 # Eval Parameters
 tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1488455612",
@@ -68,8 +68,8 @@ class SentenceClfier:
         nl = len(words)
         wordi = []
         chari = []
-        if nl > MAX_SENTENCE_LEN:
-            nl = MAX_SENTENCE_LEN
+        if nl > C_MAX_SENTENCE_LEN:
+            nl = C_MAX_SENTENCE_LEN
         for ti in range(nl):
             word = words[ti]
             try:
@@ -80,21 +80,21 @@ class SentenceClfier:
             wordi.append(str(word_idx))
             chars = list(word)
             nc = len(chars)
-            if nc > MAX_WORD_LEN:
+            if nc > C_MAX_WORD_LEN:
                 lc = chars[nc - 1]
-                chars[MAX_WORD_LEN - 1] = lc
-                nc = MAX_WORD_LEN
+                chars[C_MAX_WORD_LEN - 1] = lc
+                nc = C_MAX_WORD_LEN
             for i in range(nc):
                 try:
                     char_idx = self.char_vob.index(chars[i])
                 except ValueError:
                     char_idx = self.char_vob.index(UNK)
                 chari.append(str(char_idx))
-            for i in range(nc, MAX_WORD_LEN):
+            for i in range(nc, C_MAX_WORD_LEN):
                 chari.append("0")
-        for i in range(nl, MAX_SENTENCE_LEN):
+        for i in range(nl, C_MAX_SENTENCE_LEN):
             wordi.append("0")
-            for ii in range(MAX_WORD_LEN):
+            for ii in range(C_MAX_WORD_LEN):
                 chari.append('0')
         return wordi, chari
 

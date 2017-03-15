@@ -13,17 +13,19 @@ import sys
 
 import numpy as np
 import tensorflow as tf
-from train_ner import FLAGS, Model, do_load_data, inputs, test_evaluate, train
-from utils import ENTITY_TYPES
+
+from .train_ner import (FLAGS, NER_MAX_SENTENCE_LEN, Model, do_load_data,
+                        test_evaluate)
+
+ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 # Eval Parameters
-MAX_SENTENCE_LEN = 80
-tf.flags.DEFINE_string("run_dir", "ner_logs_v2/1489493289",
+tf.flags.DEFINE_string("ner_run_dir", "ner_logs_v2/1489493289",
                        "Dir of training run using for ckpt")
 
-tf.flags.DEFINE_string("exec_dir", ".", "execute env dir")
+tf.flags.DEFINE_string("ner_exec_dir", ".", "execute env dir")
 UNK = '<UNK>'
 
 
@@ -31,15 +33,17 @@ class Ner:
     def __init__(self):
         self.sess = tf.Session()
 
-        char2vec_path = os.path.join(FLAGS.exec_dir, FLAGS.word2vec_path)
+        char2vec_path = os.path.join(FLAGS.ner_exec_dir,
+                                     FLAGS.ner_word2vec_path)
         self.char_vob = self.get_vob(char2vec_path)
 
-        self.model = Model(FLAGS.num_tags, char2vec_path, FLAGS.num_hidden)
+        self.model = Model(FLAGS.ner_num_tags, char2vec_path,
+                           FLAGS.ner_num_hidden)
         self.test_unary_score, self.test_sequence_length = self.model.inference(
             self.model.inp_w, trainMode=False)
 
-        run_dir = os.path.join(FLAGS.exec_dir, FLAGS.run_dir)
-        checkpoint_file = tf.train.latest_checkpoint(run_dir)
+        ner_run_dir = os.path.join(FLAGS.ner_exec_dir, FLAGS.ner_run_dir)
+        checkpoint_file = tf.train.latest_checkpoint(ner_run_dir)
 
         my_saver = tf.train.Saver()
         my_saver.restore(self.sess, checkpoint_file)
@@ -72,8 +76,8 @@ class Ner:
     def process_line(self, x_text):
         nl = len(x_text)
         chari = []
-        if nl > MAX_SENTENCE_LEN:
-            nl = MAX_SENTENCE_LEN
+        if nl > NER_MAX_SENTENCE_LEN:
+            nl = NER_MAX_SENTENCE_LEN
         for ti in range(nl):
             char = x_text[ti]
             try:
@@ -81,7 +85,7 @@ class Ner:
             except ValueError:
                 idx = self.char_vob.index(UNK)
             chari.append(str(idx))
-        for i in range(nl, MAX_SENTENCE_LEN):
+        for i in range(nl, NER_MAX_SENTENCE_LEN):
             chari.append("0")
 
         return chari
@@ -153,7 +157,7 @@ class Ner:
         return entity_with_types
 
     def test(self):
-        twX, tY = do_load_data(FLAGS.test_data_path)
+        twX, tY = do_load_data(FLAGS.ner_test_data_path)
 
         test_evaluate(self.sess, self.test_unary_score,
                       self.test_sequence_length, self.trainsMatrix,

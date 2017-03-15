@@ -4,7 +4,7 @@
 # @Last Modified by:   Elias
 # @Last Modified time: 2017-02-06 15:23:12
 
-# python train_ner.py --word_word2vec_path data/glove.6B.100d.txt --train_data_path /home/elias/code/deep-drcubic/NER_with_sentence_clfier/train.txt --test_data_path test.txt --learning_rate 0.001
+# python train_ner.py --word_ner_word2vec_path data/glove.6B.100d.txt --ner_train_data_path /home/elias/code/deep-drcubic/NER_with_sentence_clfier/train.txt --ner_test_data_path test.txt --ner_learning_rate 0.001
 
 from __future__ import absolute_import, division, print_function
 
@@ -13,31 +13,32 @@ import time
 
 import numpy as np
 import tensorflow as tf
-from utils import MAX_SENTENCE_LEN, load_w2v
+from .utils import load_w2v
 
+NER_MAX_SENTENCE_LEN = 80
 FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string(
-    'train_data_path',
+    'ner_train_data_path',
     "/home/elias/code/medical_match/clfier_with_w2v/ner_train_v2.txt",
     'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "ner_test_v2.txt",
+tf.app.flags.DEFINE_string('ner_test_data_path', "ner_test_v2.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs_v2", 'The log  dir')
-tf.app.flags.DEFINE_string("word2vec_path", "chars_vec_100.txt",
+tf.app.flags.DEFINE_string("ner_word2vec_path", "chars_vec_100.txt",
                            "the word2vec data path")
-tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
+tf.app.flags.DEFINE_integer("ner_max_sentence_len", NER_MAX_SENTENCE_LEN,
                             "max num of tokens per query")
-tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
-tf.app.flags.DEFINE_integer("num_tags", 30, "num pos tags")
-tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
-tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
-tf.app.flags.DEFINE_integer("train_steps", 1500, "trainning steps")
-tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
-tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
+tf.app.flags.DEFINE_integer("ner_embedding_word_size", 100, "embedding size")
+tf.app.flags.DEFINE_integer("ner_num_tags", 30, "num pos tags")
+tf.app.flags.DEFINE_integer("ner_num_hidden", 100, "hidden unit number")
+tf.app.flags.DEFINE_integer("ner_batch_size", 64, "num example per mini batch")
+tf.app.flags.DEFINE_integer("ner_train_steps", 1500, "trainning steps")
+tf.app.flags.DEFINE_float("ner_learning_rate", 0.001, "learning rate")
+tf.app.flags.DEFINE_float('ner_dropout_keep_prob', 0.5,
                           'Dropout keep probability (default: 0.5)')
 
-tf.flags.DEFINE_float('l2_reg_lambda', 1,
+tf.flags.DEFINE_float('ner_l2_reg_lambda', 1,
                       'L2 regularization lambda (default: 0.0)')
 
 TIMESTAMP = str(int(time.time()))
@@ -54,15 +55,15 @@ def do_load_data(path):
         if not line:
             continue
         ss = line.split(" ")
-        if len(ss) != (FLAGS.max_sentence_len * 2):
+        if len(ss) != (FLAGS.ner_max_sentence_len * 2):
             print("[line:%d]len ss:%d,origin len:%d\n%s" %
                   (ln, len(ss), len(line), line))
-        assert (len(ss) == (FLAGS.max_sentence_len * 2))
+        assert (len(ss) == (FLAGS.ner_max_sentence_len * 2))
         lwx = []
         ly = []
-        for i in range(FLAGS.max_sentence_len):
+        for i in range(FLAGS.ner_max_sentence_len):
             lwx.append(int(ss[i]))
-            ly.append(int(ss[i + FLAGS.max_sentence_len]))
+            ly.append(int(ss[i + FLAGS.ner_max_sentence_len]))
         wx.append(lwx)
         y.append(ly)
     fp.close()
@@ -73,7 +74,7 @@ class Model:
     def __init__(self, distinctTagNum, w2vPath, numHidden):
         self.distinctTagNum = distinctTagNum
         self.numHidden = numHidden
-        self.w2v = load_w2v(w2vPath, FLAGS.embedding_word_size)
+        self.w2v = load_w2v(w2vPath, FLAGS.ner_embedding_word_size)
         self.words = tf.Variable(self.w2v, name="words")
 
         with tf.variable_scope('Ner_output') as scope:
@@ -84,7 +85,9 @@ class Model:
                 regularizer=tf.contrib.layers.l2_regularizer(0.001))
             self.b = tf.Variable(tf.zeros([distinctTagNum], name="bias"))
         self.inp_w = tf.placeholder(
-            tf.int32, shape=[None, FLAGS.max_sentence_len], name="input_words")
+            tf.int32,
+            shape=[None, FLAGS.ner_max_sentence_len],
+            name="input_words")
 
     def length(self, data):
         used = tf.sign(tf.abs(data))
@@ -99,7 +102,7 @@ class Model:
         length_64 = tf.cast(length, tf.int64, name='length')
 
         #if trainMode:
-        #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
+        #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.ner_dropout_keep_prob)
         with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
             forward_output, _ = tf.nn.dynamic_rnn(
                 tf.nn.rnn_cell.BasicLSTMCell(self.numHidden),
@@ -121,13 +124,13 @@ class Model:
         output = tf.concat(2, [forward_output, backward_output])
         output = tf.reshape(output, [-1, self.numHidden * 2])
         if trainMode:
-            output = tf.nn.dropout(output, FLAGS.dropout_keep_prob)
+            output = tf.nn.dropout(output, FLAGS.ner_dropout_keep_prob)
 
         matricized_unary_scores = tf.matmul(output, self.W) + self.b
         # matricized_unary_scores = tf.nn.log_softmax(matricized_unary_scores)
         unary_scores = tf.reshape(
             matricized_unary_scores,
-            [-1, FLAGS.max_sentence_len, self.distinctTagNum],
+            [-1, FLAGS.ner_max_sentence_len, self.distinctTagNum],
             name='unary_scores')
 
         return unary_scores, length
@@ -139,7 +142,7 @@ class Model:
         loss = tf.reduce_mean(-log_likelihood)
         regularization_loss = tf.add_n(
             tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
-        return loss + regularization_loss * FLAGS.l2_reg_lambda
+        return loss + regularization_loss * FLAGS.ner_l2_reg_lambda
 
     def test_unary_score(self):
         P, sequence_length = self.inference(
@@ -147,7 +150,7 @@ class Model:
         return P, sequence_length
 
 
-def read_csv(batch_size, file_name):
+def read_csv(ner_batch_size, file_name):
     filename_queue = tf.train.string_input_producer([file_name])
     reader = tf.TextLineReader(skip_header_lines=0)
     key, value = reader.read(filename_queue)
@@ -157,30 +160,30 @@ def read_csv(batch_size, file_name):
     decoded = tf.decode_csv(
         value,
         field_delim=' ',
-        record_defaults=[[0] for i in range(FLAGS.max_sentence_len * 2)])
+        record_defaults=[[0] for i in range(FLAGS.ner_max_sentence_len * 2)])
 
-    # batch actually reads the file and loads "batch_size" rows in a single tensor
+    # batch actually reads the file and loads "ner_batch_size" rows in a single tensor
     return tf.train.shuffle_batch(
         decoded,
-        batch_size=batch_size,
-        capacity=batch_size * 4,
-        min_after_dequeue=batch_size)
+        ner_batch_size=ner_batch_size,
+        capacity=ner_batch_size * 4,
+        min_after_dequeue=ner_batch_size)
 
 
 def inputs(path):
-    whole = read_csv(FLAGS.batch_size, path)
-    features = tf.transpose(tf.stack(whole[0:FLAGS.max_sentence_len]))
-    label = tf.transpose(tf.stack(whole[FLAGS.max_sentence_len:]))
+    whole = read_csv(FLAGS.ner_batch_size, path)
+    features = tf.transpose(tf.stack(whole[0:FLAGS.ner_max_sentence_len]))
+    label = tf.transpose(tf.stack(whole[FLAGS.ner_max_sentence_len:]))
     return features, label
 
 
 def train(total_loss):
-    return tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(total_loss)
+    return tf.train.AdamOptimizer(FLAGS.ner_learning_rate).minimize(total_loss)
 
 
 def test_evaluate(sess, unary_score, test_sequence_length, transMatrix, inp_w,
                   twX, tY):
-    batchSize = FLAGS.batch_size
+    batchSize = FLAGS.ner_batch_size
     totalLen = twX.shape[0]
     numBatch = int((twX.shape[0] - 1) / batchSize) + 1
     correct_labels = 0
@@ -209,15 +212,16 @@ def test_evaluate(sess, unary_score, test_sequence_length, transMatrix, inp_w,
 
 def main(unused_argv):
     # curdir = os.path.dirname(os.path.realpath(__file__))
-    trainDataPath = FLAGS.train_data_path
+    trainDataPath = FLAGS.ner_train_data_path
     # if not trainDataPath.startswith("/"):
     #     trainDataPath = curdir + "/../../" + trainDataPath
     graph = tf.Graph()
     with graph.as_default():
-        model = Model(FLAGS.num_tags, FLAGS.word2vec_path, FLAGS.num_hidden)
+        model = Model(FLAGS.ner_num_tags, FLAGS.ner_word2vec_path,
+                      FLAGS.ner_num_hidden)
         print("train data path:", trainDataPath)
         wX, Y = inputs(trainDataPath)
-        twX, tY = do_load_data(FLAGS.test_data_path)
+        twX, tY = do_load_data(FLAGS.ner_test_data_path)
         total_loss = model.loss(wX, Y)
         train_op = train(total_loss)
         test_unary_score, test_sequence_length = model.test_unary_score()
@@ -230,7 +234,7 @@ def main(unused_argv):
                 master='',
                 config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
             # actual training loop
-            training_steps = FLAGS.train_steps
+            training_steps = FLAGS.ner_train_steps
             for step in range(training_steps):
                 if sv.should_stop():
                     break

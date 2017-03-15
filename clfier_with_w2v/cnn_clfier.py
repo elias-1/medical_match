@@ -16,7 +16,10 @@ import time
 
 import numpy as np
 import tensorflow as tf
-from utils import MAX_SENTENCE_LEN2, MAX_WORD_LEN, load_w2v
+from .utils import load_w2v
+
+C_MAX_SENTENCE_LEN = 25
+C_MAX_WORD_LEN = 6
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -31,13 +34,13 @@ tf.app.flags.DEFINE_string("word2vec_path", "words_vec_100.txt",
                            "the word2vec data path")
 tf.app.flags.DEFINE_string("char2vec_path", "chars_vec_50.txt",
                            "the char2vec data path")
-tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN2,
+tf.app.flags.DEFINE_integer("max_sentence_len", C_MAX_SENTENCE_LEN,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
 tf.app.flags.DEFINE_integer("embedding_char_size", 50, "second embedding size")
 tf.app.flags.DEFINE_integer("char_window_size", 2,
                             "the window size of char convolution")
-tf.app.flags.DEFINE_integer("max_chars_per_word", MAX_WORD_LEN,
+tf.app.flags.DEFINE_integer("max_chars_per_word", C_MAX_WORD_LEN,
                             "max number of characters per word ")
 tf.app.flags.DEFINE_integer('batch_size', 64, 'Batch Size (default: 64)')
 tf.app.flags.DEFINE_integer("train_steps", 1000, "trainning steps")
