@@ -64,8 +64,8 @@ class Ner:
         #
         # self.test_unary_score = self.sess.graph.get_operation_by_name(
         #     "unary_scores").outputs[0]
-
-        self.trainsMatrix = np.load('transition.npy')
+        transition_fpath = os.path.join(FLAGS.ner_exec_dir, 'transition.npy')
+        self.trainsMatrix = np.load(transition_fpath)
 
     def get_vob(self, vob_path):
         vob = []
