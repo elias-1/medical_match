@@ -18,16 +18,17 @@ import numpy as np
 import tensorflow as tf
 from .utils import load_w2v
 
-C_MAX_SENTENCE_LEN = 25
+C_MAX_SENTENCE_LEN = 30
 C_MAX_WORD_LEN = 6
 
 FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string(
     'train_data_path',
-    "/home/drcubic/code/medical_match/clfier_with_w2v/train.txt",
+    "/home/elias/code/medical_match/clfier_with_w2v/clfier_train.txt",
     'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "test.txt", 'Test data dir')
+tf.app.flags.DEFINE_string('test_data_path', "clfier_test.txt",
+                           'Test data dir')
 tf.app.flags.DEFINE_string('cnn_clfier_log_dir', "cnn_clfier_logs",
                            'The log  dir')
 tf.app.flags.DEFINE_string("word2vec_path", "words_vec_100.txt",
@@ -51,7 +52,7 @@ tf.app.flags.DEFINE_string('filter_sizes', '3,4,5',
 tf.app.flags.DEFINE_integer('num_filters', 128,
                             'Number of filters per filter size (default: 128)')
 tf.app.flags.DEFINE_float("num_classes", 11, "Number of classes to classify")
-tf.app.flags.DEFINE_float('dropout_keep_prob', 0.6,
+tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
                           'Dropout keep probability (default: 0.5)')
 
 tf.flags.DEFINE_float('l2_reg_lambda', 1,

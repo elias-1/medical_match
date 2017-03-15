@@ -112,8 +112,7 @@ class Model:
                 scope="RNN_forward")
             backward_output_, _ = tf.nn.dynamic_rnn(
                 tf.nn.rnn_cell.BasicLSTMCell(self.numHidden),
-                inputs=tf.reverse_sequence(
-                    word_vectors, length_64, seq_dim=1),
+                inputs=tf.reverse_sequence(word_vectors, length_64, seq_dim=1),
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_backword")
@@ -165,7 +164,7 @@ def read_csv(ner_batch_size, file_name):
     # batch actually reads the file and loads "ner_batch_size" rows in a single tensor
     return tf.train.shuffle_batch(
         decoded,
-        ner_batch_size=ner_batch_size,
+        batch_size=ner_batch_size,
         capacity=ner_batch_size * 4,
         min_after_dequeue=ner_batch_size)
 
@@ -193,7 +192,9 @@ def test_evaluate(sess, unary_score, test_sequence_length, transMatrix, inp_w,
         if endOff > totalLen:
             endOff = totalLen
         y = tY[i * batchSize:endOff]
-        feed_dict = {inp_w: twX[i * batchSize:endOff], }
+        feed_dict = {
+            inp_w: twX[i * batchSize:endOff],
+        }
         unary_score_val, test_sequence_length_val = sess.run(
             [unary_score, test_sequence_length], feed_dict)
         for tf_unary_scores_, y_, sequence_length_ in zip(

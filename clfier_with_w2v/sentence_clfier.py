@@ -26,10 +26,12 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 # Eval Parameters
-tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1488455612",
+tf.flags.DEFINE_string("run_dir", "cnn_clfier_logs/1489571611",
                        "Dir of training run using for ckpt")
 
-tf.flags.DEFINE_string("exec_dir", ".", "execute env dir")
+tf.flags.DEFINE_string("exec_dir",
+                       "/home/elias/code/medical_match/clfier_with_w2v",
+                       "execute env dir")
 UNK = '<UNK>'
 
 

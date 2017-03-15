@@ -22,10 +22,12 @@ ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
 reload(sys)
 sys.setdefaultencoding('utf8')
 # Eval Parameters
-tf.flags.DEFINE_string("ner_run_dir", "ner_logs_v2/1489493289",
+tf.flags.DEFINE_string("ner_run_dir", "ner_logs_v2/1489569777",
                        "Dir of training run using for ckpt")
 
-tf.flags.DEFINE_string("ner_exec_dir", ".", "execute env dir")
+tf.flags.DEFINE_string("ner_exec_dir",
+                       "/home/elias/code/medical_match/clfier_with_w2v",
+                       "execute env dir")
 UNK = '<UNK>'
 
 
@@ -136,7 +138,9 @@ class Ner:
         chari = self.process_line(sentence)
         chari = map(int, chari)
 
-        feed_dict = {self.model.inp_w: np.array([chari]), }
+        feed_dict = {
+            self.model.inp_w: np.array([chari]),
+        }
         unary_score_val, test_sequence_length_val = self.sess.run(
             [self.test_unary_score, self.test_sequence_length], feed_dict)
 

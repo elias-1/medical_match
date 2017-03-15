@@ -16,7 +16,7 @@ import sys
 import jieba
 import w2v
 
-from utils import MAX_SENTENCE_LEN2, MAX_WORD_LEN
+from cnn_clfier import C_MAX_SENTENCE_LEN, C_MAX_WORD_LEN
 
 SPLIT_RATE = 0.8
 
