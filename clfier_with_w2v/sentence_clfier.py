@@ -50,6 +50,7 @@ class SentenceClfier:
         self.model = TextCNN(word2vec_path, char2vec_path)
         checkpoint_file = tf.train.latest_checkpoint(run_dir)
 
+        tf.reset_default_graph()
         with self.sess.graph.as_default():
             saver = tf.train.Saver()
             saver.restore(self.sess, checkpoint_file)
@@ -107,21 +108,26 @@ class SentenceClfier:
         wordi = map(int, wordi)
         chari = map(int, chari)
 
-        feed_dict = {
-            self.model.inp_w: np.array([wordi]),
-            self.model.inp_c: np.array([chari])
-        }
-        clfier_score_val = self.sess.run([self.test_clfier_score], feed_dict)
-        predictions = np.argmax(clfier_score_val[0], 1)
+        tf.reset_default_graph()
+        with self.sess.graph.as_default():
+            feed_dict = {
+                self.model.inp_w: np.array([wordi]),
+                self.model.inp_c: np.array([chari])
+            }
+            clfier_score_val = self.sess.run([self.test_clfier_score],
+                                             feed_dict)
+            predictions = np.argmax(clfier_score_val[0], 1)
 
-        return predictions[0] + 1
+            return predictions[0] + 1
 
     def test(self):
-        clfier_tX, clfier_tcX, clfier_tY = do_load_data(
-            FLAGS.test_data_path, FLAGS.max_sentence_len,
-            FLAGS.max_chars_per_word)
-        test_evaluate(self.sess, self.test_clfier_score, self.model.inp_w,
-                      self.model.inp_c, clfier_tX, clfier_tcX, clfier_tY)
+        tf.reset_default_graph()
+        with self.sess.graph.as_default():
+            clfier_tX, clfier_tcX, clfier_tY = do_load_data(
+                FLAGS.test_data_path, FLAGS.max_sentence_len,
+                FLAGS.max_chars_per_word)
+            test_evaluate(self.sess, self.test_clfier_score, self.model.inp_w,
+                          self.model.inp_c, clfier_tX, clfier_tcX, clfier_tY)
 
 
 def main(argv=None):

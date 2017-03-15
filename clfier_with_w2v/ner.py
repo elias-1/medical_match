@@ -47,6 +47,7 @@ class Ner:
         ner_run_dir = os.path.join(FLAGS.ner_exec_dir, FLAGS.ner_run_dir)
         checkpoint_file = tf.train.latest_checkpoint(ner_run_dir)
 
+        tf.reset_default_graph()
         with self.sess.graph.as_default():
             saver = tf.train.Saver()
             saver.restore(self.sess, checkpoint_file)
@@ -139,32 +140,36 @@ class Ner:
         chari = self.process_line(sentence)
         chari = map(int, chari)
 
-        feed_dict = {self.model.inp_w: np.array([chari]), }
-        unary_score_val, test_sequence_length_val = self.sess.run(
-            [self.test_unary_score, self.test_sequence_length], feed_dict)
+        tf.reset_default_graph()
+        with self.sess.graph.as_default():
+            feed_dict = {self.model.inp_w: np.array([chari]), }
+            unary_score_val, test_sequence_length_val = self.sess.run(
+                [self.test_unary_score, self.test_sequence_length], feed_dict)
 
-        tf_unary_scores_ = unary_score_val[0][:test_sequence_length_val[0]]
+            tf_unary_scores_ = unary_score_val[0][:test_sequence_length_val[0]]
 
-        viterbi_sequence, _ = tf.contrib.crf.viterbi_decode(tf_unary_scores_,
-                                                            self.trainsMatrix)
+            viterbi_sequence, _ = tf.contrib.crf.viterbi_decode(
+                tf_unary_scores_, self.trainsMatrix)
 
-        entity_location, types_id = self.decode_entity_location(
-            viterbi_sequence)
-        entity_with_types = []
-        for loc, type_id in zip(entity_location, types_id):
-            entity = sentence[loc[0]:loc[1] + 1]
-            type = ENTITY_TYPES[type_id]
-            entity_with_types.append(entity + '/' + type)
+            entity_location, types_id = self.decode_entity_location(
+                viterbi_sequence)
+            entity_with_types = []
+            for loc, type_id in zip(entity_location, types_id):
+                entity = sentence[loc[0]:loc[1] + 1]
+                type = ENTITY_TYPES[type_id]
+                entity_with_types.append(entity + '/' + type)
 
-        print('  ||  '.join(entity_with_types))
-        return entity_with_types
+            print('  ||  '.join(entity_with_types))
+            return entity_with_types
 
     def test(self):
-        twX, tY = do_load_data(FLAGS.ner_test_data_path)
+        tf.reset_default_graph()
+        with self.sess.graph.as_default():
+            twX, tY = do_load_data(FLAGS.ner_test_data_path)
 
-        test_evaluate(self.sess, self.test_unary_score,
-                      self.test_sequence_length, self.trainsMatrix,
-                      self.model.inp_w, twX, tY)
+            test_evaluate(self.sess, self.test_unary_score,
+                          self.test_sequence_length, self.trainsMatrix,
+                          self.model.inp_w, twX, tY)
 
 
 def main(argv=None):
