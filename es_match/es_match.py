@@ -17,10 +17,8 @@ es = Elasticsearch([{"host": "localhost", "port": 9200}])
 
 
 def hanzi2pinyin(word):
-    return [
-        pypinyin.pinyin(
-            ch, style=pypinyin.NORMAL)[0][0] for ch in list(word)
-    ]
+
+    return [ch[0] for ch in pypinyin.pinyin(word, style=pypinyin.NORMAL)]
 
 
 def encode_pinyin(word):
