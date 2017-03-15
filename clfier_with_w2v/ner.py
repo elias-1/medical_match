@@ -157,7 +157,8 @@ class Ner:
             for loc, type_id in zip(entity_location, types_id):
                 entity = sentence[loc[0]:loc[1] + 1]
                 type = ENTITY_TYPES[type_id]
-                entity_with_types.append(entity + '/' + type)
+                entity_with_type = entity + '/' + type
+                entity_with_types.append(entity_with_type.encode('utf-8'))
 
             print('  ||  '.join(entity_with_types))
             return entity_with_types
