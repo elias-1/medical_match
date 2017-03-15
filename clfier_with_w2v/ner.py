@@ -142,7 +142,9 @@ class Ner:
 
         tf.reset_default_graph()
         with self.sess.graph.as_default():
-            feed_dict = {self.model.inp_w: np.array([chari]), }
+            feed_dict = {
+                self.model.inp_w: np.array([chari]),
+            }
             unary_score_val, test_sequence_length_val = self.sess.run(
                 [self.test_unary_score, self.test_sequence_length], feed_dict)
 
@@ -156,11 +158,14 @@ class Ner:
             entity_with_types = []
             for loc, type_id in zip(entity_location, types_id):
                 entity = sentence[loc[0]:loc[1] + 1]
-                type = ENTITY_TYPES[type_id]
-                entity_with_type = entity + '/' + type
-                entity_with_types.append(entity_with_type.encode('utf-8'))
+                #type = ENTITY_TYPES[type_id]
+                #entity_with_type = entity + '/' + type
+                #entity_with_types.append(entity_with_type.encode('utf-8'))
+                entity = entity.replace(',', '，')
+                ens = entity.strip('，').split('，')
+                entity_with_types.extend(ens)
 
-            print('  ||  '.join(entity_with_types))
+            #print('  ||  '.join(entity_with_types))
             return entity_with_types
 
     def test(self):
