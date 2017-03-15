@@ -44,11 +44,11 @@ class Ner:
         my_saver = tf.train.Saver()
         my_saver.restore(self.sess, checkpoint_file)
 
-        saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
-        saver.restore(self.sess, checkpoint_file)
+        # saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
+        # saver.restore(self.sess, checkpoint_file)
 
-        vnames = [v.name for v in tf.global_variables()]
-        print vnames
+        # vnames = [v.name for v in tf.global_variables()]
+        # print vnames
 
         # self.inp_w = self.sess.graph.get_operation_by_name(
         #     "input_words").outputs[0]
@@ -59,10 +59,7 @@ class Ner:
         # self.test_unary_score = self.sess.graph.get_operation_by_name(
         #     "unary_scores").outputs[0]
 
-        transitions = self.sess.graph.get_operation_by_name(
-            "transitions").outputs[0]
-
-        self.trainsMatrix = self.sess.run([transitions])[0]
+        self.trainsMatrix = np.load('transition.npy')
 
     def get_vob(self, vob_path):
         vob = []

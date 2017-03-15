@@ -250,6 +250,7 @@ def main(unused_argv):
                         sess, logdir + '/model', global_step=(step + 1))
                     raise e
             sv.saver.save(sess, logdir + '/finnal-model')
+            np.save('transition.npy', trainsMatrix)
 
 
 if __name__ == '__main__':
