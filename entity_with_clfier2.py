@@ -52,19 +52,18 @@ def entity_identify(sentence):
     question = sentence
     result_json = {}
 
-    #result_json[u'label'] = sentence_clfier(sentence)
+    result_json[u'label'] = sentence_clfier(sentence)
     #seg = jieba.posseg.cut(question)
     #en_candis = en_candidate(seg, common_words)
     en_candis = sent_ner(sentence)
-    fuzzy_entity_result = set([])
+    fuzzy_entity_result = []
     entity_dict = {}
     for name in en_candis:
         print name.encode('utf-8')
-        es_results, _ = es_match.search_index(name, 1)
-        for es_result in es_results:
-            es_result
-            fuzzy_entity_result.add(es_result)
-            break
+        es_results, _ = es_match.search_index(name, 30)
+        en = {}
+        en[name] = es_results
+        fuzzy_entity_result.append(en)
 
     result_json[u'entity'] = list(fuzzy_entity_result)
 
@@ -73,7 +72,7 @@ def entity_identify(sentence):
 
 if __name__ == "__main__":
     stime = time.clock()
-    result = entity_identify(u'感冒，发骚，咳嗽吃什么药？')
+    result = entity_identify(u'咳嗽吃什么？')
     dstr = json.dumps(result, ensure_ascii=False, indent=4)
     dstr = unicode.encode(dstr, 'utf-8')
     with open('qa_result.json', 'wb') as f:

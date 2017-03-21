@@ -13,7 +13,7 @@ import time
 
 import numpy as np
 import tensorflow as tf
-from .utils import load_w2v
+from utils import load_w2v
 
 NER_MAX_SENTENCE_LEN = 80
 FLAGS = tf.app.flags.FLAGS

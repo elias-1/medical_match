@@ -14,8 +14,8 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-from .train_ner import (FLAGS, NER_MAX_SENTENCE_LEN, Model, do_load_data,
-                        test_evaluate)
+from train_ner import (FLAGS, NER_MAX_SENTENCE_LEN, Model, do_load_data,
+                       test_evaluate)
 
 ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
 
@@ -183,7 +183,9 @@ def main(argv=None):
     # pdb.set_trace()
     ner = Ner()
     # print ner(u'得了糖尿病，该吃什么药')
-    ner.test()
+    print ''.join(ner(u'今天天气怎么样？'))
+    print ''.join(ner(u'下雨了怎么办？'))
+    # ner.test()
 
 
 if __name__ == '__main__':
