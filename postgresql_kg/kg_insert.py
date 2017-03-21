@@ -9,27 +9,56 @@ Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/21 17:10
 """
 
-import sys
 import csv
 import re
+import sys
 
 import psycopg2
 
 ENTITY_WITH_ID = re.compile('edu\/(.*?)\/(.*?)>', re.IGNORECASE)
-conn = psycopg2.connect("dbname=kgdata user=dbuser")
+conn = psycopg2.connect("dbname=kgdata user=dbuser password=112233")
+
 
 def create_table(sql):
-    cur = conn.cursor()
-    cur.execute(sql)
-    cur.close()
+    try:
+        cur = conn.cursor()
+        cur.execute(sql)
+        # close communication with the PostgreSQL database server
+        cur.close()
+        # commit the changes
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+
 
 def create_kg_table():
-    sql1 = """
+    sql1 = """CREATE TABLE property (
+                  entity_id varchar(20) PRIMARY KEY,
+                  entity_type varchar(50) not null,
+                  property_name varchar(50) not null,
+                  property_value varchar(255) not null
+              )
     """
-    sql2 = """
+    sql2 = """CREATE TABLE relation (
+                  id SERIAL PRIMARY KEY,
+                  entity_id1 varchar(20),
+                  entity_name1 varchar(255) not null,
+                  entity_type1 varchar(50) not null,
+                  relation varchar(50) not null,
+                  entity_id2 varchar(20) not null,
+                  entity_name2 varchar(255) not null,
+                  entity_type2 varchar(50) not null,
+                  FOREIGN KEY (entity_id1)
+                  REFERENCES property (entity_id)
+                  ON UPDATE CASCADE ON DELETE CASCADE,
+                  FOREIGN KEY (entity_id2)
+                  REFERENCES property (entity_id)
+                  ON UPDATE CASCADE ON DELETE CASCADE,
+              )
     """
     create_table(sql1)
-    create_table(2)
+    create_table(sql2)
+
 
 def extract_id_name(csv_reader):
     id2name = {}
@@ -44,17 +73,28 @@ def extract_id_name(csv_reader):
 
 
 def insert2db(sql, data):
-    cur = conn.cursor()
-    cur.execute(sql, data)
-    cur.close()
+    try:
+        cur = conn.cursor()
+        # execute the INSERT statement
+        cur.executemany(sql, data)
+        # commit the changes to the database
+        # close communication with the database
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+
 
 def insert2property(property_data):
-    sql = ''
+    sql = """INSERT INTO property (entity_id, entity_type, property_name, property_value)
+                 VALUES (%s, %s, %s, %s);"""
     insert2db(sql, property_data)
 
+
 def insert2relation(relation_data):
-    sql = ''
-    insert2db(sql,relation_data)
+    sql = """INSERT INTO relation (entity_id1, entity_name1, entity_type1, relation, entity_id2, entity_name2, entity_type2)
+                 VALUES (%s, %s, %s, %s %s, %s, %s);"""
+    insert2db(sql, relation_data)
+
 
 def process_row(row, id2name):
     entity_with_relation = ENTITY_WITH_ID.findall(row[1])
@@ -63,7 +103,8 @@ def process_row(row, id2name):
     entity_type1 = entity_with_id[0][1]
     relation_or_property = entity_with_relation[0][1]
     if entity_with_relation[0][0] == 'property':
-        property_data = (entity_id1, entity_type1, relation_or_property, row[2])
+        property_data = (entity_id1, entity_type1, relation_or_property,
+                         row[2])
         insert2property(property_data)
     else:
         entity_with_id2 = ENTITY_WITH_ID.findall(row[2])
@@ -71,8 +112,10 @@ def process_row(row, id2name):
         entity_type2 = entity_with_id2[0][1]
         relation_data1 = (entity_id1, id2name[entity_id1], entity_type1)
         relation_data2 = (entity_id2, id2name[entity_id2], entity_type2)
-        relation_data = relation_data1 + (relation_or_property,) + relation_data2
+        relation_data = relation_data1 + (relation_or_property,
+                                          ) + relation_data2
         insert2relation(relation_data)
+
 
 def main(argc, argv):
     if argc < 2:
@@ -85,8 +128,9 @@ def main(argc, argv):
         f.seek(0)
         for row in csv_reader:
             process_row(row, id2name)
+    conn.commit()
+    conn.close()
 
 
 if __name__ == "__main__":
     main(len(sys.argv), sys.argv)
-
