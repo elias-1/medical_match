@@ -9,7 +9,6 @@ Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/21 17:10
 """
 
-import csv
 import re
 import sys
 
@@ -61,10 +60,11 @@ def create_kg_table():
     create_table(sql2)
 
 
-def extract_id_name(csv_reader):
+def extract_id_name(f):
     id2name = {}
-    for row in csv_reader:
-        print(row)
+    for line in f.readlines():
+        row = line[:-1].strip().split('\t')
+        assert (len(row) == 3)
         row[2] = row[2][:-1].strip()
         entity_with_relation = ENTITY_WITH_ID.findall(row[1])
         if entity_with_relation[0][0] == 'property':
@@ -99,8 +99,9 @@ def insert2relation(relation_data):
     insert2db(sql, relation_data)
 
 
-def process_row(row, id2name):
-    row[2] = row[2][:-1].strip()
+def process_row(line, id2name):
+    row = line[:-1].strip().split('\t')
+    assert (len(row) == 3)
     entity_with_relation = ENTITY_WITH_ID.findall(row[1])
     entity_with_id = ENTITY_WITH_ID.findall(row[0])
     entity_id1 = entity_with_id[0][1]
@@ -127,11 +128,10 @@ def main(argc, argv):
 
     create_kg_table()
     with open(argv[1], 'r') as f:
-        csv_reader = csv.reader(f, delimiter='\t')
-        id2name = extract_id_name(csv_reader)
+        id2name = extract_id_name(f)
         f.seek(0)
-        for row in csv_reader:
-            process_row(row, id2name)
+        for line in f.readlines():
+            process_row(line, id2name)
     conn.commit()
     conn.close()
 
