@@ -18,6 +18,8 @@ ENTITY_WITH_ID = re.compile('edu\/(.*?)\/(.*?)>', re.IGNORECASE)
 conn = psycopg2.connect(
     'dbname=kgdata user=dbuser password=112233 host=127.0.0.1')
 
+NO_NAME = 0
+
 
 def create_table(sql):
     try:
@@ -105,6 +107,7 @@ def insert2relation(relation_data):
 
 
 def process_row(line, id2name, table_name):
+    global NO_NAME
     line = line.replace('\"', '').decode('utf-8')
     row = line[:line.rindex('.')].strip().split('\t')
     entity_with_relation = ENTITY_WITH_ID.findall(row[1])
@@ -125,6 +128,9 @@ def process_row(line, id2name, table_name):
             entity_with_id2 = ENTITY_WITH_ID.findall(row[2])
             entity_id2 = entity_with_id2[0][1]
             entity_type2 = entity_with_id2[0][1]
+            if entity_id1 not in id2name or entity_id2 not in id2name:
+                NO_NAME += 1
+                return
             relation_data1 = (entity_id1, id2name[entity_id1], entity_type1)
             relation_data2 = (entity_id2, id2name[entity_id2], entity_type2)
             relation_data = relation_data1 + (relation_or_property,
@@ -149,6 +155,7 @@ def main(argc, argv):
         for line in f.readlines():
             process_row(line, id2name, 'relation')
             row_num += 1
+    print('entity id no name num:%d' % NO_NAME)
     conn.commit()
     conn.close()
 
