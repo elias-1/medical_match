@@ -9,6 +9,7 @@ Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/21 17:10
 """
 
+# import pdb
 import re
 import sys
 
@@ -35,10 +36,12 @@ def create_table(sql):
 
 def create_kg_table():
     sql1 = """CREATE TABLE property (
-                  entity_id varchar(20) PRIMARY KEY,
+                  id SERIAL PRIMARY KEY,
+                  entity_id varchar(20) not null,
                   entity_type varchar(50) not null,
                   property_name varchar(50) not null,
-                  property_value varchar(255) not null
+                  property_value varchar(2000) not null
+
               )
     """
     sql2 = """CREATE TABLE entity_relation (
@@ -49,13 +52,7 @@ def create_kg_table():
                   relation varchar(50) not null,
                   entity_id2 varchar(20) not null,
                   entity_name2 varchar(255) not null,
-                  entity_type2 varchar(50) not null,
-                  FOREIGN KEY (entity_id1)
-                  REFERENCES property (entity_id)
-                  ON UPDATE CASCADE ON DELETE CASCADE,
-                  FOREIGN KEY (entity_id2)
-                  REFERENCES property (entity_id)
-                  ON UPDATE CASCADE ON DELETE CASCADE
+                  entity_type2 varchar(50) not null
               )
     """
     create_table(sql1)
@@ -90,6 +87,7 @@ def insert2db(sql, data):
         # close communication with the database
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
+        exit()
         print(error)
 
 
@@ -115,7 +113,7 @@ def process_row(line, id2name, table_name):
     assert (len(row) == 3)
     entity_with_id = ENTITY_WITH_ID.findall(row[0])
     entity_id1 = entity_with_id[0][1]
-    entity_type1 = entity_with_id[0][1]
+    entity_type1 = entity_with_id[0][0]
     relation_or_property = entity_with_relation[0][1]
     if table_name == 'property':
         if entity_with_relation[0][0] == 'property':
@@ -141,7 +139,7 @@ def main(argc, argv):
     if argc < 2:
         print("Usage:%s <data>" % (argv[0]))
 
-    # create_kg_table()
+    create_kg_table()
     with open(argv[1], 'rb') as f:
         id2name = extract_id_name(f)
         f.seek(0)
@@ -161,4 +159,5 @@ def main(argc, argv):
 
 
 if __name__ == "__main__":
+    # pdb.set_trace()
     main(len(sys.argv), sys.argv)
