@@ -16,7 +16,8 @@ import sys
 import psycopg2
 
 ENTITY_WITH_ID = re.compile('edu\/(.*?)\/(.*?)>', re.IGNORECASE)
-conn = psycopg2.connect("dbname=kgdata user=dbuser password=112233")
+conn = psycopg2.connect(
+    'dbname=kgdata user=dbuser password=112233 host=127.0.0.1')
 
 
 def create_table(sql):
