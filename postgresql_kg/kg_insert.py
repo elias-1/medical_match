@@ -100,7 +100,7 @@ def insert2property(property_data):
 
 def insert2relation(relation_data):
     sql = """INSERT INTO relation (entity_id1, entity_name1, entity_type1, relation, entity_id2, entity_name2, entity_type2)
-                 VALUES (%s, %s, %s, %s %s, %s, %s);"""
+                 VALUES (%s, %s, %s, %s, %s, %s, %s);"""
     insert2db(sql, relation_data)
 
 
