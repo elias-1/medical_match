@@ -41,7 +41,7 @@ def create_kg_table():
                   property_value varchar(255) not null
               )
     """
-    sql2 = """CREATE TABLE relation (
+    sql2 = """CREATE TABLE entity_relation (
                   id SERIAL PRIMARY KEY,
                   entity_id1 varchar(20),
                   entity_name1 varchar(255) not null,
@@ -86,8 +86,7 @@ def insert2db(sql, data):
     try:
         cur = conn.cursor()
         # execute the INSERT statement
-        cur.executemany(sql, data)
-        # commit the changes to the database
+        cur.execute(sql, data)
         # close communication with the database
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
@@ -101,7 +100,7 @@ def insert2property(property_data):
 
 
 def insert2relation(relation_data):
-    sql = """INSERT INTO relation (entity_id1, entity_name1, entity_type1, relation, entity_id2, entity_name2, entity_type2)
+    sql = """INSERT INTO entity_relation (entity_id1, entity_name1, entity_type1, relation, entity_id2, entity_name2, entity_type2)
                  VALUES (%s, %s, %s, %s, %s, %s, %s);"""
     insert2db(sql, relation_data)
 
@@ -123,7 +122,7 @@ def process_row(line, id2name, table_name):
             property_data = (entity_id1, entity_type1, relation_or_property,
                              row[2])
             insert2property(property_data)
-    elif table_name == 'relation':
+    elif table_name == 'entity_relation':
         if entity_with_relation[0][0] != 'property':
             entity_with_id2 = ENTITY_WITH_ID.findall(row[2])
             entity_id2 = entity_with_id2[0][1]
@@ -150,13 +149,14 @@ def main(argc, argv):
         for line in f.readlines():
             process_row(line, id2name, 'property')
             row_num += 1
+        conn.commit()
         f.seek(0)
         row_num = 1
         for line in f.readlines():
-            process_row(line, id2name, 'relation')
+            process_row(line, id2name, 'entity_relation')
             row_num += 1
+        conn.commit()
     print('entity id no name num:%d' % NO_NAME)
-    conn.commit()
     conn.close()
 
 
