@@ -63,15 +63,16 @@ def create_kg_table():
 def extract_id_name(f):
     id2name = {}
     for line in f.readlines():
-        line = line.replace('\"', '')
+        line = line.replace('\"', '').decode('utf-8')
         row = line[:line.rindex('.')].strip().split('\t')
+        print row
         assert (len(row) == 3)
         row[2] = row[2][:-1].strip()
         entity_with_relation = ENTITY_WITH_ID.findall(row[1])
         if entity_with_relation[0][0] == 'property':
             entity_with_id = ENTITY_WITH_ID.findall(row[0])
             if entity_with_id[0][1] not in id2name:
-                id2name[entity_with_id[0][1]] = row[2].encode('utf-8')
+                id2name[entity_with_id[0][1]] = row[2]
     print('total entity names:%d' % len(id2name))
     return id2name
 
@@ -101,7 +102,7 @@ def insert2relation(relation_data):
 
 
 def process_row(line, id2name):
-    line = line.replace('\"', '')
+    line = line.replace('\"', '').decode('utf-8')
     row = line[:line.rindex('.')].strip().split('\t')
     assert (len(row) == 3)
     entity_with_relation = ENTITY_WITH_ID.findall(row[1])
