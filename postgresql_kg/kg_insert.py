@@ -63,6 +63,7 @@ def create_kg_table():
 def extract_id_name(f):
     id2name = {}
     for line in f.readlines():
+        line.replace('\"', '')
         row = line[:-1].strip().split('\t')
         assert (len(row) == 3)
         row[2] = row[2][:-1].strip()
@@ -100,6 +101,7 @@ def insert2relation(relation_data):
 
 
 def process_row(line, id2name):
+    line.replace('\"', '')
     row = line[:-1].strip().split('\t')
     assert (len(row) == 3)
     entity_with_relation = ENTITY_WITH_ID.findall(row[1])
