@@ -65,9 +65,11 @@ def extract_id_name(f):
     for line in f.readlines():
         line = line.replace('\"', '')
         row = line[:line.rindex('.')].strip().split('\t')
+        entity_with_relation = ENTITY_WITH_ID.findall(row[1])
+        if len(row) == 2 and entity_with_relation[0][0] == 'property':
+            row.append(u'')
         assert (len(row) == 3)
         row[2] = row[2][:-1].strip()
-        entity_with_relation = ENTITY_WITH_ID.findall(row[1])
         if entity_with_relation[0][0] == 'property':
             entity_with_id = ENTITY_WITH_ID.findall(row[0])
             if entity_with_id[0][1] not in id2name:
@@ -100,28 +102,32 @@ def insert2relation(relation_data):
     insert2db(sql, relation_data)
 
 
-def process_row(line, id2name):
+def process_row(line, id2name, table_name):
     line = line.replace('\"', '')
     row = line[:line.rindex('.')].strip().split('\t')
-    assert (len(row) == 3)
     entity_with_relation = ENTITY_WITH_ID.findall(row[1])
+    if len(row) == 2 and entity_with_relation[0][0] == 'property':
+        row.append(u'')
+    assert (len(row) == 3)
     entity_with_id = ENTITY_WITH_ID.findall(row[0])
     entity_id1 = entity_with_id[0][1]
     entity_type1 = entity_with_id[0][1]
     relation_or_property = entity_with_relation[0][1]
-    if entity_with_relation[0][0] == 'property':
-        property_data = (entity_id1, entity_type1, relation_or_property,
-                         row[2])
-        insert2property(property_data)
-    else:
-        entity_with_id2 = ENTITY_WITH_ID.findall(row[2])
-        entity_id2 = entity_with_id2[0][1]
-        entity_type2 = entity_with_id2[0][1]
-        relation_data1 = (entity_id1, id2name[entity_id1], entity_type1)
-        relation_data2 = (entity_id2, id2name[entity_id2], entity_type2)
-        relation_data = relation_data1 + (relation_or_property,
-                                          ) + relation_data2
-        insert2relation(relation_data)
+    if table_name == 'property':
+        if entity_with_relation[0][0] == 'property':
+            property_data = (entity_id1, entity_type1, relation_or_property,
+                             row[2])
+            insert2property(property_data)
+    elif table_name == 'relation':
+        if entity_with_relation[0][0] != 'property':
+            entity_with_id2 = ENTITY_WITH_ID.findall(row[2])
+            entity_id2 = entity_with_id2[0][1]
+            entity_type2 = entity_with_id2[0][1]
+            relation_data1 = (entity_id1, id2name[entity_id1], entity_type1)
+            relation_data2 = (entity_id2, id2name[entity_id2], entity_type2)
+            relation_data = relation_data1 + (relation_or_property,
+                                              ) + relation_data2
+            insert2relation(relation_data)
 
 
 def main(argc, argv):
@@ -133,7 +139,10 @@ def main(argc, argv):
         id2name = extract_id_name(f)
         f.seek(0)
         for line in f.readlines():
-            process_row(line, id2name)
+            process_row(line, id2name, 'property')
+        f.seek(0)
+        for line in f.readlines():
+            process_row(line, id2name, 'relation')
     conn.commit()
     conn.close()
 
