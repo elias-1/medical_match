@@ -62,7 +62,9 @@ def create_kg_table():
 
 def extract_id_name(f):
     id2name = {}
+    row_num = 1
     for line in f.readlines():
+        row_num += 1
         line = line.replace('\"', '').decode('utf-8')
         row = line[:line.rindex('.')].strip().split('\t')
         entity_with_relation = ENTITY_WITH_ID.findall(row[1])
@@ -138,11 +140,15 @@ def main(argc, argv):
     with open(argv[1], 'rb') as f:
         id2name = extract_id_name(f)
         f.seek(0)
+        row_num = 1
         for line in f.readlines():
             process_row(line, id2name, 'property')
+            row_num += 1
         f.seek(0)
+        row_num = 1
         for line in f.readlines():
             process_row(line, id2name, 'relation')
+            row_num += 1
     conn.commit()
     conn.close()
 
