@@ -53,7 +53,7 @@ def create_kg_table():
                   ON UPDATE CASCADE ON DELETE CASCADE,
                   FOREIGN KEY (entity_id2)
                   REFERENCES property (entity_id)
-                  ON UPDATE CASCADE ON DELETE CASCADE,
+                  ON UPDATE CASCADE ON DELETE CASCADE
               )
     """
     create_table(sql1)
