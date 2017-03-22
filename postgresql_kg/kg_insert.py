@@ -109,7 +109,7 @@ def process_row(line, id2name, table_name):
     row = line[:line.rindex('.')].strip().split('\t')
     entity_with_relation = ENTITY_WITH_ID.findall(row[1])
     if len(row) == 2 and entity_with_relation[0][0] == 'property':
-        row.append(u'')
+        return
     assert (len(row) == 3)
     entity_with_id = ENTITY_WITH_ID.findall(row[0])
     entity_id1 = entity_with_id[0][1]
