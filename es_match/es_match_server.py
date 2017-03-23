@@ -89,21 +89,33 @@ def search_index(query_string, return_number=1):
             }
         })
 
-    answers = res1['hits']['hits'] + res2['hits']['hits']
-    answers0 = res3['hits']['hits']
-    print answers[0]
-    print res2['hits']['hits'][0]
-    print 'dklsd:' + res2['hits']['hits'][0]['_source']['Name']
+    result_names = []
+    if len(res1['hits']['hits']) > 0:
+        fuzz = res1['hits']['hits'][0]['_source']['Name']
+        if fuzz == query_string:
+            result_names.append(fuzz)
+            #print fuzz
+        else:
+            fuzz = res2['hits']['hits'][0]['_source']['Pinyin']
+            if fuzz == query_pinyin:
+                result_names.append(res2['hits']['hits'][0]['_source']['Name'])
+                #print '222'
+            else:
+                if len(res3['hits']['hits']) > 0:
+                    result_names.append(
+                        res3['hits']['hits'][0]['_source']['Name'])
+                    #print '333'
+
+    answers = res1['hits']['hits'] + res2['hits']['hits'] + res3['hits'][
+        'hits']
     answers = sorted(
         answers, cmp=(lambda x, y: 1 if x['_score'] < y['_score'] else -1))
     # pprint.pprint(answers)
-
-    result_names = []
+    # result_names = []
     entity_types = []
-    re_num = return_number
-    if len(answers0) > 0 and answers[0]['_source']['Name'] != query_string:
-        result_names.append(answers0[0]['_source']['Name'])
-        re_num -= 1
+    re_num = return_number - len(result_names)
+    #print return_number
+
     #print re_num
     if re_num >= 1:
         for item in answers:
@@ -114,9 +126,4 @@ def search_index(query_string, return_number=1):
                 #print re_num
                 if re_num == 0:
                     break
-    '''        
-    else:
-        result_names.append(answers[0]['_source']['Name'])
-        entity_types.append(answers[0]['_source']['Entity_type'])
-    '''
     return result_names, entity_types

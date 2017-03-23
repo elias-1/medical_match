@@ -10,7 +10,8 @@ Date: 17-2-26 下午8:15
 """
 import json
 
-from es_match import create_index, encode_pinyin
+from es_match import (create_index, encode_pinyin, encode_pinyin2,
+                      encode_pinyin3)
 
 
 def encode_entity_type(id_list):
@@ -34,6 +35,8 @@ def insert2es(entitys_with_types):
         doc = {}
         doc['Name'] = word
         doc['Pinyin'] = encode_pinyin(word)
+        doc['Pinyin2'] = encode_pinyin2(word)
+        doc['Pinyin3'] = encode_pinyin3(word)
         doc['Entity_type'] = entity_type
         create_index(id, doc)
         id += 1

@@ -15,14 +15,14 @@ import es_match
 import jieba
 import jieba.posseg
 import pypinyin
-from clfier_with_w2v.sentence_clfier import SentenceClfier
+#from clfier_with_w2v.sentence_clfier import SentenceClfier
 
 with open('../data/merge_split2.json', 'rb') as f:
     data = f.read()
 common_data = json.loads(data)
 common_words = common_data['data']
 
-sentence_clfier = SentenceClfier()
+#sentence_clfier = SentenceClfier()
 jieba.load_userdict('../data/words.txt')
 dp_data = [
     "喉", "肋", "心", "脑", "脚", "肝", "肠", "肚", "肩", "骨", "耳", "足", "头", "脸", "鼻",
@@ -57,17 +57,17 @@ def entity_identify(sentence):
     question = sentence
     result_json = {}
 
-    result_json[u'label'] = sentence_clfier(sentence)
+    #result_json[u'label'] = sentence_clfier(sentence)
     seg = jieba.posseg.cut(question)
     en_candis = en_candidate(seg, common_words)
     fuzzy_entity_result = set([])
     entity_dict = {}
     for name in en_candis:
+        print name
         es_results, _ = es_match.search_index(name, 1)
         for es_result in es_results:
-            es_result
+            print es_result
             fuzzy_entity_result.add(es_result)
-            break
 
     result_json[u'entity'] = list(fuzzy_entity_result)
 
@@ -76,7 +76,7 @@ def entity_identify(sentence):
 
 if __name__ == "__main__":
     stime = time.clock()
-    result = entity_identify(u'感冒，发骚，咳嗽吃什么药？')
+    result = entity_identify(u'感猫发骚吃什么药？')
     dstr = json.dumps(result, ensure_ascii=False, indent=4)
     dstr = unicode.encode(dstr, 'utf-8')
     with open('qa_result.json', 'wb') as f:
