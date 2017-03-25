@@ -75,25 +75,44 @@ def entity_identify(sentence):
         entity_dict[name] = es_results
 
     #result_json[u'entity'] = fuzzy_entity_result
-    result_json[u'entity'] = entity_dict
+    result_json[u'entity'] = entity_fuzz(entity_dict)
 
     return result_json
 
 
-def entity_fuzz(result_json):
-    entitys = result_json[u'entity']
+def entity_fuzz(entity_dict):
+    entitys = entity_dict
     exact_list = []
     fuzz_list = []
+    refine_result = {}
     for enti in entitys:
         if enti in entitys[enti]:
             exact_list.append(enti)
+            refine_result[enti] = enti
         else:
             fuzz_list.append(enti)
     print len(fuzz_list)
+    if len(fuzz_list) > 0 and len(exact_list) > 0:
+        fuzz_candidates = search_candidates(exact_list)
+        for name in fuzz_list:
+            for item in entityts[name]:
+                if item in fuzz_candidates:
+                    refine_result[name] = item
+                    break
+    return refine_result
+
+
+def search_candidates(exact_list):
+    fuzz_candi_set = set([])
     for name in exact_list:
-        sql = "SELECT Distinct entity_name1 FROM entity_relation where entity_name2==\'" + name + "\';"
+        #sql2 = "SELECT Distinct entity_name2 FROM entity_relation where entity_name1==\'" + name + "\';"
+        sql = "SELECT entity_name1, entity_name2 FROM entity_relation where entity_name2==\'" + name + "\' or entity_name2==\'" + name + "\';"
         sql_result = search_sql(sql)
         print type(sql_result)
+        for en_result in sql_result:
+            fuzz_candi_set.add(en_result[1])
+            fuzz_candi_set.add(en_result[2])
+    return fuzz_candi_set
 
 
 if __name__ == "__main__":
