@@ -30,7 +30,6 @@ from tensorflow_serving.apis import predict_pb2, prediction_service_pb2
 tf.app.flags.DEFINE_integer('concurrency', 1,
                             'maximum number of concurrent inference requests')
 tf.app.flags.DEFINE_string('server', '', 'PredictionService host:port')
-tf.app.flags.DEFINE_string('work_dir', '/tmp', 'Working directory. ')
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -94,9 +93,9 @@ def _create_rpc_callback(label, result_counter):
         else:
             sys.stdout.write('.')
             sys.stdout.flush()
-            prediction = np.array(
-                result_future.result().outputs['classes'].int_val)
-            # prediction = np.argmax(response)
+            response = np.array(
+                result_future.result().outputs['scores'].float_val)
+            prediction = np.argmax(response)
             if label != prediction:
                 result_counter.inc_error()
         result_counter.inc_done()
@@ -105,11 +104,10 @@ def _create_rpc_callback(label, result_counter):
     return _callback
 
 
-def do_inference(hostport, work_dir, concurrency):
+def do_inference(hostport, concurrency):
     """Tests PredictionService with concurrent requests.
   Args:
     hostport: Host:port address of the PredictionService.
-    work_dir: The full path of working directory for test data set.
     concurrency: Maximum number of concurrent requests.
   Returns:
     The classification error rate.
@@ -147,7 +145,7 @@ def main(_):
     if not FLAGS.server:
         print('please specify server host:port')
         return
-    error_rate = do_inference(FLAGS.server, FLAGS.work_dir, FLAGS.concurrency)
+    error_rate = do_inference(FLAGS.server, FLAGS.concurrency)
     print('\nInference error rate: %s%%' % (error_rate * 100))
 
 
