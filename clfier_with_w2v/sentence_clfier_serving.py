@@ -113,13 +113,10 @@ def export():
                 },
                 method_name=signature_constants.CLASSIFY_METHOD_NAME)
 
-            predict_features_tensor_info = utils.build_tensor_info(features)
-            predict_char_features_tensor_info = utils.build_tensor_info(
-                char_features)
+            predict_sentence_tensor_info = utils.build_tensor_info(whole)
             prediction_signature = signature_def_utils.build_signature_def(
                 inputs={
-                    'features': predict_features_tensor_info,
-                    'char_features': predict_char_features_tensor_info
+                    'sentence': predict_sentence_tensor_info,
                 },
                 outputs={
                     'classes': classes_output_tensor_info,
