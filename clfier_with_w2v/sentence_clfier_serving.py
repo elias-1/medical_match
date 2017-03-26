@@ -51,7 +51,7 @@ def export():
         serialized_tf_example = tf.placeholder(tf.string, name='tf_example')
         feature_configs = {
             'sentence/encoded':
-            tf.FixedLenFeature(shape=[input_shape], dtype=tf.string),
+            tf.FixedLenFeature(shape=[input_shape], dtype=tf.int32),
         }
         tf_example = tf.parse_example(serialized_tf_example, feature_configs)
         whole = tf_example['sentence/encoded']
