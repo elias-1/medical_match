@@ -45,20 +45,18 @@ def export():
         # Build inference model.
         # Please refer to Tensorflow inception model for details.
 
-        input_shape = C_MAX_SENTENCE_LEN * (1 + C_MAX_WORD_LEN)
-
         # Input transformation.
         serialized_tf_example = tf.placeholder(tf.string, name='tf_example')
         feature_configs = {
-            'sentence/encoded':
-            tf.FixedLenFeature(shape=[input_shape], dtype=tf.int64),
+            'words/encoded':
+            tf.FixedLenFeature(shape=[C_MAX_SENTENCE_LEN], dtype=tf.int64),
+            'chars/encoded':
+            tf.FixedLenFeature(
+                shape=[C_MAX_SENTENCE_LEN * C_MAX_WORD_LEN], dtype=tf.int64)
         }
         tf_example = tf.parse_example(serialized_tf_example, feature_configs)
-        whole = tf_example['sentence/encoded']
-        features = tf.transpose(tf.stack(whole[0:FLAGS.max_sentence_len]))
-        char_features = tf.transpose(
-            tf.stack(whole[FLAGS.max_sentence_len:(
-                FLAGS.max_chars_per_word + 1) * FLAGS.max_sentence_len]))
+        features = tf_example['words/encoded']
+        char_features = tf_example['chars/encoded']
 
         # Run inference.
         model = TextCNN(FLAGS.word2vec_path, FLAGS.char2vec_path)
@@ -113,10 +111,12 @@ def export():
                 },
                 method_name=signature_constants.CLASSIFY_METHOD_NAME)
 
-            predict_sentence_tensor_info = utils.build_tensor_info(whole)
+            predict_words_tensor_info = utils.build_tensor_info(features)
+            predict_chras_tensor_info = utils.build_tensor_info(char_features)
             prediction_signature = signature_def_utils.build_signature_def(
                 inputs={
-                    'sentence': predict_sentence_tensor_info,
+                    'words': predict_words_tensor_info,
+                    'chars': predict_chras_tensor_info,
                 },
                 outputs={
                     'classes': classes_output_tensor_info,
