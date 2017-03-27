@@ -16,7 +16,7 @@ import time
 
 import numpy as np
 import tensorflow as tf
-from .utils import load_w2v
+from utils import load_w2v
 
 C_MAX_SENTENCE_LEN = 30
 C_MAX_WORD_LEN = 6
