@@ -7,7 +7,7 @@
 #
 ########################################################################
 """
-File: sentence_clfier_serving.py
+File: ner_serving.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2016/12/28 16:49:22
 """
@@ -18,18 +18,19 @@ standard tensorflow_model_server.
 
 import os.path
 
+import numpy as np
 import tensorflow as tf
-from cnn_clfier import C_MAX_SENTENCE_LEN, C_MAX_WORD_LEN, FLAGS, TextCNN
 from tensorflow.python.saved_model import builder as saved_model_builder
 from tensorflow.python.saved_model import (
     signature_constants, signature_def_utils, tag_constants, utils)
 from tensorflow.python.util import compat
+from train_ner import FLAGS, NER_MAX_SENTENCE_LEN, Model
 
 # This is a placeholder for a Google-internal import.
 
-tf.app.flags.DEFINE_string('checkpoint_dir', 'ner_logs_v2/1489569777',
+tf.app.flags.DEFINE_string('checkpoint_dir', 'cnn_clfier_logs/1489571611',
                            """Directory where to read training checkpoints.""")
-tf.app.flags.DEFINE_string('output_dir', '/tmp/clfier_output',
+tf.app.flags.DEFINE_string('output_dir', '/tmp/ner_output',
                            """Directory where to export inference model.""")
 tf.app.flags.DEFINE_integer('model_version', 1,
                             """Version number of the model.""")
@@ -47,23 +48,16 @@ def export():
         serialized_tf_example = tf.placeholder(tf.string, name='tf_example')
         feature_configs = {
             'words/encoded':
-            tf.FixedLenFeature(shape=[C_MAX_SENTENCE_LEN], dtype=tf.int64),
-            'chars/encoded':
-            tf.FixedLenFeature(
-                shape=[C_MAX_SENTENCE_LEN * C_MAX_WORD_LEN], dtype=tf.int64)
+            tf.FixedLenFeature(shape=[NER_MAX_SENTENCE_LEN], dtype=tf.int64),
         }
         tf_example = tf.parse_example(serialized_tf_example, feature_configs)
         features = tf_example['words/encoded']
-        char_features = tf_example['chars/encoded']
 
         # Run inference.
-        model = TextCNN(FLAGS.word2vec_path, FLAGS.char2vec_path)
-        scores = model.inference(features, char_features)
-
-        values, indices = tf.nn.top_k(scores, FLAGS.num_classes)
-        prediction_classes = tf.contrib.lookup.index_to_string(
-            tf.to_int64(indices),
-            mapping=tf.constant([str(i) for i in xrange(FLAGS.num_classes)]))
+        model = Model(FLAGS.ner_num_tags, FLAGS.ner_word2vec_path,
+                      FLAGS.ner_num_hidden)
+        test_unary_score, test_sequence_length = model.inference(
+            model.inp_w, trainMode=False)
 
         saver = tf.train.Saver()
         with tf.Session() as sess:
@@ -90,35 +84,29 @@ def export():
             builder = saved_model_builder.SavedModelBuilder(output_path)
 
             # Build the signature_def_map.
-            classify_inputs_tensor_info = utils.build_tensor_info(
+            default_inputs_tensor_info = utils.build_tensor_info(
                 serialized_tf_example)
-            classes_output_tensor_info = utils.build_tensor_info(
-                prediction_classes)
-            scores_output_tensor_info = utils.build_tensor_info(values)
 
-            classification_signature = signature_def_utils.build_signature_def(
+            scores_output_tensor_info = utils.build_tensor_info(
+                test_unary_score)
+
+            default_signature = signature_def_utils.build_signature_def(
                 inputs={
                     signature_constants.CLASSIFY_INPUTS:
-                    classify_inputs_tensor_info
+                    default_inputs_tensor_info
                 },
                 outputs={
-                    signature_constants.CLASSIFY_OUTPUT_CLASSES:
-                    classes_output_tensor_info,
-                    signature_constants.CLASSIFY_OUTPUT_SCORES:
-                    scores_output_tensor_info
+                    'scores': scores_output_tensor_info,
                 },
                 method_name=signature_constants.CLASSIFY_METHOD_NAME)
 
             predict_words_tensor_info = utils.build_tensor_info(features)
-            predict_chras_tensor_info = utils.build_tensor_info(char_features)
             prediction_signature = signature_def_utils.build_signature_def(
                 inputs={
                     'words': predict_words_tensor_info,
-                    'chars': predict_chras_tensor_info,
                 },
                 outputs={
-                    'classes': classes_output_tensor_info,
-                    'scores': scores_output_tensor_info
+                    'scores': scores_output_tensor_info,
                 },
                 method_name=signature_constants.PREDICT_METHOD_NAME)
 
@@ -130,7 +118,7 @@ def export():
                     'predict_sentence':
                     prediction_signature,
                     signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY:
-                    classification_signature,
+                    default_signature,
                 },
                 legacy_init_op=legacy_init_op)
 

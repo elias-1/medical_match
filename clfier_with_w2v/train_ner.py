@@ -105,13 +105,13 @@ class Model:
         #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.ner_dropout_keep_prob)
         with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
             forward_output, _ = tf.nn.dynamic_rnn(
-                tf.nn.rnn_cell.BasicLSTMCell(self.numHidden),
+                tf.contrib.rnn.LSTMCell(self.numHidden),
                 word_vectors,
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_forward")
             backward_output_, _ = tf.nn.dynamic_rnn(
-                tf.nn.rnn_cell.BasicLSTMCell(self.numHidden),
+                tf.contrib.rnn.LSTMCell(self.numHidden),
                 inputs=tf.reverse_sequence(word_vectors, length_64, seq_dim=1),
                 dtype=tf.float32,
                 sequence_length=length,
@@ -120,7 +120,7 @@ class Model:
         backward_output = tf.reverse_sequence(
             backward_output_, length_64, seq_dim=1)
 
-        output = tf.concat(2, [forward_output, backward_output])
+        output = tf.concat([forward_output, backward_output], 2)
         output = tf.reshape(output, [-1, self.numHidden * 2])
         if trainMode:
             output = tf.nn.dropout(output, FLAGS.ner_dropout_keep_prob)
