@@ -109,7 +109,7 @@ class TextCNN(object):
         #                       -1.0, 1.0),
         #     name="common_id_embedding")
         # self.words_emb = tf.concat(
-        #     0, [self.words, self.common_id_embedding], name='concat')
+        #     [self.words, self.common_id_embedding], 2, name='concat')
 
         with tf.variable_scope('CNN_Layer') as scope:
             self.char_filter = tf.get_variable(
@@ -202,7 +202,7 @@ class TextCNN(object):
         do_char_conv = lambda x: self.char_convolution(x)
         char_vectors_x = tf.map_fn(do_char_conv, char_vectors)
         char_vectors_x = tf.transpose(char_vectors_x, perm=[1, 0, 2])
-        word_vectors = tf.concat(2, [word_vectors, char_vectors_x])
+        word_vectors = tf.concat([word_vectors, char_vectors_x], 2)
 
         # if trainMode:
         #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
@@ -230,7 +230,7 @@ class TextCNN(object):
 
         # Combine all the pooled features
         num_filters_total = FLAGS.num_filters * len(self.filter_sizes)
-        clfier_pooled = tf.concat(3, pooled_outputs)
+        clfier_pooled = tf.concat(pooled_outputs, 3)
         clfier_pooled_flat = tf.reshape(clfier_pooled, [-1, num_filters_total])
 
         # Add dropout
@@ -286,8 +286,8 @@ def inputs(path):
         tf.stack(whole[FLAGS.max_sentence_len:(FLAGS.max_chars_per_word + 1) *
                        FLAGS.max_sentence_len]))
     label = tf.transpose(
-        tf.concat(0, whole[FLAGS.max_sentence_len * (FLAGS.max_chars_per_word +
-                                                     1):]))
+        tf.concat(whole[FLAGS.max_sentence_len * (FLAGS.max_chars_per_word + 1
+                                                  ):], 0))
     return features, char_features, label
 
 

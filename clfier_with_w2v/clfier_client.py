@@ -93,9 +93,8 @@ def _create_rpc_callback(label, result_counter):
         else:
             sys.stdout.write('.')
             sys.stdout.flush()
-            response = np.array(
-                result_future.result().outputs['scores'].float_val)
-            prediction = np.argmax(response)
+            response = result_future.result().outputs['classes'].string_val
+            prediction = int(response[0])
             if label != prediction:
                 result_counter.inc_error()
         result_counter.inc_done()

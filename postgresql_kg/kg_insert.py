@@ -70,11 +70,10 @@ def extract_id_name(f):
         if len(row) == 2 and entity_with_relation[0][0] == 'property':
             continue
         assert (len(row) == 3)
-        row[2] = row[2][:-1].strip()
         if entity_with_relation[0][0] == 'property':
             entity_with_id = ENTITY_WITH_ID.findall(row[0])
             if entity_with_id[0][1] not in id2name:
-                id2name[entity_with_id[0][1]] = row[2]
+                id2name[entity_with_id[0][1]] = row[2].strip()
     print('total entity names:%d' % len(id2name))
     return id2name
 
