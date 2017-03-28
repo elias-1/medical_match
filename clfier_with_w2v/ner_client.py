@@ -23,7 +23,7 @@ from train_ner import FLAGS, NER_MAX_SENTENCE_LEN, Model, do_load_data
 
 # This is a placeholder for a Google-internal import.
 
-tf.app.flags.DEFINE_integer('concurrency', 1,
+tf.app.flags.DEFINE_integer('concurrency', 10,
                             'maximum number of concurrent inference requests')
 tf.app.flags.DEFINE_string('server', '', 'PredictionService host:port')
 FLAGS = tf.app.flags.FLAGS
@@ -165,14 +165,12 @@ def _create_rpc_callback(label, result_counter):
         else:
             sys.stdout.write('.')
             sys.stdout.flush()
+
             result = result_future.result()
             unary_score = np.array(result.outputs['scores'].float_val)
-
-            # shape = list(result.outputs['scores'].tensor_shape.dim)
-            # shape = [int(dim[0]) for dim in shape]
-            # print(shape)
-
-            unary_score = np.reshape(unary_score, (NER_MAX_SENTENCE_LEN, -1))
+            shape = list(result.outputs['scores'].tensor_shape.dim)
+            unary_score = np.reshape(unary_score,
+                                     (int(shape[1].size), int(shape[2].size)))
             seq_len = int(result.outputs['sequence_length'].int_val[0])
 
             tf_unary_scores_ = unary_score[:seq_len]
@@ -234,13 +232,14 @@ def do_inference(hostport, concurrency):
 
 
 def main(_):
-    start = time.clock()
+    start = time.time()
     if not FLAGS.server:
         print('please specify server host:port')
         return
     error_rate = do_inference(FLAGS.server, FLAGS.concurrency)
     print('\nInference error rate: %s%%' % (error_rate * 100))
-    end = time.clock()
+    end = time.time()
+    print('cost time:%d s' % (end - start))
 
 
 if __name__ == '__main__':
