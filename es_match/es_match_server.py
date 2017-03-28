@@ -13,6 +13,9 @@ Date: 17-2-26 上午10:51
 import pypinyin
 from elasticsearch import Elasticsearch
 
+from fuzzywuzzy import process
+from fuzzywuzzy.fuzz import ratio
+
 es = Elasticsearch([{"host": "localhost", "port": 9200}])
 
 
@@ -99,12 +102,16 @@ def search_index(query_string, return_number=1):
             fuzz = res2['hits']['hits'][0]['_source']['Pinyin']
             if fuzz == query_pinyin:
                 result_names.append(res2['hits']['hits'][0]['_source']['Name'])
-                #print '222'
+                print '222'
             else:
                 if len(res3['hits']['hits']) > 0:
-                    result_names.append(
+                    word_ratio = ratio(
+                        query_string,
                         res3['hits']['hits'][0]['_source']['Name'])
-                    #print '333'
+                    if word_ratio > 40:
+                        result_names.append(
+                            res3['hits']['hits'][0]['_source']['Name'])
+                        print '333'
 
     answers = res1['hits']['hits'] + res2['hits']['hits'] + res3['hits'][
         'hits']
