@@ -108,3 +108,6 @@ bazel*
 
 # test
 */test.py
+
+# db
+db.sqlite3
