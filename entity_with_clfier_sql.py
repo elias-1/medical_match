@@ -2,85 +2,69 @@
 
 import json
 import time
+from StringIO import StringIO
 
-#import chardet
-import jieba
-import jieba.posseg
+import chardet
 import psycopg2
-#from clfier_with_w2v.sentence_clfier import SentenceClfier
-from es_match import es_match_server
+import pycurl
+from es_match import es_match
 
-with open('data/common_words.json', 'rb') as f:
-    data = f.read()
-common_data = json.loads(data)
-common_words = common_data['data']
-
-#sent_ner = Ner()
-#sentence_clfier = SentenceClfier()127.0.0.1
 conn = psycopg2.connect(
-    'dbname=kgdata user=elias password=112233 host=127.0.0.1')
-
-jieba.load_userdict('data/words.txt')
-dp_data = [
-    "喉", "肋", "心", "脑", "脚", "肝", "肠", "肚", "肩", "骨", "耳", "足", "头", "脸", "鼻",
-    "肺", "咽", "眼", "肾", "胃", "胆", "手", "筋", "背", "舌", "牙", "口", "腰", "腹", "胸",
-    "脾", "嘴", "腿"
-]
+    'dbname=kgdata user=dbuser password=112233 host=127.0.0.1')
 
 
-def en_candidate(segs, common_words):
-    s = []
-    for i in segs:
-        if i.word not in common_words and not i.flag == u't' and not i.flag == u'm':
-            s.append(i.word)
-    name_index = 0
-    en_sets = set([])
-    '''
-    如果分词结果有一个字的词，那就与其上一个的词合并
-    '''
-
-    for sname in s:
-        if len(sname) == 1 and name_index > 0 and sname not in dp_data:
-            en_sets.add(s[name_index - 1] + sname)
-            if s[name_index - 1] in en_sets:
-                en_sets.remove(s[name_index - 1])
-        else:
-            en_sets.add(sname)
-        name_index += 1
-    return en_sets
+def ops_api(url):
+    storage = StringIO()
+    try:
+        nurl = url
+        c = pycurl.Curl()
+        c.setopt(pycurl.URL, nurl)
+        c.setopt(pycurl.HTTPHEADER, ['Content-Type: application/json'])
+        c.setopt(pycurl.CONNECTTIMEOUT, 3)
+        c.setopt(c.WRITEFUNCTION, storage.write)
+        c.perform()
+        c.close()
+    except:
+        return 2
+    response = storage.getvalue()
+    res = json.loads(response)
+    return res
 
 
 def search_sql(sql):
     try:
         cur = conn.cursor()
         cur.execute(sql)
+        result_set = cur.fetchall()
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
+    return result_set
 
 
 def entity_identify(sentence):
     question = sentence
     result_json = {}
+    url = '1.85.37.136:9999/qa/strEntity/?q={"q":"' + question + '","num":5}'
+    entity_result = ops_api(url)
+    if entity_result[u'return'] != 0:
+        result_json[u'return'] = 1
+        return result_json
 
-    #result_json[u'label'] = sentence_clfier(sentence)
-    seg = jieba.posseg.cut(question)
-    en_candis = en_candidate(seg, common_words)
-    #en_candis = sent_ner(sentence)
-    fuzzy_entity_result = []
+    entities = entity_result[u'content'][u'entity']
     entity_dict = {}
-    for name in en_candis:
-        print name.encode('utf-8')
-        es_results, _ = es_match_server.search_index(name, 5)
-        entity_dict[name] = es_results
-
-    #result_json[u'entity'] = fuzzy_entity_result
-    result_json[u'entity'] = entity_fuzz(entity_dict)
+    score_list = []
+    for enti in entities:
+        for key in enti:
+            entity_dict[key], score_dict, _ = es_match.search_index(key, 5)
+            score_list.append(score_dict)
+    if len(entity_dict) > 1:
+        result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
 
     return result_json
 
 
-def entity_fuzz(entity_dict):
+def entity_fuzz(entity_dict, score_list):
     entitys = entity_dict
     exact_list = []
     fuzz_list = []
@@ -92,37 +76,53 @@ def entity_fuzz(entity_dict):
         else:
             fuzz_list.append(enti)
     print len(fuzz_list)
+    #如果全部匹配
+    if len(fuzz_list) == 0:
+        return refine_result
+    #只有模糊匹配,取分值最高者加入exact_list
+    if len(exact_list) == 0 and len(fuzz_list) != 0:
+        #return refine_result
+        score_sort = sorted(
+            score_list, key=lambda s: s[u'max_score'], reverse=True)
+        exact_list.append(score_sort[0][u'max_item'])
+    #存在全匹配和模糊匹配
     if len(fuzz_list) > 0 and len(exact_list) > 0:
         fuzz_candidates = search_candidates(exact_list)
         for name in fuzz_list:
-            for item in entityts[name]:
-                if item in fuzz_candidates:
+            print 'fu:  ' + name
+            flag = 0
+            for item in entitys[name]:
+                iname = item.encode('utf-8')
+                if iname in fuzz_candidates:
                     refine_result[name] = item
+                    flag = 1
                     break
+            if flag == 0:
+                refine_result[name] = entitys[name]
+        return refine_result
+
     return refine_result
 
 
 def search_candidates(exact_list):
     fuzz_candi_set = set([])
     for name in exact_list:
-        #sql2 = "SELECT Distinct entity_name2 FROM entity_relation where entity_name1==\'" + name + "\';"
-        sql = "SELECT entity_name1, entity_name2 FROM entity_relation where entity_name2==\'" + name + "\' or entity_name2==\'" + name + "\';"
-        sql_result = search_sql(sql)
-        print type(sql_result)
+        print 'exact:  ' + name
+        sql1 = """SELECT DISTINCT entity_name2 FROM entity_relation where entity_name1 = \'""" + name + """\' union SELECT DISTINCT entity_name1 FROM entity_relation where entity_name2 = \'""" + name + """\';"""
+        sql_result = search_sql(sql1)
+        print len(sql_result)
         for en_result in sql_result:
-            fuzz_candi_set.add(en_result[1])
-            fuzz_candi_set.add(en_result[2])
+            fuzz_candi_set.add(en_result[0])
     return fuzz_candi_set
 
 
 if __name__ == "__main__":
     stime = time.clock()
-    result = entity_identify(u'感冒，咳嗽，发骚吃什么？')
+    result = entity_identify("感冒鼻涕多，喉咙痒总是咳嗽，请问医生需要吃什么药？（女，29岁）")
     dstr = json.dumps(result, ensure_ascii=False, indent=4)
     dstr = unicode.encode(dstr, 'utf-8')
     with open('qa_result.json', 'wb') as f:
         f.write(dstr)
-    entity_fuzz(result)
     etime = time.clock()
 
     print "read: %f s" % (etime - stime)
