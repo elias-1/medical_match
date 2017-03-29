@@ -28,7 +28,7 @@ from train_ner import FLAGS, NER_MAX_SENTENCE_LEN, Model
 
 # This is a placeholder for a Google-internal import.
 
-tf.app.flags.DEFINE_string('checkpoint_dir', 'cnn_clfier_logs/1489571611',
+tf.app.flags.DEFINE_string('checkpoint_dir', 'ner_logs_v2/1490617207',
                            """Directory where to read training checkpoints.""")
 tf.app.flags.DEFINE_string('output_dir', '/tmp/ner_output',
                            """Directory where to export inference model.""")
@@ -57,7 +57,7 @@ def export():
         model = Model(FLAGS.ner_num_tags, FLAGS.ner_word2vec_path,
                       FLAGS.ner_num_hidden)
         test_unary_score, test_sequence_length = model.inference(
-            model.inp_w, trainMode=False)
+            features, trainMode=False)
 
         saver = tf.train.Saver()
         with tf.Session() as sess:
@@ -90,13 +90,19 @@ def export():
             scores_output_tensor_info = utils.build_tensor_info(
                 test_unary_score)
 
+            scores_seq_len_tensor_info = utils.build_tensor_info(
+                test_sequence_length)
+
             default_signature = signature_def_utils.build_signature_def(
                 inputs={
                     signature_constants.CLASSIFY_INPUTS:
                     default_inputs_tensor_info
                 },
                 outputs={
-                    'scores': scores_output_tensor_info,
+                    signature_constants.CLASSIFY_OUTPUT_SCORES:
+                    scores_output_tensor_info,
+                    'sequence_length':
+                    scores_seq_len_tensor_info
                 },
                 method_name=signature_constants.CLASSIFY_METHOD_NAME)
 
@@ -107,6 +113,7 @@ def export():
                 },
                 outputs={
                     'scores': scores_output_tensor_info,
+                    'sequence_length': scores_seq_len_tensor_info
                 },
                 method_name=signature_constants.PREDICT_METHOD_NAME)
 

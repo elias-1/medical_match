@@ -8,7 +8,7 @@ File: clfier_client.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/26 14:34
 
-A client that talks to tensorflow_model_server loaded with clfier model.
+A serving_client that talks to tensorflow_model_server loaded with clfier model.
 
 Typical usage example:
     clfier_client.py --num_tests=100 --server=localhost:9000
