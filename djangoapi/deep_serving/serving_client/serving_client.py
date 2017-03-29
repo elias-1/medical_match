@@ -58,17 +58,31 @@ def _flatten_to_string(nested_strings):
         yield nested_strings
 
 
-def _array_as_string(chari):
-    data_as_string = np.array(chari, None).tostring()
-    proto_values = _flatten_to_string(data_as_string)
-    return [compat.as_bytes(x) for x in proto_values]
-
+# def _array_as_string(chari):
+#     data_as_string = np.array(chari, None).tostring()
+#     proto_values = _flatten_to_string(data_as_string)
+#     return [compat.as_bytes(x) for x in proto_values]
 
 # construct a tensor.proto containing our image data
+# def _predict_tensor_proto(chari, predict_shape):
+#     # dtype 7 is String
+#     tensor_proto = tensor_pb2.TensorProto(
+#         dtype=7, tensor_shape=predict_shape())
+#     tensor_proto.string_val.extend(_array_as_string(chari))
+#     return tensor_proto
+
+
+def _array_as_string(chari):
+    data_as_array = np.array(chari, np.int64)
+    # proto_values = _flatten_to_string(data_as_string)
+    # return [compat.as_bytes(x) for x in proto_values]
+    return compat.as_bytes(data_as_array)
+
+
 def _predict_tensor_proto(chari, predict_shape):
     # dtype 7 is String
     tensor_proto = tensor_pb2.TensorProto(
-        dtype=7, tensor_shape=predict_shape())
+        dtype=9, tensor_shape=predict_shape())
     tensor_proto.string_val.extend(_array_as_string(chari))
 
     return tensor_proto
