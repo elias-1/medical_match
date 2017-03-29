@@ -53,29 +53,6 @@ def _get_vob(vob_path):
     return vob
 
 
-def _flatten_to_string(nested_strings):
-    if isinstance(nested_strings, (list, tuple)):
-        for inner in nested_strings:
-            for flattened_string in _flatten_to_string(inner):
-                yield flattened_string
-    else:
-        yield nested_strings
-
-
-# def _array_as_string(chari):
-#     data_as_string = np.array(chari, None).tostring()
-#     proto_values = _flatten_to_string(data_as_string)
-#     return [compat.as_bytes(x) for x in proto_values]
-
-# construct a tensor.proto containing our image data
-# def _predict_tensor_proto(chari, predict_shape):
-#     # dtype 7 is String
-#     tensor_proto = tensor_pb2.TensorProto(
-#         dtype=7, tensor_shape=predict_shape())
-#     tensor_proto.string_val.extend(_array_as_string(chari))
-#     return tensor_proto
-
-
 def _predict_tensor_proto(chari, predict_shape):
     # dtype 7 is String
     tensor_proto = tensor_pb2.TensorProto(

@@ -16,7 +16,7 @@ def sentence_clfier(request):
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
-            sentence = input_dict('sentence')
+            sentence = input_dict['sentence']
             prediction = clfier(sentence)
             json_out['class'] = prediction
             json_out["Return"] = 0
@@ -33,7 +33,7 @@ def sentence_ner(request):
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
-            sentence = input_dict('sentence')
+            sentence = input_dict['sentence']
             entity_result, type_result = ner(sentence)
             json_out['entities'] = entity_result
             json_out['types'] = type_result
@@ -51,7 +51,7 @@ def sentence_clfier_ner(request):
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
-            sentence = input_dict('sentence')
+            sentence = input_dict['sentence']
 
             prediction = clfier(sentence)
             json_out['class'] = prediction
