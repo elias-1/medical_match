@@ -32,7 +32,7 @@ ner_server = 'localhost:9000'
 clfier_server = 'localhost:9001'
 ner_char2vec_path = os.path.join(data_dir, 'chars_vec_100.txt')
 UNK = '<UNK>'
-ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
+ENTITY_TYPES = [u'@d@', u'@s@', u'@l@', u'@o@', u'@m@', u'@dp@', u'@bp@']
 
 clfier_word2vec_path = os.path.join(data_dir, 'words_vec_100.txt')
 clfier_char2vec_path = os.path.join(data_dir, 'chars_vec_50.txt')
@@ -340,7 +340,8 @@ def main():
         entity_with_type = map(lambda x, y: x + '/' + y, entity_result,
                                type_result)
         print('sentence: %s, class: %d, entity_with_type: %s' %
-              (sentence, prediction, ' '.join(entity_with_type)))
+              (sentence.encode('utf-8'), prediction,
+               ' '.join(entity_with_type).encode('utf-8')))
 
 
 if __name__ == '__main__':
