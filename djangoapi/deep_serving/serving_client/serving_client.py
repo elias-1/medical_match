@@ -230,7 +230,7 @@ class Ner(object):
             entity = entity.replace(',', '，')
             entities = entity.strip('，').split('，')
             entity_result.extend(entities)
-            type_result.extend(ENTITY_TYPES[type_id] * len(entities))
+            type_result.extend([ENTITY_TYPES[type_id]] * len(entities))
 
         return entity_result, type_result
 
