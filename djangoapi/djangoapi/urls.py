@@ -18,4 +18,9 @@ from django.contrib import admin
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^deep_serving/sentence_clfier/$',
+        'deep_serving.views.sentence_clfier'),
+    url(r'^deep_serving/sentence_ner/$', 'deep_serving.views.sentence_ner'),
+    url(r'^deep_serving/sentence_clfier_ner/$',
+        'deep_serving.views.sentence_clfier_ner'),
 ]
