@@ -11,7 +11,6 @@ Date: 2017/3/28 9:42
 
 import os
 import sys
-import compat
 import jieba
 import numpy as np
 import predict_pb2
@@ -230,27 +229,27 @@ class Clfier(object):
         self.word_vob = _get_vob(clfier_word2vec_path)
         self.char_vob = _get_vob(clfier_char2vec_path)
 
-    def _predict_shape_word(self):
-        return tensor_shape_pb2.TensorShapeProto(dim=[
-            tensor_shape_pb2.TensorShapeProto.Dim(size=1),
-            tensor_shape_pb2.TensorShapeProto.Dim(size=C_MAX_SENTENCE_LEN)
-        ])
+    def _create_predict_shape(self, shape):
+        def _predict_shape():
+            dim = []
+            for s in shape:
+                dim.append(tensor_shape_pb2.TensorShapeProto.Dim(size=s))
+            return tensor_shape_pb2.TensorShapeProto(dim=dim)
 
-    def _predict_shape_char(self):
-        return tensor_shape_pb2.TensorShapeProto(dim=[
-            tensor_shape_pb2.TensorShapeProto.Dim(size=1),
-            tensor_shape_pb2.TensorShapeProto.Dim(size=C_MAX_SENTENCE_LEN *
-                                                  C_MAX_WORD_LEN)
-        ])
+        return _predict_shape
 
     def _predict_request(self, wordi, chari):
         request = predict_pb2.PredictRequest()
         request.model_spec.name = 'clfier'
         request.model_spec.signature_name = 'predict_sentence'
+        predict_shape_word = [1, C_MAX_SENTENCE_LEN]
+        predict_shape_char = [1, C_MAX_SENTENCE_LEN * C_MAX_WORD_LEN]
         request.inputs['words'].CopyFrom(
-            _predict_tensor_proto(wordi, self._predict_shape_word))
+            _predict_tensor_proto(
+                wordi, self._create_predict_shape(predict_shape_word)))
         request.inputs['chars'].CopyFrom(
-            _predict_tensor_proto(chari, self._predict_shape_char))
+            _predict_tensor_proto(
+                chari, self._create_predict_shape(predict_shape_char)))
         return request
 
     def _process_line(self, x_text):
