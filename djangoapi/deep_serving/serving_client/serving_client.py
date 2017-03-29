@@ -10,6 +10,7 @@ Date: 2017/3/28 9:42
 """
 
 import os
+import sys
 import compat
 import jieba
 import numpy as np
@@ -18,6 +19,9 @@ import prediction_service_pb2
 import tensor_pb2
 import tensor_shape_pb2
 from grpc.beta import implementations
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 data_dir = os.path.join(app_dir, 'data')
@@ -72,18 +76,11 @@ def _flatten_to_string(nested_strings):
 #     return tensor_proto
 
 
-def _array_as_string(chari):
-    data_as_array = np.array(chari, np.int64)
-    # proto_values = _flatten_to_string(data_as_string)
-    # return [compat.as_bytes(x) for x in proto_values]
-    return compat.as_bytes(data_as_array)
-
-
 def _predict_tensor_proto(chari, predict_shape):
     # dtype 7 is String
     tensor_proto = tensor_pb2.TensorProto(
         dtype=9, tensor_shape=predict_shape())
-    tensor_proto.string_val.extend(_array_as_string(chari))
+    tensor_proto.int64_val.extend(chari)
 
     return tensor_proto
 
@@ -207,7 +204,7 @@ class Ner(object):
 
     def __call__(self, sentence):
         chari = self._process_line(sentence)
-        chari = map(int, chari)
+        chari = map(int, np.array(chari, np.int64))
         # make a prediction request
         request = self._predict_request(chari)
         # send it to the server, with a 60 second timeout
@@ -320,7 +317,8 @@ class Clfier(object):
         chari = map(int, chari)
 
         # make a prediction request
-        request = self._predict_request(wordi, chari)
+        request = self._predict_request(
+            np.array(wordi, np.int64), np.array(chari, np.int64))
         # send it to the server, with a 60 second timeout
         result = self.stub.Predict(request, 10.0)
 
