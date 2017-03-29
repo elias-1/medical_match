@@ -77,7 +77,7 @@ def _predict_tensor_proto(chari, predict_shape):
 class Ner(object):
     def __init__(self,
                  tfserving_host=ner_server.split(':')[0],
-                 tfserving_port=ner_server.split(':')[1]):
+                 tfserving_port=int(ner_server.split(':')[1])):
         self.tfserving_host = tfserving_host
         self.tfserving_port = tfserving_port
 
@@ -227,7 +227,7 @@ class Ner(object):
 class Clfier(object):
     def __init__(self,
                  tfserving_host=clfier_server.split(':')[0],
-                 tfserving_port=clfier_server.split(':')[1]):
+                 tfserving_port=int(clfier_server.split(':')[1])):
         self.tfserving_host = tfserving_host
         self.tfserving_port = tfserving_port
 
