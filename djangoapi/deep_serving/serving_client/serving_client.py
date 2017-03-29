@@ -9,6 +9,7 @@ Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/28 9:42
 """
 
+import os
 import compat
 import jieba
 import numpy as np
@@ -18,16 +19,19 @@ import tensor_pb2
 import tensor_shape_pb2
 from grpc.beta import implementations
 
+app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+data_dir = os.path.join(app_dir, 'data')
+
 NER_MAX_SENTENCE_LEN = 80
-trainsMatrix = np.load('transition.npy')
+trainsMatrix = np.load(os.path.join(data_dir, 'transition.npy'))
 ner_server = 'localhost:9000'
 clfier_server = 'localhost:9001'
-ner_char2vec_path = 'chars_vec_100.txt'
+ner_char2vec_path = os.path.join(data_dir, 'chars_vec_100.txt')
 UNK = '<UNK>'
 ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
 
-clfier_word2vec_path = 'words_vec_100.txt'
-clfier_char2vec_path = 'chars_vec_50.txt'
+clfier_word2vec_path = os.path.join(data_dir, 'words_vec_100.txt')
+clfier_char2vec_path = os.path.join(data_dir, 'chars_vec_50.txt')
 C_MAX_SENTENCE_LEN = 30
 C_MAX_WORD_LEN = 6
 
@@ -310,3 +314,22 @@ class Clfier(object):
         prediction = int(response[0])
 
         return prediction
+
+
+def main():
+    ner = Ner()
+    clfier = Clfier()
+    sentence_list = [
+        u'感冒吃什么药', u'头部挺疼的，是怎么了', u'大便很稀，赖床咋办啊？', u'头痛，喉咙痒是不是发烧了？'
+    ]
+    for sentence in sentence_list:
+        prediction = clfier(sentence)
+        entity_result, type_result = ner(sentence)
+        entity_with_type = map(lambda x, y: x + '/' + y, entity_result,
+                               type_result)
+        print('sentence: %s, class: %d, entity_with_type: %s' %
+              (sentence, prediction, ' '.join(entity_with_type)))
+
+
+if __name__ == '__main__':
+    main()

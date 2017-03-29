@@ -1,11 +1,13 @@
 import json
 import traceback
-from datetime import datetime
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-# from StringIO import StringIO
+from .serving_client.serving_client import Clfier, Ner
+
+ner = Ner()
+clfier = Clfier()
 
 
 @csrf_exempt
@@ -14,7 +16,10 @@ def sentence_clfier(request):
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
-
+            sentence = input_dict('sentence')
+            prediction = clfier(sentence)
+            json_out['class'] = prediction
+            json_out["Return"] = 0
         except:
             traceback.print_exc()
             json_out["Return"] = 1
@@ -23,52 +28,38 @@ def sentence_clfier(request):
 
 
 @csrf_exempt
-def news_latest(request):
+def sentence_ner(request):
     if request.method == "GET":
+        json_out = {}
         try:
-            news_count = News.objects.count()
-            news_info = News.objects.order_by("-UpdateTime")[0:min(news_count,
-                                                                   100)]
-            json_out = []
-            for temp_news in news_info:
-                if temp_news.Content:
-                    json_out = json_out + split_text(
-                        w.get_file(temp_news.Content))
-            items2remove = []
-            for i in json_out:
-                if len(i) < 4 or i.isdigit():
-                    items2remove.append(i)
-            for j in items2remove:
-                json_out.remove(j)
+            input_dict = json.loads(request.GET["q"])
+            sentence = input_dict('sentence')
+            entity_result, type_result = ner(sentence)
+            json_out['entities'] = entity_result
+            json_out['types'] = type_result
+            json_out["Return"] = 0
         except:
-            json_out = {}
             traceback.print_exc()
             json_out["Return"] = 1
         return HttpResponse(
             json.dumps(json_out), content_type="application/json")
 
 
-def news_op(request):
+@csrf_exempt
+def sentence_clfier_ner(request):
     if request.method == "GET":
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
-            nid = int(input_dict["NewsID"])
-            news_info = News.objects.filter(NewsID=nid)
-            if news_info:
-                news_info = news_info.values()[0]
-                for key in news_info.keys():
-                    if news_info[key] not in useless_list:
-                        if key in datetime_list:
-                            json_out[key] = news_info[key].isoformat()
-                        elif key == "Content":
-                            if news_info[key]:
-                                json_out[key] = w.get_file(news_info[key])
-                        else:
-                            json_out[key] = news_info[key]
-                json_out["Return"] = 0
-            else:
-                json_out["Return"] = 1
+            sentence = input_dict('sentence')
+
+            prediction = clfier(sentence)
+            json_out['class'] = prediction
+
+            entity_result, type_result = ner(sentence)
+            json_out['entities'] = entity_result
+            json_out['types'] = type_result
+            json_out["Return"] = 0
         except:
             traceback.print_exc()
             json_out["Return"] = 1
