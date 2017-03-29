@@ -44,10 +44,10 @@ def search_sql(sql):
 
 def entity_identify(sentence):
     question = sentence
-    print type(question)
+    #print type(question)
     result_json = {}
     url = '1.85.37.136:9999/qa/strEntity/?q={"q":"' + question + '","num":5}'
-    print type(url)
+    #print type(url)
     entity_result = ops_api(url)
     if entity_result[u'return'] != 0:
         result_json[u'return'] = 1
@@ -55,17 +55,20 @@ def entity_identify(sentence):
 
     entities = entity_result[u'content'][u'entity']
     entity_dict = {}
+    score_list = []
     for enti in entities:
         for key in enti:
             #print key
-            entity_dict[key], _ = es_match_server.search_index(key, 5)
+            entity_dict[key], score_dict, _ = es_match_server.search_index(key,
+                                                                           5)
+            score_list.append(score_dict)
     if len(entity_dict) > 1:
-        result_json[u'entity'] = entity_fuzz(entity_dict)
+        result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
 
     return result_json
 
 
-def entity_fuzz(entity_dict):
+def entity_fuzz(entity_dict, score_list):
     entitys = entity_dict
     exact_list = []
     fuzz_list = []
@@ -78,8 +81,16 @@ def entity_fuzz(entity_dict):
         else:
             fuzz_list.append(enti)
     print len(fuzz_list)
+    #如果全部匹配
     if len(fuzz_list) == 0:
         return refine_result
+    #只有模糊匹配,取分值最高者加入exact_list
+    if len(exact_list) == 0 and len(fuzz_list) != 0:
+        #return refine_result
+        score_sort = sorted(
+            score_list, key=lambda s: s[u'max_score'], reverse=True)
+        exact_list.append(score_sort[0][u'max_item'])
+    #存在全匹配和模糊匹配
     if len(fuzz_list) > 0 and len(exact_list) > 0:
         fuzz_candidates = search_candidates(exact_list)
         for name in fuzz_list:
@@ -94,6 +105,7 @@ def entity_fuzz(entity_dict):
             if flag == 0:
                 refine_result[name] = entitys[name]
         return refine_result
+
     return refine_result
 
 
@@ -115,7 +127,7 @@ def search_candidates(exact_list):
 
 if __name__ == "__main__":
     stime = time.clock()
-    result = entity_identify("四个月宝宝感冒，有流涕打喷嚏咳嗽没发热症状，可以吃点什么药！")
+    result = entity_identify("小孩对头孢、罗红霉素过敏，能服用小儿氨酚烷胺吗")
     dstr = json.dumps(result, ensure_ascii=False, indent=4)
     dstr = unicode.encode(dstr, 'utf-8')
     with open('qa_result.json', 'wb') as f:
