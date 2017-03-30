@@ -5,8 +5,9 @@ import time
 
 import jieba
 import jieba.posseg
+
 from clfier_with_w2v.sentence_clfier import SentenceClfier
-from es_match import es_match
+from deep_serving.es_match import es_match
 
 with open('data/merge_split2.json', 'rb') as f:
     data = f.read()

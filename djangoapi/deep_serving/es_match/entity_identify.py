@@ -1,20 +1,16 @@
 # encoding:UTF-8
 
-import codecs
-import csv
 import json
-import pprint
-import sys
 import time
 
-#import exact_match.mm
-#import fuzzy_match.fuzzy_match
-#from clfier import sentence_clfier
-#from clfier.sentence_clfier import tokenizer
+# import exact_match.mm
+# import fuzzy_match.fuzzy_match
+# from clfier import sentence_clfier
+# from clfier.sentence_clfier import tokenizer
 import es_match
 import jieba
 import jieba.posseg
-import pypinyin
+
 #from clfier_with_w2v.sentence_clfier import SentenceClfier
 
 with open('../data/merge_split2.json', 'rb') as f:

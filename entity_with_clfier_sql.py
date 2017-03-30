@@ -4,10 +4,10 @@ import json
 import time
 from StringIO import StringIO
 
-import chardet
 import psycopg2
 import pycurl
-from es_match import es_match
+
+from deep_serving.es_match import es_match
 
 conn = psycopg2.connect(
     'dbname=kgdata user=dbuser password=112233 host=127.0.0.1')
