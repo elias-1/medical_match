@@ -1,5 +1,13 @@
-# encoding:UTF-8
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2017 www.drcubic.com, Inc. All Rights Reserved
+#
+"""
+File: entities_refine.py
+Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
+Date: 2017/3/28 9:42
+"""
 import json
 import time
 from StringIO import StringIO
@@ -37,9 +45,10 @@ def search_sql(sql):
         cur.execute(sql)
         result_set = cur.fetchall()
         cur.close()
+        return result_set
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
-    return result_set
+        return None
 
 
 def entity_identify(sentence):
@@ -108,8 +117,14 @@ def search_candidates(exact_list):
     fuzz_candi_set = set([])
     for name in exact_list:
         print 'exact:  ' + name
-        sql1 = """SELECT DISTINCT entity_name2 FROM entity_relation where entity_name1 = \'""" + name + """\' union SELECT DISTINCT entity_name1 FROM entity_relation where entity_name2 = \'""" + name + """\';"""
-        sql_result = search_sql(sql1)
+        sql = """SELECT DISTINCT entity_name2 
+                  FROM entity_relation 
+                  where entity_name1 = '%s'
+                  union 
+                  SELECT DISTINCT entity_name1
+                  FROM entity_relation
+                  where entity_name2 = '%s'"""
+        sql_result = search_sql(sql % (name, name))
         print len(sql_result)
         for en_result in sql_result:
             fuzz_candi_set.add(en_result[0])

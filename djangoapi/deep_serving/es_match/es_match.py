@@ -5,7 +5,7 @@
 #
 """
 File: es_match.py
-Author: shileicao(shileicao@stu.xjtu.edu.cn)
+Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 17-2-26 上午10:51
 """
 
@@ -33,7 +33,6 @@ def encode_pinyin(word):
 
 
 def encode_pinyin2(word):
-    pinyin_ = []
     pinyin = hanzi2pinyin(word)
     return ' '.join(pinyin)
 
