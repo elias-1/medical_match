@@ -3,7 +3,10 @@
 import json
 import time
 
+import tensorflow as tf
 from core import entity_with_clfier
+
+tf.matmul()
 
 if __name__ == "__main__":
     stime = time.clock()

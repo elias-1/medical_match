@@ -5,13 +5,16 @@
 #
 """
 File: es_match.py
-Author: shileicao(shileicao@stu.xjtu.edu.cn)
+Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 17-2-26 上午10:51
 """
 
 # import pprint
 import pypinyin
 from elasticsearch import Elasticsearch
+
+from fuzzywuzzy import process
+from fuzzywuzzy.fuzz import ratio
 
 es = Elasticsearch([{"host": "localhost", "port": 9200}])
 
@@ -30,7 +33,6 @@ def encode_pinyin(word):
 
 
 def encode_pinyin2(word):
-    pinyin_ = []
     pinyin = hanzi2pinyin(word)
     return ' '.join(pinyin)
 
@@ -89,34 +91,54 @@ def search_index(query_string, return_number=1):
             }
         })
 
-    answers = res1['hits']['hits'] + res2['hits']['hits']
-    answers0 = res3['hits']['hits']
-    print answers[0]
-    print res2['hits']['hits'][0]
-    print 'dklsd:' + res2['hits']['hits'][0]['_source']['Name']
+    result_names = []
+    max_score = 0
+    max_item = ''
+    if len(res1['hits']['hits']) > 0:
+        fuzz = res1['hits']['hits'][0]['_source']['Name']
+        if fuzz == query_string:
+            result_names.append(fuzz)
+            max_score = res1['hits']['hits'][0]['_score']
+            max_item = fuzz
+        else:
+            fuzz = res2['hits']['hits'][0]['_source']['Pinyin']
+            if fuzz == query_pinyin:
+                result_names.append(res2['hits']['hits'][0]['_source']['Name'])
+                max_score = res2['hits']['hits'][0]['_score']
+                max_item = res2['hits']['hits'][0]['_source']['Name']
+                print '222'
+
+            else:
+                if len(res3['hits']['hits']) > 0:
+                    word_ratio = ratio(
+                        query_string,
+                        res3['hits']['hits'][0]['_source']['Name'])
+                    if word_ratio > 40:
+                        result_names.append(
+                            res3['hits']['hits'][0]['_source']['Name'])
+                        max_score = res3['hits']['hits'][0]['_score']
+                        max_item = res3['hits']['hits'][0]['_source']['Name']
+                        print '333'
+
+    answers = res1['hits']['hits'] + res2['hits']['hits'] + res3['hits'][
+        'hits']
     answers = sorted(
         answers, cmp=(lambda x, y: 1 if x['_score'] < y['_score'] else -1))
-    # pprint.pprint(answers)
-
-    result_names = []
     entity_types = []
-    re_num = return_number
-    if len(answers0) > 0 and answers[0]['_source']['Name'] != query_string:
-        result_names.append(answers0[0]['_source']['Name'])
-        re_num -= 1
-    #print re_num
+    re_num = return_number - len(result_names)
+
     if re_num >= 1:
         for item in answers:
             if item['_source']['Name'] not in result_names:
                 result_names.append(item['_source']['Name'])
                 entity_types.append(item['_source']['Entity_type'])
+                if item['_score'] > max_score:
+                    max_score = item['_score']
+                    max_item = item['_source']['Name']
                 re_num -= 1
-                #print re_num
                 if re_num == 0:
                     break
-    '''        
-    else:
-        result_names.append(answers[0]['_source']['Name'])
-        entity_types.append(answers[0]['_source']['Entity_type'])
-    '''
-    return result_names, entity_types
+    score_dict = {}
+    score_dict[u'max_score'] = max_score
+    score_dict[u'max_item'] = max_item
+    return result_names, score_dict, entity_types

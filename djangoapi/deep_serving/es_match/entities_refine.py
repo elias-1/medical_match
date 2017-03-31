@@ -1,13 +1,21 @@
-# encoding:UTF-8
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2017 www.drcubic.com, Inc. All Rights Reserved
+#
+"""
+File: entities_refine.py
+Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
+Date: 2017/3/28 9:42
+"""
 import json
 import time
 from StringIO import StringIO
 
-import chardet
 import psycopg2
 import pycurl
-from es_match import es_match_server
+
+from deep_serving.es_match import es_match
 
 conn = psycopg2.connect(
     'dbname=kgdata user=dbuser password=112233 host=127.0.0.1')
@@ -37,17 +45,16 @@ def search_sql(sql):
         cur.execute(sql)
         result_set = cur.fetchall()
         cur.close()
+        return result_set
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
-    return result_set
+        return None
 
 
 def entity_identify(sentence):
     question = sentence
-    #print type(question)
     result_json = {}
     url = '1.85.37.136:9999/qa/strEntity/?q={"q":"' + question + '","num":5}'
-    #print type(url)
     entity_result = ops_api(url)
     if entity_result[u'return'] != 0:
         result_json[u'return'] = 1
@@ -58,9 +65,7 @@ def entity_identify(sentence):
     score_list = []
     for enti in entities:
         for key in enti:
-            #print key
-            entity_dict[key], score_dict, _ = es_match_server.search_index(key,
-                                                                           5)
+            entity_dict[key], score_dict, _ = es_match.search_index(key, 5)
             score_list.append(score_dict)
     if len(entity_dict) > 1:
         result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
@@ -73,7 +78,6 @@ def entity_fuzz(entity_dict, score_list):
     exact_list = []
     fuzz_list = []
     refine_result = {}
-    #print entity_dict
     for enti in entitys:
         if enti in entitys[enti]:
             exact_list.append(enti)
@@ -113,26 +117,27 @@ def search_candidates(exact_list):
     fuzz_candi_set = set([])
     for name in exact_list:
         print 'exact:  ' + name
-        sql1 = "SELECT DISTINCT entity_name2 FROM entity_relation where entity_name1 = \'" + name + "\';"
-        sql2 = "SELECT DISTINCT entity_name1 FROM entity_relation where entity_name2 = \'" + name + "\';"
-        #sql = "SELECT entity_name1, entity_name2 FROM entity_relation where entity_name1 like \'" + name + "\' or entity_name2 like \'" + name + "\';"
-        sql_result = search_sql(sql1) + search_sql(sql2)
-        #print len(sql_result)
+        sql = """SELECT DISTINCT entity_name2 
+                  FROM entity_relation 
+                  where entity_name1 = '%s'
+                  union 
+                  SELECT DISTINCT entity_name1
+                  FROM entity_relation
+                  where entity_name2 = '%s'"""
+        sql_result = search_sql(sql % (name, name))
+        print len(sql_result)
         for en_result in sql_result:
-            #print chardet.detect(en_result[0])
             fuzz_candi_set.add(en_result[0])
-        #print len(fuzz_candi_set)
     return fuzz_candi_set
 
 
 if __name__ == "__main__":
     stime = time.clock()
-    result = entity_identify("小孩对头孢、罗红霉素过敏，能服用小儿氨酚烷胺吗")
+    result = entity_identify("感冒鼻涕多，喉咙痒总是咳嗽，请问医生需要吃什么药？（女，29岁）")
     dstr = json.dumps(result, ensure_ascii=False, indent=4)
     dstr = unicode.encode(dstr, 'utf-8')
     with open('qa_result.json', 'wb') as f:
         f.write(dstr)
-    #entity_fuzz(result)
     etime = time.clock()
 
     print "read: %f s" % (etime - stime)
