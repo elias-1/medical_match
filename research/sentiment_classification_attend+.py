@@ -27,9 +27,11 @@ tf.app.flags.DEFINE_string('test_data_path', "clfier_test_attend.txt",
 tf.app.flags.DEFINE_string('clfier_log_dir', "clfier_attend_logs",
                            'The log  dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
-tf.app.flags.DEFINE_string("word2vec_path", "words_vec_100.txt",
+tf.app.flags.DEFINE_string("word2vec_path",
+                           "../clfier_with_w2v/words_vec_100.txt",
                            "the word2vec data path")
-tf.app.flags.DEFINE_string("char2vec_path", "chars_vec_50.txt",
+tf.app.flags.DEFINE_string("char2vec_path",
+                           "../clfier_with_w2v/chars_vec_50.txt",
                            "the char2vec data path")
 tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN2,
                             "max num of tokens per query")
