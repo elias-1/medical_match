@@ -118,7 +118,7 @@ class Model:
                               -1.0, 1.0),
             name="common_id_embedding")
         self.words_emb = tf.concat(
-            0, [self.words, self.common_id_embedding], name='concat')
+            [self.words, self.common_id_embedding], 0, name='concat')
         self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
         self.chars = tf.Variable(self.c2v, name="chars")
 
@@ -217,7 +217,7 @@ class Model:
         do_char_conv = lambda x: self.char_convolution(x)
         char_vectors_x = tf.map_fn(do_char_conv, char_vectors)
         char_vectors_x = tf.transpose(char_vectors_x, perm=[1, 0, 2])
-        word_vectors = tf.concat(2, [word_vectors, char_vectors_x])
+        word_vectors = tf.concat([word_vectors, char_vectors_x], 2)
 
         #if trainMode:
         #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
@@ -239,7 +239,7 @@ class Model:
         backward_output = tf.reverse_sequence(
             backward_output_, length_64, seq_dim=1)
 
-        output = tf.concat(2, [forward_output, backward_output])
+        output = tf.concat([forward_output, backward_output], 2)
         if trainMode:
             output = tf.nn.dropout(output, FLAGS.dropout_keep_prob)
 
@@ -267,7 +267,7 @@ class Model:
     def loss(self, clfier_X, clfier_cX, clfier_Y, entity_info):
         self.scores = self.inference(clfier_X, clfier_cX, entity_info)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            self.scores, clfier_Y)
+            logits=self.scores, labels=clfier_Y)
         loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
         regularization_loss = tf.add_n(
             tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
@@ -320,7 +320,7 @@ def inputs(path):
         tf.stack(whole[FLAGS.max_sentence_len:(FLAGS.max_chars_per_word + 1) *
                        FLAGS.max_sentence_len]))
     len_features = FLAGS.max_sentence_len * (FLAGS.max_chars_per_word + 1)
-    label = tf.transpose(tf.concat(0, whole[len_features:len_features + 1]))
+    label = tf.transpose(tf.concat(whole[len_features:len_features + 1], 0))
     entity_info = tf.transpose(tf.stack(whole[len_features + 1:]))
     return features, char_features, label, entity_info
 
