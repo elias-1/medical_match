@@ -9,13 +9,12 @@ Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 17-2-12 下午9:08
 """
 
-from copy import deepcopy
-
 import numpy as np
 
 MAX_SENTENCE_LEN = 80
 MAX_SENTENCE_LEN2 = 25
 MAX_WORD_LEN = 6
+MAX_COMMON_LEN = 5
 ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
 """ENTITY_TYPES
 len([PAD, O]) + len(ENTITY_TYPES) * len([S B M E])
@@ -88,3 +87,43 @@ def do_load_data(path, max_sentence_len, max_chars_per_word):
         y.append(int(ss[max_sentence_len * (1 + max_chars_per_word)]))
     fp.close()
     return np.array(wx), np.array(cx), np.array(y)
+
+
+def do_load_data_attend(path, max_sentence_len, max_chars_per_word):
+    wx = []
+    cx = []
+    y = []
+    entity_info = []
+    fp = open(path, "r")
+    ln = 0
+    for line in fp.readlines():
+        line = line.rstrip()
+        ln += 1
+        if not line:
+            continue
+        ss = line.split(" ")
+        if len(ss) != (max_sentence_len *
+                       (1 + max_chars_per_word) + 1 + len(ENTITY_TYPES)):
+            print("[line:%d]len ss:%d,origin len:%d\n%s" %
+                  (ln, len(ss), len(line), line))
+        assert (len(ss) == (max_sentence_len *
+                            (1 + max_chars_per_word) + 1 + len(ENTITY_TYPES)))
+        lwx = []
+        lcx = []
+        lentity_info = []
+        for i in range(max_sentence_len):
+            lwx.append(int(ss[i]))
+            for k in range(max_chars_per_word):
+                lcx.append(
+                    int(ss[max_sentence_len + i * max_chars_per_word + k]))
+
+        len_features = max_sentence_len * (max_chars_per_word + 1)
+        for i in xrange(MAX_COMMON_LEN):
+            lentity_info.append(int(ss[len_features + 1 + i]))
+
+        wx.append(lwx)
+        cx.append(lcx)
+        entity_info.append(lentity_info)
+        y.append(int(ss[max_sentence_len * (1 + max_chars_per_word)]))
+    fp.close()
+    return np.array(wx), np.array(cx), np.array(y), np.array(entity_info)

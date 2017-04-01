@@ -17,13 +17,12 @@ import sys
 
 import jieba
 import w2v
-from utils import (ENTITY_TYPES, MAX_SENTENCE_LEN, MAX_SENTENCE_LEN2,
-                   MAX_WORD_LEN)
+from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN,
+                   MAX_SENTENCE_LEN2, MAX_WORD_LEN)
 
 jieba.load_userdict(os.path.join('../data', 'words.txt'))
 
 SPLIT_RATE = 0.8
-MAX_COMMON_LEN = 5
 
 RESEARCH_LABEL = {
     '1': '0',

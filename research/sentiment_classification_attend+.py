@@ -15,9 +15,8 @@ import os
 
 import numpy as np
 import tensorflow as tf
-
-from utils import (ASPECT, CHARACTERS, MAX_SENTENCE_LEN, MAX_WORD_LEN,
-                   do_load_data_attend, load_w2v)
+from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN2,
+                   MAX_WORD_LEN, do_load_data_attend, load_w2v)
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -25,12 +24,14 @@ tf.app.flags.DEFINE_string('train_data_path', "clfier_train_attend.txt",
                            'Training data dir')
 tf.app.flags.DEFINE_string('test_data_path', "clfier_test_attend.txt",
                            'Test data dir')
-tf.app.flags.DEFINE_string('clfier_log_dir', "clfier_attend+_logs",
+tf.app.flags.DEFINE_string('clfier_log_dir', "clfier_attend_logs",
                            'The log  dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
-tf.app.flags.DEFINE_string("word_word2vec_path", "data/glove.6B.100d.txt",
+tf.app.flags.DEFINE_string("word2vec_path", "words_vec_100.txt",
                            "the word2vec data path")
-tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
+tf.app.flags.DEFINE_string("char2vec_path", "chars_vec_50.txt",
+                           "the char2vec data path")
+tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN2,
                             "max num of tokens per query")
 tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
 tf.app.flags.DEFINE_integer("embedding_char_size", 50, "second embedding size")
@@ -106,26 +107,18 @@ def linear(args, output_size, bias, bias_start=0.0, scope=None, reuse=None):
 
 
 class Model:
-    def __init__(self, w2vPath, numHidden):
+    def __init__(self, w2vPath, c2vPath, numHidden):
         self.numHidden = numHidden
         self.w2v = load_w2v(w2vPath, FLAGS.embedding_word_size)
         self.words = tf.Variable(self.w2v, name="words")
-
-        self.common_id_embedding_pad = tf.constant(
-            0.0, shape=[1, numHidden * 2], name="common_id_embedding_pad")
-
         self.common_id_embedding = tf.Variable(
-            tf.random_uniform([len(ASPECT), numHidden * 2], -1.0, 1.0),
-            name="common_id_embedding")
-
-        self.common_embedding = tf.concat(
-            0, [self.common_id_embedding_pad, self.common_id_embedding],
-            name='common_embedding')
-
-        self.chars = tf.Variable(
-            tf.random_uniform([len(CHARACTERS) + 1, FLAGS.embedding_char_size],
+            tf.random_uniform([len(ENTITY_TYPES), FLAGS.embedding_word_size],
                               -1.0, 1.0),
-            name="chars")
+            name="common_id_embedding")
+        self.words_emb = tf.concat(
+            0, [self.words, self.common_id_embedding], name='concat')
+        self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
+        self.chars = tf.Variable(self.c2v, name="chars")
 
         with tf.variable_scope('CNN_Layer') as scope:
             self.char_filter = tf.get_variable(
@@ -175,7 +168,7 @@ class Model:
             name="input_chars")
 
         self.entity_info = tf.placeholder(
-            tf.int32, shape=[None, len(ASPECT)], name="entity_info")
+            tf.int32, shape=[None, MAX_COMMON_LEN], name="entity_info")
 
     def length(self, data):
         used = tf.sign(tf.abs(data))
@@ -304,9 +297,11 @@ def read_csv(batch_size, file_name):
     decoded = tf.decode_csv(
         value,
         field_delim=' ',
-        record_defaults=[[0]
-                         for i in range(FLAGS.max_sentence_len * (
-                             FLAGS.max_chars_per_word + 1) + 1 + len(ASPECT))])
+        record_defaults=[
+            [0]
+            for i in range(FLAGS.max_sentence_len * (FLAGS.max_chars_per_word +
+                                                     1) + 1 + MAX_COMMON_LEN)
+        ])
 
     # batch actually reads the file and loads "batch_size" rows in a single tensor
     return tf.train.shuffle_batch(
@@ -361,7 +356,8 @@ def main(unused_argv):
     graph = tf.Graph()
     # ner_checkpoint_file = tf.train.latest_checkpoint(FLAGS.ner_log_dir)
     with graph.as_default():
-        model = Model(FLAGS.word_word2vec_path, FLAGS.num_hidden)
+        model = Model(FLAGS.word2vec_path, FLAGS.char2vec_path,
+                      FLAGS.num_hidden)
         print("train data path:", trainDataPath)
         clfier_X, clfier_cX, clfier_Y, entity_info = inputs(trainDataPath)
         clfier_tX, clfier_tcX, clfier_tY, tentity_info = do_load_data_attend(
