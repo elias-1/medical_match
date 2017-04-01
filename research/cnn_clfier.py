@@ -23,10 +23,8 @@ C_MAX_WORD_LEN = 6
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string(
-    'train_data_path',
-    "/home/elias/code/medical_match/clfier_with_w2v/clfier_train.txt",
-    'Training data dir')
+tf.app.flags.DEFINE_string('train_data_path', "clfier_train.txt",
+                           'Training data dir')
 tf.app.flags.DEFINE_string('test_data_path', "clfier_test.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('cnn_clfier_log_dir', "cnn_clfier_logs",
@@ -319,10 +317,7 @@ def test_evaluate(sess, test_clfier_score, inp_w, inp_c, clfier_tX, clfier_tcX,
 
 
 def main(unused_argv):
-    curdir = os.path.dirname(os.path.realpath(__file__))
     trainDataPath = tf.app.flags.FLAGS.train_data_path
-    if not trainDataPath.startswith("/"):
-        trainDataPath = curdir + "/../../" + trainDataPath
     graph = tf.Graph()
     with graph.as_default():
         model = TextCNN(FLAGS.word2vec_path, FLAGS.char2vec_path)

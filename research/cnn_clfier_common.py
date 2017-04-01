@@ -22,11 +22,9 @@ from utils import (ENTITY_TYPES, MAX_SENTENCE_LEN2, MAX_WORD_LEN, do_load_data,
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string(
-    'train_data_path',
-    "/home/elias/code/medical_match/clfier_with_w2v/clfier_common2_train.txt",
-    'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "clfier_common2_test.txt",
+tf.app.flags.DEFINE_string('train_data_path', "clfier_common_train.txt",
+                           'Training data dir')
+tf.app.flags.DEFINE_string('test_data_path', "clfier_common_test.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('cnn_clfier_common2_log_dir',
                            "cnn_clfier_common2_log", 'The log  dir')
@@ -286,10 +284,7 @@ def test_evaluate(sess, test_clfier_score, inp_w, inp_c, clfier_tX, clfier_tcX,
 
 
 def main(unused_argv):
-    curdir = os.path.dirname(os.path.realpath(__file__))
     trainDataPath = tf.app.flags.FLAGS.train_data_path
-    if not trainDataPath.startswith("/"):
-        trainDataPath = curdir + "/../../" + trainDataPath
     graph = tf.Graph()
     with graph.as_default():
         model = TextCNN(FLAGS.word2vec_path, FLAGS.char2vec_path)

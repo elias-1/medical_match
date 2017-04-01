@@ -21,9 +21,9 @@ from utils import (ASPECT, CHARACTERS, MAX_SENTENCE_LEN, MAX_WORD_LEN,
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "clfier_train.txt",
+tf.app.flags.DEFINE_string('train_data_path', "clfier_train_attend.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "clfier_test.txt",
+tf.app.flags.DEFINE_string('test_data_path', "clfier_test_attend.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('clfier_log_dir', "clfier_attend+_logs",
                            'The log  dir')
@@ -357,12 +357,9 @@ def test_evaluate(sess, test_clfier_score, inp_w, inp_c, entity_info,
 
 
 def main(unused_argv):
-    curdir = os.path.dirname(os.path.realpath(__file__))
     trainDataPath = tf.app.flags.FLAGS.train_data_path
-    if not trainDataPath.startswith("/"):
-        trainDataPath = curdir + "/../../" + trainDataPath
     graph = tf.Graph()
-    ner_checkpoint_file = tf.train.latest_checkpoint(FLAGS.ner_log_dir)
+    # ner_checkpoint_file = tf.train.latest_checkpoint(FLAGS.ner_log_dir)
     with graph.as_default():
         model = Model(FLAGS.word_word2vec_path, FLAGS.num_hidden)
         print("train data path:", trainDataPath)
