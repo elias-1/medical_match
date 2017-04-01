@@ -48,7 +48,7 @@ tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 tf.app.flags.DEFINE_float("filter_size", 5, "The clfier's conv fileter size")
 tf.app.flags.DEFINE_float("num_filters", 128, "Number of filters")
-tf.app.flags.DEFINE_float("num_classes", 65, "Number of classes to classify")
+tf.app.flags.DEFINE_float("num_classes", 7, "Number of classes to classify")
 tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
                           'Dropout keep probability (default: 0.5)')
 

@@ -48,7 +48,7 @@ tf.app.flags.DEFINE_string('filter_sizes', '3,4,5',
                            'Comma-separated filter sizes (default: \'3,4,5\')')
 tf.app.flags.DEFINE_integer('num_filters', 128,
                             'Number of filters per filter size (default: 128)')
-tf.app.flags.DEFINE_float("num_classes", 11, "Number of classes to classify")
+tf.app.flags.DEFINE_float("num_classes", 7, "Number of classes to classify")
 tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
                           'Dropout keep probability (default: 0.5)')
 
