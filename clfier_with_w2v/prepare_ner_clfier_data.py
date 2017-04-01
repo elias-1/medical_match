@@ -23,6 +23,7 @@ from utils import (ENTITY_TYPES, MAX_SENTENCE_LEN, MAX_SENTENCE_LEN2,
 jieba.load_userdict(os.path.join('../data', 'words.txt'))
 
 SPLIT_RATE = 0.8
+MAX_COMMON_LEN = 5
 
 RESEARCH_LABEL = {
     '1': '0',
@@ -115,11 +116,11 @@ def words2labels(words, entity_with_types):
             entity_labels[loc[0]] = str(entity_index * 4 + 3)
             entity_labels[loc[1]] = str(entity_index * 4 + 5)
         if loc[1] - loc[0] > 1:
-            for mid in range(loc[0] + 1, loc[1]):
+            for mid in xrange(loc[0] + 1, loc[1]):
                 entity_labels[mid] = str(entity_index * 4 + 4)
 
     sort_index = sorted(
-        range(len(entity_location)),
+        xrange(len(entity_location)),
         key=lambda index: entity_location[index][1][0])
     entity_location = [entity_location[index] for index in sort_index]
     return entity_labels, entity_location
@@ -130,11 +131,11 @@ def generate_ner_line(ner_out, char_vob, words, labeli):
     chari = []
     if nl > MAX_SENTENCE_LEN:
         nl = MAX_SENTENCE_LEN
-    for ti in range(nl):
+    for ti in xrange(nl):
         char = words[ti]
         idx = char_vob.GetWordIndex(char)
         chari.append(str(idx))
-    for i in range(nl, MAX_SENTENCE_LEN):
+    for i in xrange(nl, MAX_SENTENCE_LEN):
         chari.append("0")
 
     line = " ".join(chari)
@@ -145,7 +146,7 @@ def generate_ner_line(ner_out, char_vob, words, labeli):
 
 
 def data_shuffle(x, y=None):
-    indexes = range(len(x))
+    indexes = xrange(len(x))
     random.shuffle(indexes)
     x_temp = [x[i] for i in indexes]
     if y:
@@ -182,7 +183,7 @@ def generate_clfier_line(clfier_cout, char_vob, words_with_class,
     vob_size = char_vob.GetTotalWord()
     chari = []
     nl = len(chars)
-    for ti in range(nl):
+    for ti in xrange(nl):
         char = chars[ti]
         idx = char_vob.GetWordIndex(char)
         chari.append(str(idx))
@@ -201,7 +202,7 @@ def generate_clfier_line(clfier_cout, char_vob, words_with_class,
     if nl > MAX_SENTENCE_LEN:
         clfier_line = ' '.join(chari[:MAX_SENTENCE_LEN]) + ' ' + label_id
     else:
-        for i in range(nl, MAX_SENTENCE_LEN):
+        for i in xrange(nl, MAX_SENTENCE_LEN):
             chari.append('0')
         clfier_line = ' '.join(chari) + ' ' + label_id
 
@@ -278,7 +279,7 @@ def generate_clfier2_line(clfier_cout2,
     wordi = []
     chari = []
     current_index = 0
-    for ti in range(nl):
+    for ti in xrange(nl):
         word = words[ti]
         if current_index < len(common_index) and ti == common_index[
                 current_index]:
@@ -294,14 +295,14 @@ def generate_clfier2_line(clfier_cout2,
             lc = chars[nc - 1]
             chars[MAX_WORD_LEN - 1] = lc
             nc = MAX_WORD_LEN
-        for i in range(nc):
+        for i in xrange(nc):
             char_idx = char_vob.GetWordIndex(chars[i])
             chari.append(str(char_idx))
-        for i in range(nc, MAX_WORD_LEN):
+        for i in xrange(nc, MAX_WORD_LEN):
             chari.append("0")
-    for i in range(nl, MAX_SENTENCE_LEN2):
+    for i in xrange(nl, MAX_SENTENCE_LEN2):
         wordi.append("0")
-        for ii in range(MAX_WORD_LEN):
+        for ii in xrange(MAX_WORD_LEN):
             chari.append('0')
 
     line = " ".join(wordi)
@@ -323,7 +324,7 @@ def generate_research_line(out, char_vob, word_vob, words_with_class):
         nl = MAX_SENTENCE_LEN2
     wordi = []
     chari = []
-    for ti in range(nl):
+    for ti in xrange(nl):
         word = words[ti]
         idx = word_vob.GetWordIndex(word)
         wordi.append(str(idx))
@@ -333,14 +334,14 @@ def generate_research_line(out, char_vob, word_vob, words_with_class):
             lc = chars[nc - 1]
             chars[MAX_WORD_LEN - 1] = lc
             nc = MAX_WORD_LEN
-        for i in range(nc):
+        for i in xrange(nc):
             char_idx = char_vob.GetWordIndex(chars[i])
             chari.append(str(char_idx))
-        for i in range(nc, MAX_WORD_LEN):
+        for i in xrange(nc, MAX_WORD_LEN):
             chari.append("0")
-    for i in range(nl, MAX_SENTENCE_LEN2):
+    for i in xrange(nl, MAX_SENTENCE_LEN2):
         wordi.append("0")
-        for ii in range(MAX_WORD_LEN):
+        for ii in xrange(MAX_WORD_LEN):
             chari.append('0')
 
     line = " ".join(wordi)
@@ -350,6 +351,60 @@ def generate_research_line(out, char_vob, word_vob, words_with_class):
     clfier_line = line + label_id
 
     out.write("%s\n" % (clfier_line))
+    return clfier_line
+
+
+def generate_research_attend_line(clfier_cout, char_vob, word_vob,
+                                  words_with_class, entity_location,
+                                  entity_with_types):
+    word_vob_size = word_vob.GetTotalWord()
+
+    label_id = RESEARCH_LABEL[words_with_class[0]]
+
+    words = tokenizer(words_with_class[1])
+    words, common_index = refine_tokenizer2common(words, entity_location)
+    nl = len(words)
+    if nl > MAX_SENTENCE_LEN2:
+        nl = MAX_SENTENCE_LEN2
+    wordi = []
+    chari = []
+
+    common_index_ids = [
+        ENTITY_TYPES.index(entity_with_types[words[eindex]]) + word_vob_size
+        for eindex in common_index
+    ]
+
+    for ti in xrange(nl):
+        word = words[ti]
+        idx = word_vob.GetWordIndex(word)
+        wordi.append(str(idx))
+
+        chars = list(word)
+        nc = len(chars)
+        if nc > MAX_WORD_LEN:
+            lc = chars[nc - 1]
+            chars[MAX_WORD_LEN - 1] = lc
+            nc = MAX_WORD_LEN
+        for i in xrange(nc):
+            char_idx = char_vob.GetWordIndex(chars[i])
+            chari.append(str(char_idx))
+        for i in xrange(nc, MAX_WORD_LEN):
+            chari.append("0")
+    for i in xrange(nl, MAX_SENTENCE_LEN2):
+        wordi.append("0")
+        for ii in xrange(MAX_WORD_LEN):
+            chari.append('0')
+
+    for i in xrange(len(common_index_ids), MAX_COMMON_LEN):
+        common_index_ids.append("0")
+
+    line = " ".join(wordi)
+    line += " "
+    line += " ".join(chari)
+    line += " "
+    clfier_line = line + label_id + " " + " ".join(common_index_ids)
+
+    clfier_cout.write("%s\n" % (clfier_line))
     return clfier_line
 
 
@@ -381,18 +436,22 @@ def processLine(out, output_type, data, char_vob, word_vob):
                 for_research=True)
         elif output_type == '5':
             generate_research_line(out, char_vob, word_vob, row[:2])
+        elif output_type == '6':
+            generate_research_attend_line(out, char_vob, word_vob, row[:2],
+                                          entity_location, entity_with_types)
 
         else:
-            raise ('output type error!')
+            raise ValueError('output type error!')
 
 
 """
 output_type:
 1   ner
 2   clfier_common
-3   clfier_common2
-4   research_common
-5   research_clfier
+3   clfier_common2  with char-level support
+4   research_common  with char-level support
+5   research_clfier just clfier
+6   research_clfier_attend
 """
 
 
