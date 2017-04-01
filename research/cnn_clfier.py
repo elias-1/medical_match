@@ -243,7 +243,7 @@ class TextCNN(object):
     def loss(self, clfier_X, clfier_cX, clfier_Y):
         self.scores = self.inference(clfier_X, clfier_cX)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            self.scores, clfier_Y)
+            logits=self.scores, labels=clfier_Y)
         loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
         regularization_loss = tf.add_n(
             tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
