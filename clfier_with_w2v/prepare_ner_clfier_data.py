@@ -160,12 +160,12 @@ def entity_id_to_common(chari, entity_location, aspects_id_in_vob):
     current = 0
     common_chari = []
     for i, word_id in enumerate(chari):
-        if current < len(entity_location) and i >= entity_location[current][1][
-                0] and i <= entity_location[current][1][1]:
-            if i == entity_location[current][0]:
+        if current < len(entity_location) and i >= entity_location[1][current][
+                1][0] and i <= entity_location[1][current][1][1]:
+            if i == entity_location[1][current][0]:
                 common_chari.append(aspects_id_in_vob[current])
 
-            if i == entity_location[current][1][1]:
+            if i == entity_location[1][current][1][1]:
                 current += 1
         else:
             common_chari.append(chari[i])
@@ -173,10 +173,17 @@ def entity_id_to_common(chari, entity_location, aspects_id_in_vob):
     return common_chari
 
 
-def generate_clfier_line(clfier_cout, char_vob, words_with_class,
-                         entity_location, entity_with_types):
+def generate_clfier_line(clfier_cout,
+                         char_vob,
+                         words_with_class,
+                         entity_location,
+                         entity_with_types,
+                         for_research=False):
+    if for_research:
+        label_id = RESEARCH_LABEL[words_with_class[0]]
+    else:
+        label_id = str(int(words_with_class[0]) - 1)
 
-    label_id = str(int(words_with_class[0]) - 1)
     chars = words_with_class[1]
 
     vob_size = char_vob.GetTotalWord()
@@ -192,7 +199,7 @@ def generate_clfier_line(clfier_cout, char_vob, words_with_class,
             str(
                 ENTITY_TYPES.index(entity_with_types[chars[loc[1][0]:loc[1][1]
                                                            + 1]]) + vob_size)
-            for loc in entity_location
+            for _, loc in entity_location
         ]
 
         chari = entity_id_to_common(chari, entity_location, aspects_id_in_vob)
@@ -481,6 +488,15 @@ def processLine(out, output_type, data, char_vob, word_vob):
         elif output_type == '7':
             generate_research_char_attend_line(
                 out, char_vob, row[:2], entity_location, entity_with_types)
+
+        elif output_type == '8':
+            generate_clfier_line(
+                out,
+                char_vob,
+                row[:2],
+                entity_location,
+                entity_with_types,
+                for_research=True)
         else:
             raise ValueError('output type error!')
 
@@ -494,6 +510,7 @@ output_type:
 5   research_clfier just clfier
 6   research_clfier_attend
 7   research_char_clfier_attend
+8   research_char_clfier_common
 """
 
 
