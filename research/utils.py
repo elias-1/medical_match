@@ -103,11 +103,11 @@ def do_load_data_attend(path, max_sentence_len, max_chars_per_word):
             continue
         ss = line.split(" ")
         if len(ss) != (max_sentence_len *
-                       (1 + max_chars_per_word) + 1 + len(ENTITY_TYPES)):
+                       (1 + max_chars_per_word) + 1 + MAX_COMMON_LEN):
             print("[line:%d]len ss:%d,origin len:%d\n%s" %
                   (ln, len(ss), len(line), line))
         assert (len(ss) == (max_sentence_len *
-                            (1 + max_chars_per_word) + 1 + len(ENTITY_TYPES)))
+                            (1 + max_chars_per_word) + 1 + MAX_COMMON_LEN))
         lwx = []
         lcx = []
         lentity_info = []

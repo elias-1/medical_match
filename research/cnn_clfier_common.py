@@ -26,8 +26,8 @@ tf.app.flags.DEFINE_string('train_data_path', "clfier_common_train.txt",
                            'Training data dir')
 tf.app.flags.DEFINE_string('test_data_path', "clfier_common_test.txt",
                            'Test data dir')
-tf.app.flags.DEFINE_string('cnn_clfier_common2_log_dir',
-                           "cnn_clfier_common2_log", 'The log  dir')
+tf.app.flags.DEFINE_string('cnn_clfier_common_log_dir',
+                           "cnn_clfier_common_log", 'The log  dir')
 tf.app.flags.DEFINE_string("word2vec_path",
                            "../clfier_with_w2v/words_vec_100.txt",
                            "the word2vec data path")
@@ -299,7 +299,7 @@ def main(unused_argv):
         train_op = train(total_loss)
         test_clfier_score = model.test_clfier_score()
 
-        logdir = os.path.join(FLAGS.cnn_clfier_common2_log_dir, TIMESTAMP)
+        logdir = os.path.join(FLAGS.cnn_clfier_common_log_dir, TIMESTAMP)
         sv = tf.train.Supervisor(graph=graph, logdir=logdir)
 
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
