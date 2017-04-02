@@ -369,8 +369,9 @@ def generate_research_attend_line(clfier_cout, char_vob, word_vob,
     chari = []
 
     common_index_ids = [
-        ENTITY_TYPES.index(entity_with_types[words[eindex]]) + word_vob_size
-        for eindex in common_index
+        str(
+            ENTITY_TYPES.index(entity_with_types[words[eindex]]) +
+            word_vob_size) for eindex in common_index
     ]
 
     for ti in xrange(nl):
