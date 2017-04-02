@@ -116,7 +116,8 @@ class Model:
             name="common_id_embedding")
 
         self.common_embedding = tf.concat(
-            0, [self.common_id_embedding_pad, self.common_id_embedding],
+            [self.common_id_embedding_pad, self.common_id_embedding],
+            0,
             name='common_embedding')
 
         with tf.variable_scope('Attention') as scope:
