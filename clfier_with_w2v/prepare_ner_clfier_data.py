@@ -402,7 +402,8 @@ def generate_research_attend_line(clfier_cout, char_vob, word_vob,
     line += " "
     line += " ".join(chari)
     line += " "
-    clfier_line = line + label_id + " " + " ".join(common_index_ids)
+    clfier_line = line + label_id + " " + " ".join(
+        common_index_ids[:MAX_COMMON_LEN])
 
     clfier_cout.write("%s\n" % (clfier_line))
     return clfier_line

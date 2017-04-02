@@ -126,7 +126,8 @@ class Model:
             self.char_filter = tf.get_variable(
                 "char_filter",
                 shape=[
-                    2, FLAGS.embedding_char_size, 1, FLAGS.embedding_char_size
+                    FLAGS.char_window_size, FLAGS.embedding_char_size, 1,
+                    FLAGS.embedding_char_size
                 ],
                 regularizer=tf.contrib.layers.l2_regularizer(0.0001),
                 initializer=tf.truncated_normal_initializer(stddev=0.01),
