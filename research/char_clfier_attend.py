@@ -212,8 +212,8 @@ class Model:
                                  self.clfier_softmax_b)
         return scores
 
-    def loss(self, clfier_X, clfier_cX, clfier_Y, entity_info):
-        self.scores = self.inference(clfier_X, clfier_cX, entity_info)
+    def loss(self, clfier_cX, clfier_Y, entity_info):
+        self.scores = self.inference(clfier_cX, entity_info)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self.scores, labels=clfier_Y)
         loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
@@ -244,7 +244,7 @@ def read_csv(batch_size, file_name):
         value,
         field_delim=' ',
         record_defaults=[
-            [0] for i in range(FLAGS.max_sentence_len * +1 + MAX_COMMON_LEN)
+            [0] for i in range(FLAGS.max_sentence_len + 1 + MAX_COMMON_LEN)
         ])
 
     # batch actually reads the file and loads "batch_size" rows in a single tensor
