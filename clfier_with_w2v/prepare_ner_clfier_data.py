@@ -414,7 +414,7 @@ def generate_research_char_attend_line(clfier_cout, char_vob, words_with_class,
     char_vob_size = char_vob.GetTotalWord()
     label_id = RESEARCH_LABEL[words_with_class[0]]
 
-    chars = tokenizer(words_with_class[1])
+    chars = words_with_class[1]
     nl = len(chars)
     if nl > MAX_SENTENCE_LEN:
         nl = MAX_SENTENCE_LEN
