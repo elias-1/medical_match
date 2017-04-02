@@ -113,12 +113,16 @@ class Model:
         self.numHidden = numHidden
         self.w2v = load_w2v(w2vPath, FLAGS.embedding_word_size)
         self.words = tf.Variable(self.w2v, name="words")
+        self.common_id_embedding_pad = tf.constant(
+            0.0, shape=[1, numHidden * 2], name="common_id_embedding_pad")
+
         self.common_id_embedding = tf.Variable(
-            tf.random_uniform([len(ENTITY_TYPES), FLAGS.embedding_word_size],
-                              -1.0, 1.0),
+            tf.random_uniform([len(ENTITY_TYPES), numHidden * 2], -1.0, 1.0),
             name="common_id_embedding")
-        self.words_emb = tf.concat(
-            [self.words, self.common_id_embedding], 0, name='concat')
+
+        self.common_embedding = tf.concat(
+            0, [self.common_id_embedding_pad, self.common_id_embedding],
+            name='common_embedding')
         self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
         self.chars = tf.Variable(self.c2v, name="chars")
 
