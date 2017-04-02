@@ -160,12 +160,12 @@ def entity_id_to_common(chari, entity_location, aspects_id_in_vob):
     current = 0
     common_chari = []
     for i, word_id in enumerate(chari):
-        if current < len(entity_location) and i >= entity_location[1][current][
-                1][0] and i <= entity_location[1][current][1][1]:
-            if i == entity_location[1][current][0]:
+        if current < len(entity_location) and i >= entity_location[current][1][
+                0] and i <= entity_location[current][1][1]:
+            if i == entity_location[current][0]:
                 common_chari.append(aspects_id_in_vob[current])
 
-            if i == entity_location[1][current][1][1]:
+            if i == entity_location[current][1][1]:
                 current += 1
         else:
             common_chari.append(chari[i])
@@ -199,7 +199,7 @@ def generate_clfier_line(clfier_cout,
             str(
                 ENTITY_TYPES.index(entity_with_types[chars[loc[1][0]:loc[1][1]
                                                            + 1]]) + vob_size)
-            for _, loc in entity_location
+            for loc in entity_location
         ]
 
         chari = entity_id_to_common(chari, entity_location, aspects_id_in_vob)
