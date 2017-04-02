@@ -228,13 +228,13 @@ class Model:
         #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
         with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
             forward_output, _ = tf.nn.dynamic_rnn(
-                tf.nn.rnn_cell.BasicLSTMCell(self.numHidden),
+                tf.contrib.rnn.LSTMCell(self.numHidden),
                 word_vectors,
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_forward")
             backward_output_, _ = tf.nn.dynamic_rnn(
-                tf.nn.rnn_cell.BasicLSTMCell(self.numHidden),
+                tf.contrib.rnn.LSTMCell(self.numHidden),
                 inputs=tf.reverse_sequence(word_vectors, length_64, seq_dim=1),
                 dtype=tf.float32,
                 sequence_length=length,
