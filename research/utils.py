@@ -127,3 +127,35 @@ def do_load_data_attend(path, max_sentence_len, max_chars_per_word):
         y.append(int(ss[max_sentence_len * (1 + max_chars_per_word)]))
     fp.close()
     return np.array(wx), np.array(cx), np.array(y), np.array(entity_info)
+
+
+def do_load_data_char_attend(path, max_sentence_len):
+    cx = []
+    y = []
+    entity_info = []
+    fp = open(path, "r")
+    ln = 0
+    for line in fp.readlines():
+        line = line.rstrip()
+        ln += 1
+        if not line:
+            continue
+        ss = line.split(" ")
+        if len(ss) != (max_sentence_len + 1 + MAX_COMMON_LEN):
+            print("[line:%d]len ss:%d,origin len:%d\n%s" %
+                  (ln, len(ss), len(line), line))
+        assert (len(ss) == (max_sentence_len + 1 + MAX_COMMON_LEN))
+        lcx = []
+        lentity_info = []
+        for i in range(max_sentence_len):
+            lcx.append(int(ss[i]))
+
+        len_features = max_sentence_len
+        for i in xrange(MAX_COMMON_LEN):
+            lentity_info.append(int(ss[len_features + 1 + i]))
+
+        cx.append(lcx)
+        entity_info.append(lentity_info)
+        y.append(int(ss[max_sentence_len]))
+    fp.close()
+    return np.array(cx), np.array(y), np.array(entity_info)

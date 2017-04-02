@@ -4,9 +4,9 @@
 # Copyright (c) 2016 www.drcubic.com, Inc. All Rights Reserved
 #
 """
-File: clfier_attend.py
+File: char_clfier_attend.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
-Date: 2017-04-01 21:06:16
+Date: 2017-04-02 16:11:46
 """
 
 from __future__ import absolute_import, division, print_function
@@ -15,38 +15,32 @@ import os
 
 import numpy as np
 import tensorflow as tf
-from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN2,
-                   MAX_WORD_LEN, do_load_data_attend, load_w2v)
+from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN,
+                   do_load_data_char_attend, load_w2v)
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "clfier_train_attend.txt",
+tf.app.flags.DEFINE_string('train_data_path', "char_clfier_train_attend.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "clfier_test_attend.txt",
+tf.app.flags.DEFINE_string('test_data_path', "char_clfier_test_attend.txt",
                            'Test data dir')
-tf.app.flags.DEFINE_string('clfier_log_dir', "clfier_attend_logs",
+tf.app.flags.DEFINE_string('clfier_log_dir', "char_clfier_attend_logs",
                            'The log  dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
-tf.app.flags.DEFINE_string("word2vec_path",
-                           "../clfier_with_w2v/words_vec_100.txt",
-                           "the word2vec data path")
+
 tf.app.flags.DEFINE_string("char2vec_path",
-                           "../clfier_with_w2v/chars_vec_50.txt",
+                           "../clfier_with_w2v/chars_vec_100.txt",
                            "the char2vec data path")
-tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN2,
+tf.app.flags.DEFINE_integer("max_sentence_len", MAX_SENTENCE_LEN,
                             "max num of tokens per query")
-tf.app.flags.DEFINE_integer("embedding_word_size", 100, "embedding size")
-tf.app.flags.DEFINE_integer("embedding_char_size", 50, "second embedding size")
-tf.app.flags.DEFINE_integer("char_window_size", 2,
-                            "the window size of char convolution")
-tf.app.flags.DEFINE_integer("max_chars_per_word", MAX_WORD_LEN,
-                            "max number of characters per word ")
+tf.app.flags.DEFINE_integer("embedding_char_size", 100,
+                            "second embedding size")
 tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
 tf.app.flags.DEFINE_integer("train_steps", 2000, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
-tf.app.flags.DEFINE_float("filter_size", 5, "The clfier's conv fileter size")
+tf.app.flags.DEFINE_float("filter_size", 20, "The clfier's conv fileter size")
 tf.app.flags.DEFINE_float("num_filters", 128, "Number of filters")
 tf.app.flags.DEFINE_float("num_classes", 7, "Number of classes to classify")
 tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
@@ -109,10 +103,11 @@ def linear(args, output_size, bias, bias_start=0.0, scope=None, reuse=None):
 
 
 class Model:
-    def __init__(self, w2vPath, c2vPath, numHidden):
+    def __init__(self, c2vPath, numHidden):
         self.numHidden = numHidden
-        self.w2v = load_w2v(w2vPath, FLAGS.embedding_word_size)
-        self.words = tf.Variable(self.w2v, name="words")
+        self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
+        self.chars = tf.Variable(self.c2v, name="chars")
+
         self.common_id_embedding_pad = tf.constant(
             0.0, shape=[1, numHidden * 2], name="common_id_embedding_pad")
 
@@ -121,22 +116,8 @@ class Model:
             name="common_id_embedding")
 
         self.common_embedding = tf.concat(
-            [self.common_id_embedding_pad, self.common_id_embedding],
-            0,
+            0, [self.common_id_embedding_pad, self.common_id_embedding],
             name='common_embedding')
-        self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
-        self.chars = tf.Variable(self.c2v, name="chars")
-
-        with tf.variable_scope('CNN_Layer') as scope:
-            self.char_filter = tf.get_variable(
-                "char_filter",
-                shape=[
-                    FLAGS.char_window_size, FLAGS.embedding_char_size, 1,
-                    FLAGS.embedding_char_size
-                ],
-                regularizer=tf.contrib.layers.l2_regularizer(0.0001),
-                initializer=tf.truncated_normal_initializer(stddev=0.01),
-                dtype=tf.float32)
 
         with tf.variable_scope('Attention') as scope:
             self.attend_W = tf.get_variable(
@@ -168,12 +149,8 @@ class Model:
                 initializer=tf.truncated_normal_initializer(stddev=0.01),
                 dtype=tf.float32)
 
-        self.inp_w = tf.placeholder(
-            tf.int32, shape=[None, FLAGS.max_sentence_len], name="input_words")
         self.inp_c = tf.placeholder(
-            tf.int32,
-            shape=[None, FLAGS.max_sentence_len * FLAGS.max_chars_per_word],
-            name="input_chars")
+            tf.int32, shape=[None, FLAGS.max_sentence_len], name="input_words")
 
         self.entity_info = tf.placeholder(
             tf.int32, shape=[None, MAX_COMMON_LEN], name="entity_info")
@@ -184,59 +161,24 @@ class Model:
         length = tf.cast(length, tf.int32)
         return length
 
-    def char_convolution(self, vecs):
-        conv1 = tf.nn.conv2d(
-            vecs,
-            self.char_filter, [1, 1, FLAGS.embedding_char_size, 1],
-            padding='VALID')
-        conv1 = tf.nn.relu(conv1)
-        pool1 = tf.nn.max_pool(
-            conv1,
-            ksize=[
-                1, FLAGS.max_chars_per_word - FLAGS.char_window_size + 1, 1, 1
-            ],
-            strides=[
-                1, FLAGS.max_chars_per_word - FLAGS.char_window_size + 1, 1, 1
-            ],
-            padding='SAME')
-        pool1 = tf.squeeze(pool1, [1, 2])
-        return pool1
+    def inference(self, clfier_cX, entity_info, reuse=None, trainMode=True):
 
-    def inference(self,
-                  clfier_X,
-                  clfier_cX,
-                  entity_info,
-                  reuse=None,
-                  trainMode=True):
-        word_vectors = tf.nn.embedding_lookup(self.words, clfier_X)
         char_vectors = tf.nn.embedding_lookup(self.chars, clfier_cX)
-        char_vectors = tf.reshape(char_vectors, [
-            -1, FLAGS.max_sentence_len, FLAGS.embedding_char_size,
-            FLAGS.max_chars_per_word
-        ])
-        char_vectors = tf.transpose(char_vectors, perm=[1, 0, 3, 2])
-        char_vectors = tf.expand_dims(char_vectors, -1)
-
-        length = self.length(clfier_X)
+        length = self.length(clfier_cX)
         length_64 = tf.cast(length, tf.int64)
 
-        do_char_conv = lambda x: self.char_convolution(x)
-        char_vectors_x = tf.map_fn(do_char_conv, char_vectors)
-        char_vectors_x = tf.transpose(char_vectors_x, perm=[1, 0, 2])
-        word_vectors = tf.concat([word_vectors, char_vectors_x], 2)
-
         #if trainMode:
-        #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
+        #  char_vectors = tf.nn.dropout(char_vectors, FLAGS.dropout_keep_prob)
         with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
             forward_output, _ = tf.nn.dynamic_rnn(
                 tf.contrib.rnn.LSTMCell(self.numHidden),
-                word_vectors,
+                char_vectors,
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_forward")
             backward_output_, _ = tf.nn.dynamic_rnn(
                 tf.contrib.rnn.LSTMCell(self.numHidden),
-                inputs=tf.reverse_sequence(word_vectors, length_64, seq_dim=1),
+                inputs=tf.reverse_sequence(char_vectors, length_64, seq_dim=1),
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_backword")
@@ -286,11 +228,7 @@ class Model:
 
     def test_clfier_score(self):
         scores = self.inference(
-            self.inp_w,
-            self.inp_c,
-            self.entity_info,
-            reuse=True,
-            trainMode=False)
+            self.inp_c, self.entity_info, reuse=True, trainMode=False)
         return scores
 
 
@@ -305,9 +243,7 @@ def read_csv(batch_size, file_name):
         value,
         field_delim=' ',
         record_defaults=[
-            [0]
-            for i in range(FLAGS.max_sentence_len * (FLAGS.max_chars_per_word +
-                                                     1) + 1 + MAX_COMMON_LEN)
+            [0] for i in range(FLAGS.max_sentence_len * +1 + MAX_COMMON_LEN)
         ])
 
     # batch actually reads the file and loads "batch_size" rows in a single tensor
@@ -321,23 +257,20 @@ def read_csv(batch_size, file_name):
 def inputs(path):
     whole = read_csv(FLAGS.batch_size, path)
     features = tf.transpose(tf.stack(whole[0:FLAGS.max_sentence_len]))
-    char_features = tf.transpose(
-        tf.stack(whole[FLAGS.max_sentence_len:(FLAGS.max_chars_per_word + 1) *
-                       FLAGS.max_sentence_len]))
-    len_features = FLAGS.max_sentence_len * (FLAGS.max_chars_per_word + 1)
+    len_features = FLAGS.max_sentence_len
     label = tf.transpose(tf.concat(whole[len_features:len_features + 1], 0))
     entity_info = tf.transpose(tf.stack(whole[len_features + 1:]))
-    return features, char_features, label, entity_info
+    return features, label, entity_info
 
 
 def train(total_loss):
     return tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(total_loss)
 
 
-def test_evaluate(sess, test_clfier_score, inp_w, inp_c, entity_info,
-                  clfier_tX, clfier_tcX, clfier_tY, tentity_info):
+def test_evaluate(sess, test_clfier_score, inp_c, entity_info, clfier_tcX,
+                  clfier_tY, tentity_info):
     batchSize = FLAGS.batch_size
-    totalLen = clfier_tX.shape[0]
+    totalLen = clfier_tcX.shape[0]
     numBatch = int((totalLen - 1) / batchSize) + 1
     correct_clfier_labels = 0
     for i in range(numBatch):
@@ -346,7 +279,6 @@ def test_evaluate(sess, test_clfier_score, inp_w, inp_c, entity_info,
             endOff = totalLen
         y = clfier_tY[i * batchSize:endOff]
         feed_dict = {
-            inp_w: clfier_tX[i * batchSize:endOff],
             inp_c: clfier_tcX[i * batchSize:endOff],
             entity_info: tentity_info[i * batchSize:endOff]
         }
@@ -363,14 +295,12 @@ def main(unused_argv):
     graph = tf.Graph()
     # ner_checkpoint_file = tf.train.latest_checkpoint(FLAGS.ner_log_dir)
     with graph.as_default():
-        model = Model(FLAGS.word2vec_path, FLAGS.char2vec_path,
-                      FLAGS.num_hidden)
+        model = Model(FLAGS.char2vec_path, FLAGS.num_hidden)
         print("train data path:", trainDataPath)
-        clfier_X, clfier_cX, clfier_Y, entity_info = inputs(trainDataPath)
-        clfier_tX, clfier_tcX, clfier_tY, tentity_info = do_load_data_attend(
-            FLAGS.test_data_path, FLAGS.max_sentence_len,
-            FLAGS.max_chars_per_word)
-        total_loss = model.loss(clfier_X, clfier_cX, clfier_Y, entity_info)
+        clfier_cX, clfier_Y, entity_info = inputs(trainDataPath)
+        clfier_tcX, clfier_tY, tentity_info = do_load_data_char_attend(
+            FLAGS.test_data_path, FLAGS.max_sentence_len)
+        total_loss = model.loss(clfier_cX, clfier_Y, entity_info)
         train_op = train(total_loss)
         test_clfier_score = model.test_clfier_score()
 
@@ -419,9 +349,8 @@ def main(unused_argv):
                         print("[%d] loss: [%r]" %
                               (step + 1, sess.run(total_loss)))
                     if (step + 1) % 20 == 0:
-                        test_evaluate(sess, test_clfier_score, model.inp_w,
-                                      model.inp_c, model.entity_info,
-                                      clfier_tX, clfier_tcX, clfier_tY,
+                        test_evaluate(sess, test_clfier_score, model.inp_c,
+                                      model.entity_info, clfier_tcX, clfier_tY,
                                       tentity_info)
                 except KeyboardInterrupt, e:
                     #     sv.saver.save(

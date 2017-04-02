@@ -409,6 +409,44 @@ def generate_research_attend_line(clfier_cout, char_vob, word_vob,
     return clfier_line
 
 
+def generate_research_char_attend_line(clfier_cout, char_vob, words_with_class,
+                                       entity_location, entity_with_types):
+    char_vob_size = char_vob.GetTotalWord()
+    label_id = RESEARCH_LABEL[words_with_class[0]]
+
+    chars = tokenizer(words_with_class[1])
+    nl = len(chars)
+    if nl > MAX_SENTENCE_LEN:
+        nl = MAX_SENTENCE_LEN
+    chari = []
+
+    common_index_ids = [
+        str(
+            ENTITY_TYPES.index(entity_with_types[chars[entity_loc[
+                0]:entity_loc[1] + 1]]) + char_vob_size)
+        for _, entity_loc in entity_location
+    ]
+
+    for ti in xrange(nl):
+        char = chars[ti]
+        idx = char_vob.GetWordIndex(char)
+        chari.append(str(idx))
+
+    for i in xrange(nl, MAX_SENTENCE_LEN):
+        chari.append("0")
+
+    for i in xrange(len(common_index_ids), MAX_COMMON_LEN):
+        common_index_ids.append("0")
+
+    line = " ".join(chari)
+    line += " "
+    clfier_line = line + label_id + " " + " ".join(
+        common_index_ids[:MAX_COMMON_LEN])
+
+    clfier_cout.write("%s\n" % (clfier_line))
+    return clfier_line
+
+
 def processLine(out, output_type, data, char_vob, word_vob):
     for row in data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
@@ -440,7 +478,9 @@ def processLine(out, output_type, data, char_vob, word_vob):
         elif output_type == '6':
             generate_research_attend_line(out, char_vob, word_vob, row[:2],
                                           entity_location, entity_with_types)
-
+        elif output_type == '7':
+            generate_research_char_attend_line(
+                out, char_vob, row[:2], entity_location, entity_with_types)
         else:
             raise ValueError('output type error!')
 
@@ -453,6 +493,7 @@ output_type:
 4   research_common  with char-level support
 5   research_clfier just clfier
 6   research_clfier_attend
+7   research_char_clfier_attend
 """
 
 
