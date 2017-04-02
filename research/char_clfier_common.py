@@ -147,7 +147,8 @@ class Model:
                 scope="RNN_forward")
             backward_output_, _ = tf.nn.dynamic_rnn(
                 tf.contrib.rnn.LSTMCell(self.numHidden),
-                inputs=tf.reverse_sequence(char_vectors, length_64, seq_dim=1),
+                inputs=tf.reverse_sequence(
+                    char_vectors, length_64, seq_dim=1),
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_backword")
@@ -164,8 +165,8 @@ class Model:
                                  self.clfier_softmax_b)
         return scores
 
-    def loss(self, clfier_X, clfier_cX, clfier_Y):
-        self.scores = self.inference(clfier_X, clfier_cX)
+    def loss(self, clfier_cX, clfier_Y):
+        self.scores = self.inference(clfier_cX)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self.scores, labels=clfier_Y)
         loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
@@ -190,7 +191,7 @@ def read_csv(batch_size, file_name):
     decoded = tf.decode_csv(
         value,
         field_delim=' ',
-        record_defaults=[[0] for i in range(FLAGS.max_sentence_len * +1)])
+        record_defaults=[[0] for i in range(FLAGS.max_sentence_len + 1)])
 
     # batch actually reads the file and loads "batch_size" rows in a single tensor
     return tf.train.shuffle_batch(
@@ -222,9 +223,7 @@ def test_evaluate(sess, test_clfier_score, inp_c, clfier_tcX, clfier_tY):
         if endOff > totalLen:
             endOff = totalLen
         y = clfier_tY[i * batchSize:endOff]
-        feed_dict = {
-            inp_c: clfier_tcX[i * batchSize:endOff],
-        }
+        feed_dict = {inp_c: clfier_tcX[i * batchSize:endOff], }
         clfier_score_val = sess.run([test_clfier_score], feed_dict)
         predictions = np.argmax(clfier_score_val[0], 1)
         correct_clfier_labels += np.sum(np.equal(predictions, y))
@@ -234,7 +233,7 @@ def test_evaluate(sess, test_clfier_score, inp_c, clfier_tcX, clfier_tY):
 
 
 def main(unused_argv):
-    trainDataPath = tf.app.flags.FLAGS.train_data_path
+    trainDataPath = FLAGS.train_data_path
     graph = tf.Graph()
     # ner_checkpoint_file = tf.train.latest_checkpoint(FLAGS.ner_log_dir)
     with graph.as_default():
