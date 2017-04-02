@@ -145,7 +145,7 @@ def generate_ner_line(ner_out, char_vob, words, labeli):
 
 
 def data_shuffle(x, y=None):
-    indexes = xrange(len(x))
+    indexes = range(len(x))
     random.shuffle(indexes)
     x_temp = [x[i] for i in indexes]
     if y:
