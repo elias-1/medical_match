@@ -51,25 +51,18 @@ def search_sql(sql):
         return None
 
 
-def entity_identify(sentence):
-    question = sentence
-    result_json = {}
-    url = '1.85.37.136:9999/qa/strEntity/?q={"q":"' + question + '","num":5}'
-    entity_result = ops_api(url)
-    if entity_result[u'return'] != 0:
-        result_json[u'return'] = 1
+def entity_identify(entity_result):
+    entities = entity_result
+    if len(entities) == 1:
+        entity_dict[key], _, _ = es_match.search_index(entities[0], 1)
+        result_json[u'entity'] = entity_dict
         return result_json
 
-    entities = entity_result[u'content'][u'entity']
-    entity_dict = {}
-    score_list = []
     for enti in entities:
-        for key in enti:
-            entity_dict[key], score_dict, _ = es_match.search_index(key, 5)
-            score_list.append(score_dict)
+        entity_dict[entity], score_dict, _ = es_match.search_index(entity, 5)
+        score_list.append(score_dict)
     if len(entity_dict) > 1:
         result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
-
     return result_json
 
 

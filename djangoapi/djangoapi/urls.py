@@ -23,4 +23,6 @@ urlpatterns = [
     url(r'^deep_serving/sentence_ner/$', 'deep_serving.views.sentence_ner'),
     url(r'^deep_serving/sentence_clfier_ner/$',
         'deep_serving.views.sentence_clfier_ner'),
+    url(r'^deep_serving/sentence_ner_es/$',
+        'deep_serving.views.sentence_ner_es'),
 ]
