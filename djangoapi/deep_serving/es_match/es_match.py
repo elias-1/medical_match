@@ -92,18 +92,25 @@ def search_index(query_string, return_number=1):
         })
 
     result_names = []
+    entity_type_dict = {}
     max_score = 0
     max_item = ''
+    max_type = ''
     if len(res1['hits']['hits']) > 0:
         fuzz = res1['hits']['hits'][0]['_source']['Name']
         if fuzz == query_string:
             result_names.append(fuzz)
+            entity_type_dict[fuzz] = res1['hits']['hits'][0]['_source'][
+                'Entity_type']
             max_score = res1['hits']['hits'][0]['_score']
             max_item = fuzz
         else:
             fuzz = res2['hits']['hits'][0]['_source']['Pinyin']
             if fuzz == query_pinyin:
                 result_names.append(res2['hits']['hits'][0]['_source']['Name'])
+                entity_type_dict[res2['hits']['hits'][0]['_source'][
+                    'Name']] = res2['hits']['hits'][0]['_source'][
+                        'Entity_type']
                 max_score = res2['hits']['hits'][0]['_score']
                 max_item = res2['hits']['hits'][0]['_source']['Name']
                 #print '222'
@@ -116,6 +123,9 @@ def search_index(query_string, return_number=1):
                     if word_ratio > 40:
                         result_names.append(
                             res3['hits']['hits'][0]['_source']['Name'])
+                        entity_type_dict[res3['hits']['hits'][0]['_source'][
+                            'Name']] = res3['hits']['hits'][0]['_source'][
+                                'Entity_type']
                         max_score = res3['hits']['hits'][0]['_score']
                         max_item = res3['hits']['hits'][0]['_source']['Name']
                         #print '333'
@@ -124,14 +134,16 @@ def search_index(query_string, return_number=1):
         'hits']
     answers = sorted(
         answers, cmp=(lambda x, y: 1 if x['_score'] < y['_score'] else -1))
-    entity_types = []
     re_num = return_number - len(result_names)
+    entity_types = []
 
     if re_num >= 1:
         for item in answers:
             if item['_source']['Name'] not in result_names:
                 result_names.append(item['_source']['Name'])
                 entity_types.append(item['_source']['Entity_type'])
+                entity_type_dict[item['_source']['Name']] = item['_source'][
+                    'Entity_type']
                 if item['_score'] > max_score:
                     max_score = item['_score']
                     max_item = item['_source']['Name']
@@ -141,4 +153,4 @@ def search_index(query_string, return_number=1):
     score_dict = {}
     score_dict[u'max_score'] = max_score
     score_dict[u'max_item'] = max_item
-    return result_names, score_dict, entity_types
+    return result_names, score_dict, entity_type_dict

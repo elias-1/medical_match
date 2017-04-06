@@ -12,10 +12,10 @@ import json
 import time
 from StringIO import StringIO
 
+#from deep_serving.es_match import es_match
+import es_match
 import psycopg2
 import pycurl
-
-from deep_serving.es_match import es_match
 
 conn = psycopg2.connect(
     'dbname=kgdata user=dbuser password=112233 host=127.0.0.1')
@@ -55,24 +55,33 @@ def entity_identify(entity_result):
     entities = entity_result
     result_json = {}
     result_list = []
+    type_list = []
     entity_dict = {}
     score_list = []
     if len(entities) == 0:
         result_list.append('none_enti')
-        return result_list
+        type_list.append('none_type')
+        return result_list, type_list
     if len(entities) == 1:
-        entity_dict[entities[0]], _, _ = es_match.search_index(entities[0], 1)
+        entity_dict[entities[0]], _, type_dict = es_match.search_index(
+            entities[0], 1)
         result_json[u'entity'] = entity_dict
         result_list.append(entity_dict[entities[0]][0])
-        return result_list
-
+        type_list.append(type_dict.values())
+        return result_list, type_list
+    all_type_dict = {}
     for entity in entities:
-        entity_dict[entity], score_dict, _ = es_match.search_index(entity, 5)
+        entity_dict[entity], score_dict, type_dict = es_match.search_index(
+            entity, 5)
         score_list.append(score_dict)
-    if len(entity_dict) > 1:
-        result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
-    result_list = result_json[u'entity'].values()
-    return result_list
+        all_type_dict = dict(all_type_dict, **type_dict)
+    result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
+    #result_list = result_json[u'entity'].values()
+    for key in result_json[u'entity']:
+        e_name = result_json[u'entity'][key]
+        result_list.append(e_name)
+        type_list.append(all_type_dict[e_name])
+    return result_list, type_list
 
 
 def entity_fuzz(entity_dict, score_list):
@@ -135,7 +144,8 @@ def search_candidates(exact_list):
 
 if __name__ == "__main__":
     stime = time.clock()
-    result = entity_identify("感冒鼻涕多，喉咙痒总是咳嗽，请问医生需要吃什么药？（女，29岁）")
+    result = {}
+    result[u'en'], result[u'ty'] = entity_identify([u'感冒', u'发骚', u'阿莫西林'])
     dstr = json.dumps(result, ensure_ascii=False, indent=4)
     dstr = unicode.encode(dstr, 'utf-8')
     with open('qa_result.json', 'wb') as f:
