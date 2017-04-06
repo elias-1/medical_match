@@ -106,7 +106,7 @@ def search_index(query_string, return_number=1):
                 result_names.append(res2['hits']['hits'][0]['_source']['Name'])
                 max_score = res2['hits']['hits'][0]['_score']
                 max_item = res2['hits']['hits'][0]['_source']['Name']
-                print '222'
+                #print '222'
 
             else:
                 if len(res3['hits']['hits']) > 0:
@@ -118,7 +118,7 @@ def search_index(query_string, return_number=1):
                             res3['hits']['hits'][0]['_source']['Name'])
                         max_score = res3['hits']['hits'][0]['_score']
                         max_item = res3['hits']['hits'][0]['_source']['Name']
-                        print '333'
+                        #print '333'
 
     answers = res1['hits']['hits'] + res2['hits']['hits'] + res3['hits'][
         'hits']

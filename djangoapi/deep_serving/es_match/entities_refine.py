@@ -53,17 +53,26 @@ def search_sql(sql):
 
 def entity_identify(entity_result):
     entities = entity_result
+    result_json = {}
+    result_list = []
+    entity_dict = {}
+    score_list = []
+    if len(entities) == 0:
+        result_list.append('none_enti')
+        return result_list
     if len(entities) == 1:
-        entity_dict[key], _, _ = es_match.search_index(entities[0], 1)
+        entity_dict[entities[0]], _, _ = es_match.search_index(entities[0], 1)
         result_json[u'entity'] = entity_dict
-        return result_json
+        result_list.append(entity_dict[entities[0]][0])
+        return result_list
 
-    for enti in entities:
+    for entity in entities:
         entity_dict[entity], score_dict, _ = es_match.search_index(entity, 5)
         score_list.append(score_dict)
     if len(entity_dict) > 1:
         result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
-    return result_json
+    result_list = result_json[u'entity'].values()
+    return result_list
 
 
 def entity_fuzz(entity_dict, score_list):
@@ -77,7 +86,7 @@ def entity_fuzz(entity_dict, score_list):
             refine_result[enti] = enti
         else:
             fuzz_list.append(enti)
-    print len(fuzz_list)
+    #print len(fuzz_list)
     #如果全部匹配
     if len(fuzz_list) == 0:
         return refine_result
@@ -91,7 +100,7 @@ def entity_fuzz(entity_dict, score_list):
     if len(fuzz_list) > 0 and len(exact_list) > 0:
         fuzz_candidates = search_candidates(exact_list)
         for name in fuzz_list:
-            print 'fu:  ' + name
+            #print 'fu:  ' + name
             flag = 0
             for item in entitys[name]:
                 iname = item.encode('utf-8')
@@ -100,7 +109,7 @@ def entity_fuzz(entity_dict, score_list):
                     flag = 1
                     break
             if flag == 0:
-                refine_result[name] = entitys[name]
+                refine_result[name] = entitys[name][0]
         return refine_result
 
     return refine_result
@@ -109,7 +118,7 @@ def entity_fuzz(entity_dict, score_list):
 def search_candidates(exact_list):
     fuzz_candi_set = set([])
     for name in exact_list:
-        print 'exact:  ' + name
+        #print 'exact:  ' + name
         sql = """SELECT DISTINCT entity_name2 
                   FROM entity_relation 
                   where entity_name1 = '%s'
@@ -118,7 +127,7 @@ def search_candidates(exact_list):
                   FROM entity_relation
                   where entity_name2 = '%s'"""
         sql_result = search_sql(sql % (name, name))
-        print len(sql_result)
+        #print len(sql_result)
         for en_result in sql_result:
             fuzz_candi_set.add(en_result[0])
     return fuzz_candi_set
