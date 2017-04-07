@@ -51,7 +51,7 @@ def search_sql(sql):
         return None
 
 
-def entity_refine(entity_result):
+def entity_refine(entity_result, type_result):
     entities = entity_result
     result_json = {}
     result_list = []
@@ -74,13 +74,15 @@ def entity_refine(entity_result):
         entity_dict[entity], score_dict, type_dict = es_match.search_index(
             entity, 5)
         score_list.append(score_dict)
-        all_type_dict = dict(all_type_dict, **type_dict)
+        for key in type_dict:
+            all_type_dict[key] = type_dict[key]
     result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
-    #result_list = result_json[u'entity'].values()
+    result_dict = {}
     for key in result_json[u'entity']:
         e_name = result_json[u'entity'][key]
         result_list.append(e_name)
         type_list.append(all_type_dict[e_name])
+        result_dict[e_name] = all_type_dict[e_name]
     return result_list, type_list
 
 
@@ -145,7 +147,8 @@ def search_candidates(exact_list):
 if __name__ == "__main__":
     stime = time.clock()
     result = {}
-    result = entity_refine("感冒鼻涕多，喉咙痒总是咳嗽，请问医生需要吃什么药？（女，29岁）")
+    result['en'], result['type'] = entity_refine(
+        [u'感冒', u'鼻涕多', u'喉咙痒', u'咳嗽'])
     dstr = json.dumps(result, ensure_ascii=False, indent=4)
     dstr = unicode.encode(dstr, 'utf-8')
     with open('qa_result.json', 'wb') as f:

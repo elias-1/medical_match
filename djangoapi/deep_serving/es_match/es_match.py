@@ -108,9 +108,9 @@ def search_index(query_string, return_number=1):
             fuzz = res2['hits']['hits'][0]['_source']['Pinyin']
             if fuzz == query_pinyin:
                 result_names.append(res2['hits']['hits'][0]['_source']['Name'])
-                entity_type_dict[res2['hits']['hits'][0]['_source'][
-                    'Name']] = res2['hits']['hits'][0]['_source'][
-                        'Entity_type']
+                key = res2['hits']['hits'][0]['_source']['Name']
+                entity_type_dict[key] = res2['hits']['hits'][0]['_source'][
+                    'Entity_type']
                 max_score = res2['hits']['hits'][0]['_score']
                 max_item = res2['hits']['hits'][0]['_source']['Name']
                 #print '222'
@@ -123,9 +123,9 @@ def search_index(query_string, return_number=1):
                     if word_ratio > 40:
                         result_names.append(
                             res3['hits']['hits'][0]['_source']['Name'])
-                        entity_type_dict[res3['hits']['hits'][0]['_source'][
-                            'Name']] = res3['hits']['hits'][0]['_source'][
-                                'Entity_type']
+                        key = res3['hits']['hits'][0]['_source']['Name']
+                        entity_type_dict[key] = res3['hits']['hits'][0][
+                            '_source']['Entity_type']
                         max_score = res3['hits']['hits'][0]['_score']
                         max_item = res3['hits']['hits'][0]['_source']['Name']
                         #print '333'
