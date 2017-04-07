@@ -45,7 +45,16 @@ def kg_entity_identify(sentence):
         result: list; if success 0, None, 
         
     """
-    pass
+    sql = """SELECT property_value FROM property WHERE property_name = 'desc' and entity_id in ( SELECT entity_id FROM property WHERE property_name = 'name' and property_value = '%s');"""
+    sql_result = search_sql(sql % (sentence))
+    result_list = []
+    success = 0
+    if len(sql_result) > 0:
+        success = 1
+        for item in sql_result:
+            result_list.append(item[0])
+    return result_list, success
+    #pass
 
 
 # TODO: implementation
@@ -57,4 +66,12 @@ def kg_entity_summary(entities):
     Returns:
         entitiy_summarys: list
         """
-    pass
+    evalues = '\',\''.join(entities)
+    sql = """SELECT property_value FROM property WHERE property_name = 'desc' and entity_id in ( SELECT entity_id FROM property WHERE property_name = 'name' and property_value IN ('%s'));"""
+    sql_result = search_sql(sql % (evalues))
+    result_list = []
+    if len(sql_result) > 0:
+        success = 1
+        for item in sql_result:
+            result_list.append(item[0])
+    return result_list, success
