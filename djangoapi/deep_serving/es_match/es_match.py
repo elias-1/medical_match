@@ -9,14 +9,20 @@ Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 17-2-26 上午10:51
 """
 
+import os
+
 # import pprint
 import pypinyin
 from elasticsearch import Elasticsearch
-
 from fuzzywuzzy import process
 from fuzzywuzzy.fuzz import ratio
 
-es = Elasticsearch([{"host": "localhost", "port": 9200}])
+from ..utils.utils import config
+
+app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
+params = config(filename=config_file_dir, section='elasticsearch')
+es = Elasticsearch(**params)
 
 
 def hanzi2pinyin(word):

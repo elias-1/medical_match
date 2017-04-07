@@ -9,16 +9,20 @@ Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/28 9:42
 """
 import json
+import os
 import time
 from StringIO import StringIO
 
-#from deep_serving.es_match import es_match
 import es_match
 import psycopg2
 import pycurl
 
-conn = psycopg2.connect(
-    'dbname=kgdata user=dbuser password=112233 host=127.0.0.1')
+from ..utils.utils import config
+
+app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
+params = config(filename=config_file_dir, section='postgresql')
+conn = psycopg2.connect(**params)
 
 
 def ops_api(url):

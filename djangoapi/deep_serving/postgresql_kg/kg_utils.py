@@ -34,5 +34,25 @@ def search_sql(sql):
         return None
 
 
+# TODO: implementation
 def kg_entity_identify(sentence):
+    """
+    
+    Args:
+        sentence: 
+    Returns:
+        
+    """
+    pass
+
+
+# TODO: implementation
+def kg_entity_summary(entities):
+    """返回entities的概述
+    
+    Args:
+        entities: list
+    Returns:
+        entitiy_summarys: list
+        """
     pass

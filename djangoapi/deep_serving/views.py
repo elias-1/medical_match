@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .es_match.entity_refine import entity_refine
-from .postgresql_kg.kg_utils import kg_entity_identify
+from .postgresql_kg.kg_utils import *
 from .serving_client.serving_client import Clfier, Ner
 
 ner = Ner()
@@ -77,8 +77,8 @@ def sentence_ner_es(request):
             input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
             entity_result, type_result = ner(sentence)
-            json_out['entities'] = entity_refine(entity_result)
-            json_out['types'] = type_result
+            json_out['entities'], json_out['types'] = entity_refine(
+                entity_result, type_result)
             json_out["Return"] = 0
         except:
             traceback.print_exc()
@@ -96,7 +96,7 @@ def sentence_process(request):
         json_dict: 
             {
                 result: result,
-                flag: 0(白话) 1 (概述) 2() 3()
+                flag: 0(白话) 1 (正常返回) 2(疾病/症状问药打架式) 3(症状问诊及相应科室) 4 (概述)
             }
         
     """
@@ -109,8 +109,8 @@ def sentence_process(request):
             if len(sentence) <= 4:
                 identify_result = kg_entity_identify(sentence)
                 if identify_result['success']:
-                    json['result'] = identify_result['result']
-                    json['flag'] = 1
+                    json['result'] = [identify_result['result']]
+                    json['flag'] = 4
                     json_out["Return"] = 0
                     return HttpResponse(
                         json.dumps(json_out), content_type="application/json")
@@ -121,14 +121,34 @@ def sentence_process(request):
                         json.dumps(json_out), content_type="application/json")
 
             entity_result, type_result = ner(sentence)
+            entities, types = entity_refine(entity_result, type_result)
             if not entity_result:
                 json['flag'] = 0
                 json_out["Return"] = 0
                 return HttpResponse(
                     json.dumps(json_out), content_type="application/json")
 
-            json_out['entities'] = entity_refine(entity_result)
-            json_out['types'] = type_result
+            prediction = clfier(sentence)
+            if prediction == 0:
+                json['flag'] = 2
+                json_out["Return"] = 0
+                return HttpResponse(
+                    json.dumps(json_out), content_type="application/json")
+            elif prediction == 8 or prediction == 3:
+                json['flag'] = 3
+                json_out["Return"] = 0
+                return HttpResponse(
+                    json.dumps(json_out), content_type="application/json")
+            elif prediction == '7':
+                json['result'] = kg_entity_summary(entities)
+                json['flag'] = 4
+                json_out["Return"] = 0
+                return HttpResponse(
+                    json.dumps(json_out), content_type="application/json")
+
+            # TODO: add kg support
+            # json['result'] =
+            json['flag'] = 1
             json_out["Return"] = 0
         except:
             traceback.print_exc()
