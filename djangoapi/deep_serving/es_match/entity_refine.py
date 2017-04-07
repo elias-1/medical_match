@@ -4,7 +4,7 @@
 # Copyright (c) 2017 www.drcubic.com, Inc. All Rights Reserved
 #
 """
-File: entities_refine.py
+File: entity_refine.py
 Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/28 9:42
 """
@@ -51,7 +51,7 @@ def search_sql(sql):
         return None
 
 
-def entity_identify(entity_result):
+def entity_refine(entity_result):
     entities = entity_result
     result_json = {}
     result_list = []
@@ -145,7 +145,7 @@ def search_candidates(exact_list):
 if __name__ == "__main__":
     stime = time.clock()
     result = {}
-    result[u'en'], result[u'ty'] = entity_identify([u'感冒', u'发骚', u'阿莫西林'])
+    result = entity_refine("感冒鼻涕多，喉咙痒总是咳嗽，请问医生需要吃什么药？（女，29岁）")
     dstr = json.dumps(result, ensure_ascii=False, indent=4)
     dstr = unicode.encode(dstr, 'utf-8')
     with open('qa_result.json', 'wb') as f:
