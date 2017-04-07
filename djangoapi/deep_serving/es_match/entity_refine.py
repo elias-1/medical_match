@@ -4,7 +4,7 @@
 # Copyright (c) 2017 www.drcubic.com, Inc. All Rights Reserved
 #
 """
-File: entities_refine.py
+File: entity_refine.py
 Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/28 9:42
 """
@@ -51,7 +51,7 @@ def search_sql(sql):
         return None
 
 
-def entity_identify(entity_result):
+def entity_refine(entity_result):
     entities = entity_result
     result_json = {}
     result_list = []
