@@ -135,7 +135,7 @@ def search_candidates(exact_list):
 
 if __name__ == "__main__":
     stime = time.clock()
-    result = entity_identify("感冒鼻涕多，喉咙痒总是咳嗽，请问医生需要吃什么药？（女，29岁）")
+    result = entity_refine("感冒鼻涕多，喉咙痒总是咳嗽，请问医生需要吃什么药？（女，29岁）")
     dstr = json.dumps(result, ensure_ascii=False, indent=4)
     dstr = unicode.encode(dstr, 'utf-8')
     with open('qa_result.json', 'wb') as f:
