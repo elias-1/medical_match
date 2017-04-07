@@ -36,11 +36,13 @@ def search_sql(sql):
 
 # TODO: implementation
 def kg_entity_identify(sentence):
-    """
+    """判断sentence是否为医疗实体，如果是，返回其概述。否则success为0，result为None
     
     Args:
-        sentence: 
+        sentence: 实体短语
     Returns:
+        success: 是否成功
+        result: list; if success 0, None, 
         
     """
     pass

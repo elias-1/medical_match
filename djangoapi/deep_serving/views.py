@@ -109,7 +109,7 @@ def sentence_process(request):
             if len(sentence) <= 4:
                 identify_result = kg_entity_identify(sentence)
                 if identify_result['success']:
-                    json['result'] = [identify_result['result']]
+                    json['result'] = identify_result['result']
                     json['flag'] = 4
                     json_out["Return"] = 0
                     return HttpResponse(
