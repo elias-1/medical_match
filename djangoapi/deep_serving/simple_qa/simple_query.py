@@ -286,7 +286,7 @@ def simple_qa(entities, label):
     try:
         rdf_strings = query_multi_sub(entities, label)
         if rdf_strings is None:  # question is unsupported
-            json_out['return'] = 0
+            json_out['return'] = 1
             json_out['content'] = [u'意图识别不明确,句子分类可能存在错误']
         elif type(rdf_strings) is list:
             rdf_anw = call_api_rdf3x(rdf_strings[-1])
@@ -302,11 +302,13 @@ def simple_qa(entities, label):
                     temp_s += node + ', '
                 json_out['content'].append(temp_s)
             else:
+                json_out['return'] = 1
                 json_out['content'].append(u'暂无记录')
         elif type(rdf_strings) is dict:  # 结果由调用医疗百科api返回
             json_out['return'] = 0
             json_out['content'] = []
             if len(rdf_strings.values()) == 0:
+                json_out['return'] = 1
                 json_out['content'] = [u'医疗知识百科暂无记录']
             else:
                 for k, v in rdf_strings.items():
@@ -317,7 +319,6 @@ def simple_qa(entities, label):
         json_out["return"] = 1
     return json_out
 
-
-if __name__ == "__main__":
-    s = simple_qa([u'感冒'], 3)
-    json.dump(s, open('./res.json', 'w'), indent=4, ensure_ascii=False)
+# if __name__ == "__main__":
+#     s = simple_qa([u'发烧'], 3)
+#     json.dump(s, open('./res.json', 'w'), indent=4, ensure_ascii=False)
