@@ -10,7 +10,6 @@ Date: 2017/4/7 13:51
 """
 
 import os
-
 import psycopg2
 
 from ..utils.utils import config
@@ -34,7 +33,6 @@ def search_sql(sql):
         return None
 
 
-# TODO: implementation
 def kg_entity_identify(sentence):
     """判断sentence是否为医疗实体，如果是，返回其概述。否则success为0，result为None
     
@@ -42,10 +40,17 @@ def kg_entity_identify(sentence):
         sentence: 实体短语
     Returns:
         success: 是否成功
-        result: list; if success 0, None, 
+        result_list: list; if success 0, None, 
         
     """
-    sql = """SELECT property_value FROM property WHERE property_name = 'desc' and entity_id in ( SELECT entity_id FROM property WHERE property_name = 'name' and property_value = '%s');"""
+    sql = """SELECT distinct property_value
+             FROM property
+             WHERE property_name = 'desc'
+             and entity_id in (
+                  SELECT entity_id 
+                  FROM property 
+                  WHERE property_name = 'name' 
+                  and property_value = '%s');"""
     sql_result = search_sql(sql % (sentence))
     result_list = []
     success = 0
@@ -54,10 +59,8 @@ def kg_entity_identify(sentence):
         for item in sql_result:
             result_list.append(item[0])
     return result_list, success
-    #pass
 
 
-# TODO: implementation
 def kg_entity_summary(entities):
     """返回entities的概述
     
@@ -65,13 +68,58 @@ def kg_entity_summary(entities):
         entities: list
     Returns:
         entitiy_summarys: list
+        success: 0/1
         """
-    evalues = '\',\''.join(entities)
-    sql = """SELECT property_value FROM property WHERE property_name = 'desc' and entity_id in ( SELECT entity_id FROM property WHERE property_name = 'name' and property_value IN ('%s'));"""
+    evalues = "','".join(entities)
+    sql = """SELECT distinct property_value 
+             FROM property 
+             WHERE property_name = 'desc' 
+             and entity_id in (
+                SELECT entity_id
+                FROM property 
+                WHERE property_name = 'name' 
+                and property_value IN ('%s'));"""
     sql_result = search_sql(sql % (evalues))
-    result_list = []
+    entitiy_summarys = []
+    success = 0
     if len(sql_result) > 0:
         success = 1
         for item in sql_result:
-            result_list.append(item[0])
-    return result_list, success
+            entitiy_summarys.append(item[0])
+    return entitiy_summarys, success
+
+
+def kg_search_body_part(entities):
+    """返回entities的概述
+
+    Args:
+        entities: list
+    Returns:
+        entitiy_summarys: list
+        success: 0/1
+    """
+    raise NotImplementedError
+
+
+def kg_search_price(entities):
+    """返回entities的概述
+
+    Args:
+        entities: list
+    Returns:
+        entitiy_summarys: list
+        success: 0/1
+    """
+    raise NotImplementedError
+
+
+def kg_search_department(entities):
+    """返回entities的概述
+
+    Args:
+        entities: list
+    Returns:
+        entitiy_summarys: list
+        success: 0/1
+    """
+    raise NotImplementedError

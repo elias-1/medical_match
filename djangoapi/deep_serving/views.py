@@ -93,11 +93,29 @@ def sentence_process(request):
     Args:
         request: request
     Return:
-        json_dict: 
-            {
-                result: result,
-                flag: 0(白话) 1 (正常返回) 2(疾病/症状问药打架式) 3(症状问诊及相应科室) 4 (概述)
-            }
+        flag: 0 白话 
+              1 疾病/症状问药打架式 
+              2 药品对比、药品配伍  
+                    额外返回result: 
+              3 疾病相关疾病、药品适应证、检查相关疾病、手术相关疾病
+                    额外返回result: 
+              4 疾病的相关症状、药品适应症状、症状的相关症状、检查的相关症状
+                    额外返回result: 
+              5 疾病的相关检查、症状的相关检查
+                    额外返回result: 
+              6 疾病的相关手术
+                    额外返回result:
+              7 手术部位、检查的部位、症状的部位、疾病的部位
+                    额外返回result: 
+              8 症状的科室、疾病的科室 
+                    额外返回result: 
+              9 症状、疾病、药品、检查、手术的概述
+                    额外返回result: list
+              10 疾病、检查、手术的价格 
+                    额外返回result:
+              11 药品用量
+                    额外返回result:
+              12 症状问诊及相应科室打架式
         
     """
     if request.method == "GET":
@@ -110,7 +128,7 @@ def sentence_process(request):
                 identify_result = kg_entity_identify(sentence)
                 if identify_result['success']:
                     json['result'] = identify_result['result']
-                    json['flag'] = 4
+                    json['flag'] = 9
                     json_out["Return"] = 0
                     return HttpResponse(
                         json.dumps(json_out), content_type="application/json")
@@ -129,26 +147,46 @@ def sentence_process(request):
                     json.dumps(json_out), content_type="application/json")
 
             prediction = clfier(sentence)
-            if prediction == 0:
-                json['flag'] = 2
+            json['flag'] = prediction
+            if prediction == 1:
                 json_out["Return"] = 0
                 return HttpResponse(
                     json.dumps(json_out), content_type="application/json")
-            elif prediction == 8 or prediction == 3:
-                json['flag'] = 3
+            elif prediction == 7:
+                # TODO implementation
+                json['result'] = kg_search_body_part(entities)
                 json_out["Return"] = 0
                 return HttpResponse(
                     json.dumps(json_out), content_type="application/json")
-            elif prediction == '7':
-                json['result'] = kg_entity_summary(entities)
-                json['flag'] = 4
+            elif prediction == 8:
+                # TODO implementation
+                json['result'] = kg_search_department(entities)
+                json_out["Return"] = 0
+                return HttpResponse(
+                    json.dumps(json_out), content_type="application/json")
+            elif prediction == 9:
+                entitiy_summarys, success = kg_entity_summary(entities)
+                if success:
+                    json['result'] = entitiy_summarys
+                    json_out["Return"] = 0
+                else:
+                    json['result'] = [u'没能找到%s的概述' % u'、'.join(entities)]
+                    json_out["Return"] = 0
+                return HttpResponse(
+                    json.dumps(json_out), content_type="application/json")
+            elif prediction == 10:
+                # TODO implementation
+                json['result'] = kg_search_price(entities)
+                json_out["Return"] = 0
+                return HttpResponse(
+                    json.dumps(json_out), content_type="application/json")
+            elif prediction == 12:
                 json_out["Return"] = 0
                 return HttpResponse(
                     json.dumps(json_out), content_type="application/json")
 
             # TODO: add kg support
             # json['result'] =
-            json['flag'] = 1
             json_out["Return"] = 0
         except:
             traceback.print_exc()

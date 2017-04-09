@@ -18,25 +18,29 @@ import prediction_service_pb2
 import tensor_pb2
 import tensor_shape_pb2
 from grpc.beta import implementations
+from ..utils.utils import config
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
+params = config(filename=config_file_dir, section='deep_serving')
+
 data_dir = os.path.join(app_dir, 'data')
 
-NER_MAX_SENTENCE_LEN = 80
-trainsMatrix = np.load(os.path.join(data_dir, 'transition.npy'))
-ner_server = 'localhost:9000'
-clfier_server = 'localhost:9001'
-ner_char2vec_path = os.path.join(data_dir, 'chars_vec_100.txt')
-UNK = '<UNK>'
-ENTITY_TYPES = [u'@d@', u'@s@', u'@l@', u'@o@', u'@m@', u'@dp@', u'@bp@']
+NER_MAX_SENTENCE_LEN = params['NER_MAX_SENTENCE_LEN']
+trainsMatrix = np.load(os.path.join(data_dir, params['trainsMatrix']))
+ner_server = params['ner_server']
+clfier_server = params['clfier_server']
+ner_char2vec_path = os.path.join(data_dir, params['ner_char2vec_path'])
+UNK = params['UNK']
+ENTITY_TYPES = params['ENTITY_TYPES'].split(',')
 
-clfier_word2vec_path = os.path.join(data_dir, 'words_vec_100.txt')
-clfier_char2vec_path = os.path.join(data_dir, 'chars_vec_50.txt')
-C_MAX_SENTENCE_LEN = 30
-C_MAX_WORD_LEN = 6
+clfier_word2vec_path = os.path.join(data_dir, params['clfier_word2vec_path'])
+clfier_char2vec_path = os.path.join(data_dir, params['clfier_char2vec_path'])
+C_MAX_SENTENCE_LEN = params['C_MAX_SENTENCE_LEN']
+C_MAX_WORD_LEN = params['C_MAX_WORD_LEN']
 
 
 def _tokenizer(sentence):
@@ -301,7 +305,7 @@ class Clfier(object):
         response = result.outputs['classes'].string_val
         prediction = int(response[0])
 
-        return prediction
+        return prediction + 1
 
 
 def main():
