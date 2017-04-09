@@ -5,6 +5,8 @@ import sys
 import traceback
 from StringIO import StringIO
 import pycurl
+from ..utils.utils import config
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -37,7 +39,6 @@ ABBRAVIATION_OP = "op:"
 ABBRAVIATION_DP = "dp:"
 ABBRAVIATION_BP = "bp:"
 
-
 prefix_str = "PREFIX " + ABBRAVIATION_PRO + PREFIX_PRO
 prefix_str += " PREFIX " + ABBRAVIATION_DIS + PREFIX_DIS
 prefix_str += " PREFIX " + ABBRAVIATION_LAB + PREFIX_LAB
@@ -52,24 +53,31 @@ prefix_str += " PREFIX " + ABBRAVIATION_OP + PREFIX_OP
 prefix_str += " PREFIX " + ABBRAVIATION_DP + PREFIX_DP
 prefix_str += " PREFIX " + ABBRAVIATION_BP + PREFIX_BP
 
+app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
+params = config(filename=config_file_dir, section='simple_qa')
 
-RDF3X_API_DIR = "/var/rdf3x/bin/"
-KG_DAT_DIR = "/var/rdf3x/"
-KG_DATABASE = "merge"
-REQ_FILE_DIR = "/var/www/djangoapi/file/qadata/"
+RDF3X_API_DIR = params['RDF3X_API_DIR']
+KG_DAT_DIR = params['KG_DAT_DIR']
+KG_DATABASE = params['KG_DATABASE']
+REQ_FILE_DIR = params['REQ_FILE_DIR']
 
+sub_dict = json.load(open(params['sub_dict']))
+relations = json.load(open(params['relations']))
+nodes_type = {
+    "disease": "dis:",
+    "symptom": "sym:",
+    "lab": "lab:",
+    "medication": "med:",
+    "medicine": "med:",
+    "department": "dp:",
+    "operation": "op:",
+    "bodypart": "bp:"
+}
+q_template = json.load(open(params['q_template']))
+obj_ref = json.load(open(params['obj_ref']))
 
-sub_dict = json.load(
-    open('/var/www/djangoapi/file/qadata/name-idlist-dict-all.json'))
-relations = json.load(
-    open('/var/www/djangoapi/file/qadata/merge-relation.json'))
-nodes_type = {"disease": "dis:", "symptom": "sym:", "lab": "lab:", "medication":
-              "med:", "medicine": "med:", "department": "dp:", "operation":
-              "op:", "bodypart": "bp:"}
-q_template = json.load(open('/var/www/djangoapi/file/qadata/q_template.json'))
-obj_ref = json.load(open('/var/www/djangoapi/file/qadata/obj_ref.json'))
-
-root_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJvb3QiLCJ1cHdkIjoicm9vdCIsInRpbWUiOjE0ODMzNjY1MzkuMjI0MzkyfQ.T0NJMkZuNukrF8JMdVHX6hXG_djPwMY5kgOAf82dBxk'
+root_token = params['root_token']
 
 
 def get_cat(id):
@@ -89,7 +97,7 @@ def get_nodes_list(content_list):
     list_content = content_list
     ret_list = []
 
-    if(list_content[0] == "<empty result>\n"):
+    if (list_content[0] == "<empty result>\n"):
         return ret_list
     else:
         for var in list_content:
@@ -111,7 +119,7 @@ def get_nodes_degree_list(content_list):
     list_content = content_list
     ret_dict = {}
 
-    if(list_content[0] == "<empty result>\n"):
+    if (list_content[0] == "<empty result>\n"):
         return []
     else:
         for var in list_content:
@@ -150,7 +158,8 @@ def ops_api(url):
         c = pycurl.Curl()
         c.setopt(pycurl.URL, nurl)
         c.setopt(pycurl.HTTPHEADER, [
-                 'Content-Type: application/json', 'token:{:s}'.format(root_token)])
+            'Content-Type: application/json', 'token:{:s}'.format(root_token)
+        ])
         c.setopt(pycurl.CONNECTTIMEOUT, 3)
         c.setopt(c.WRITEFUNCTION, storage.write)
         c.perform()
@@ -229,7 +238,8 @@ def query_multi_sub(sub_names, obj_type):
     if obj_type == '2':
         if len(sub_names) == 1 and 'medicine' in sub_types_ids:
             sub_id = sub_types_ids.values()
-            return get_med_content(sub_id, 'medication', [u'药物剂型', u'适应证', u'用法用量'])
+            return get_med_content(sub_id, 'medication',
+                                   [u'药物剂型', u'适应证', u'用法用量'])
         elif len(sub_names) >= 2 and 'medicine' in sub_types_ids:
             sub_ids = sub_types_ids['medicine']
             return get_med_content(sub_ids, 'medication', [u'适应证', u'禁忌证'])
@@ -295,8 +305,11 @@ def simple_qa(entities, label):
             json_out['return'] = 0
             json_out['content'] = [rdf_strings[0]]
             if out_anws:
-                temp = [var[0] for var in sorted(
-                    out_anws.items(), key=lambda d: d[1], reverse=True)]
+                temp = [
+                    var[0]
+                    for var in sorted(
+                        out_anws.items(), key=lambda d: d[1], reverse=True)
+                ]
                 temp_s = ''
                 for node in temp:
                     temp_s += node + ', '
@@ -318,6 +331,7 @@ def simple_qa(entities, label):
         json_out["exception"] = traceback.print_exc()
         json_out["return"] = 1
     return json_out
+
 
 # if __name__ == "__main__":
 #     s = simple_qa([u'发烧'], 3)

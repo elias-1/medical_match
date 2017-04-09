@@ -89,37 +89,40 @@ def kg_entity_summary(entities):
     return entitiy_summarys, success
 
 
+# TODO(zhanmengting)
 def kg_search_body_part(entities):
-    """返回entities的概述
+    """问部位
 
     Args:
         entities: list
     Returns:
-        entitiy_summarys: list
+        body_part: list
         success: 0/1
     """
     raise NotImplementedError
 
 
+# TODO(zhanmengting)
 def kg_search_price(entities):
-    """返回entities的概述
+    """问价格
 
     Args:
         entities: list
     Returns:
-        entitiy_summarys: list
+        price: str
         success: 0/1
     """
     raise NotImplementedError
 
 
+# TODO(zhanmengting)
 def kg_search_department(entities):
-    """返回entities的概述
+    """问科室
 
     Args:
         entities: list
     Returns:
-        entitiy_summarys: list
+        department_list: list
         success: 0/1
     """
     raise NotImplementedError
