@@ -3,15 +3,24 @@ import traceback
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from elasticsearch import Elasticsearch
 
 from .es_match.entity_refine import entity_refine
 from .postgresql_kg.kg_utils import *
 from .serving_client.serving_client import Clfier, Ner
-# from .simple_qa.simple_query import simple_qa
 from .simple_qa.simple_query import *
+from .interactive_query.interactive_query import *
+
+from fuzzywuzzy import fuzz
+from collections import OrderedDict
 
 ner = Ner()
 clfier = Clfier()
+
+app_dir = os.path.dirname(os.path.abspath(__file__))
+config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
+params = config(filename=config_file_dir, section='elasticsearch')
+es = Elasticsearch(**params)
 
 
 @csrf_exempt
@@ -198,10 +207,23 @@ def sentence_process(request):
             json.dumps(json_out), content_type="application/json")
 
 
-
 # ycc
 @csrf_exempt
 def get_symptom_id(request):  # get symptom id
+    """
+    功能:
+        返回症状名字对应的ID，采用ES模糊匹配
+
+    示例:
+        http://yiliao1:9999/kgInterface/getSymId/?q={%22Name%22:%22%E5%A4%B4%E7%97%9B%22}
+
+    输入:
+        Name:症状名,字符串
+    返回:
+        Results: list:
+            Id:  症状ID
+            Name: 症状名字
+    """
     if request.method == "GET":
         json_out = {}
         try:
@@ -209,17 +231,27 @@ def get_symptom_id(request):  # get symptom id
             sname = input_dict['Name']
             query_size = 200
             es = Elasticsearch()
-            res = es.search( index='medknowledge', doc_type='search', 
-                    body={'size':query_size, 'query': { "query_string" : { 'fields': ['Name','Ename','Oname'], "query" :  sname } } })
+            res = es.search(
+                index='medknowledge',
+                doc_type='search',
+                body={
+                    'size': query_size,
+                    'query': {
+                        "query_string": {
+                            'fields': ['Name', 'Ename', 'Oname'],
+                            "query": sname
+                        }
+                    }
+                })
             answers = res['hits']['hits']
             results = []
-            for i,answer in enumerate(answers):
+            for i, answer in enumerate(answers):
                 d = answer['_source']
                 try:
                     xid = d['Sid']
                     xname = d['Name']
                     if len(xid):
-                        results.append({ 'Id':xid,'Name':xname })
+                        results.append({'Id': xid, 'Name': xname})
                 except:
                     continue
             json_out["Return"] = 0
@@ -227,11 +259,38 @@ def get_symptom_id(request):  # get symptom id
         except:
             traceback.print_exc()
             json_out["Return"] = 1
-        return HttpResponse(json.dumps(json_out), content_type="application/json")
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
 
 # ycc
 @csrf_exempt
 def get_symptom_disease(request):  # get possible disease of symptom 
+    """
+    功能:
+        返回症状的可能疾病,使用json文件存储的数据,应该改成rdf3x查询(速度太慢)
+
+    示例:
+        http://yiliao1:9999/kgInterface/getSymDis/?q={%22Ids%22:[%22s15670%22],%22NotIds%22:[],%22UnknownIds%22:[]}
+
+    输入:
+        Ids: 患者已有的症状
+        NotIds: 患者没有的症状
+        UnknowIds: 患者不确定是否含有的症状
+    返回:
+        Results: dict:
+            PosDep: 可能科室,list:
+                disease: 该科室对应的疾病ID
+                Id: 科室ID
+                Name: 科室名字
+            PosDis: 可能疾病,list:
+                department: 该疾病对应的科室ID
+                Id: 疾病ID
+                Name: 疾病名字
+            PosSym: 是否还有如下症状,list:
+                Id: 症状ID
+                Name: 症状名字
+    """
     if request.method == "GET":
         json_out = {}
         try:
@@ -242,69 +301,116 @@ def get_symptom_disease(request):  # get possible disease of symptom
             unknown_sids = set(input_dict['UnknownIds'])
             nodetype1 = 'symptom'
             nodetype2 = 'disease'
-            json_out["Results"] = { }
-            posDis = get_fids_to_nodetype2list(fids,nodetype1,nodetype2)
-            posSym,didname_dict = get_disease_symptom(posDis,sids,not_sids,unknown_sids)
-
+            json_out["Results"] = {}
+            posDis = get_fids_to_nodetype2list(fids, nodetype1, nodetype2)
+            posSym, didname_dict = get_disease_symptom(posDis, sids, not_sids,
+                                                       unknown_sids)
 
             posdisset = set(didname_dict)
-            for fid in fids:
-                if len(fids) < 2:
-                    break
-                otherDis = get_fids_to_nodetype2list(set(fids)- set([fid]),nodetype1,nodetype2)
-                for d in otherDis:
-                    xid = d['Id']
-                    name = d['Name']
-                    if xid not in didname_dict:
-                        didname_dict[xid] = '________' + name
+            if len(fids) > 1:
+                for fid in fids:
+                    otherDis = get_fids_to_nodetype2list(
+                        set(fids) - set([fid]), nodetype1, nodetype2)
+                    for d in otherDis:
+                        xid = d['Id']
+                        name = d['Name']
+                        if xid not in didname_dict:
+                            didname_dict[xid] = '________' + name
 
-            with open('/var/www/djangoapi/file/symptom_disease/id-degree-dict.json','r') as f:
-                id_degree_dict = json.loads(f.read())
-            posdislist = sorted(posdisset,key=lambda s:id_degree_dict[s],reverse=True)
-            # posDis = [{ 'Id':xid,'Name':didname_dict[xid]} for xid in posdislist]
+            posdislist = sorted(
+                posdisset, key=lambda s: id_degree_dict[s], reverse=True)
             posDis = get_dis_list(posdislist)
 
             moredisset = set(didname_dict) - set(posdisset)
-            moredislist = sorted(moredisset,key=lambda s:id_degree_dict[s],reverse=True)
-            # moreDis = [{ 'Id':xid,'Name':didname_dict[xid]} for xid in moredislist]
-            moreDis = get_dis_list(moredislist,'-----')
+            moredislist = sorted(
+                moredisset, key=lambda s: id_degree_dict[s], reverse=True)
+            moreDis = get_dis_list(moredislist, '-----')
 
             json_out["Results"]['PosSym'] = posSym
             json_out["Results"]['PosDis'] = posDis + moreDis
-            json_out["Results"]['PosDep'] = get_dep_dis_list(posDis+moreDis)
+            json_out["Results"]['PosDep'] = get_dep_dis_list(posDis + moreDis)
             json_out["Return"] = 0
         except:
             traceback.print_exc()
             json_out["Return"] = 1
-        return HttpResponse(json.dumps(json_out), content_type="application/json")
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
 
 # ycc
 @csrf_exempt
 def get_symptom_id_2(request):  # get symptom id to find medicine
+    """
+    功能:
+        根据症状/疾病,询问药品
+        返回症状/疾病名字对应的ID，读取json文件,采用fuzz做模糊匹配
+
+    示例:
+        http://yiliao1:9999/kgInterface/getSymId2/?q={%22Name%22:%22%E5%A4%B4%E7%97%9B%22}
+
+    输入:
+        Name:症状名,字符串
+    返回:
+        Results: list:
+            Id:  症状/疾病ID
+            Name: 症状/疾病名字
+    """
     if request.method == "GET":
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
             sname = input_dict['Name']
-            with open('/var/www/djangoapi/file/symptom_drug/symptom_name_id_dict.json','r') as f:
-                symptom_name_id_dict = json.loads(f.read())
-            with open('/var/www/djangoapi/file/symptom_drug/sid_didlist_dict.json','r') as f:
-                sid_midlist_dict = json.loads(f.read())
-            name_score_dict = { name:fuzz.partial_ratio(name,sname) for name in symptom_name_id_dict}
-            name_list = sorted(name_score_dict.keys(), key=lambda name:name_score_dict[name], reverse=True)
-            results = [ { 'Name':name, 'Id':symptom_name_id_dict[name] } for name in name_list if symptom_name_id_dict[name] in sid_midlist_dict]
-            # results = [ { 'Name':name, 'Id':symptom_name_id_dict[name] } for name in name_list ]
+            name_score_dict = {
+                name: fuzz.partial_ratio(name, sname)
+                for name in symptom_name_id_dict
+            }
+            name_list = sorted(
+                name_score_dict.keys(),
+                key=lambda name: name_score_dict[name],
+                reverse=True)
+            results = [{
+                'Name': name,
+                'Id': symptom_name_id_dict[name]
+            } for name in name_list
+                       if symptom_name_id_dict[name] in sid_midlist_dict]
             json_out["Return"] = 0
             json_out["num"] = len(symptom_name_id_dict)
             json_out["Results"] = results[:20]
         except:
             traceback.print_exc()
             json_out["Return"] = 1
-        return HttpResponse(json.dumps(json_out), content_type="application/json")
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
 
 # ycc
 @csrf_exempt
 def get_symptom_medcine(request):  # get possible disease of symptom 
+    """
+    功能:
+        返回症状/疾病的推荐药品,使用json文件存储的数据,应该改成rdf3x查询(速度太慢)
+
+    示例:
+        http://1.85.37.136:9999/kgInterface/getSymMed/?q={%22Sids%22:[%22s12097%22,%22s15063%22],%22NotSids%22:[],%22Tids%22:[],%22NotTids%22:[],%22Age%22:%22%22}
+
+    输入:
+        Sids: 患者已有的症状
+        NotSids: 患者没有的症状
+        Tids: 患者已有的禁忌症
+        NotTids: 患者没有的禁忌症
+        Age: 患者年龄
+    返回:
+        Results: dict:
+            PosMed: 可能疾病,list:
+                Id: 药品ID
+                Name: 药品名字
+            PosSym: 是否还有如下症状,list:
+                Id: 症状ID
+                Name: 症状名字
+            PosTaboo: 是否还有如下禁忌症,list:
+                Id: 禁忌症ID
+                Name: 禁忌症名字
+    """
     if request.method == "GET":
         json_out = {}
         try:
@@ -313,44 +419,19 @@ def get_symptom_medcine(request):  # get possible disease of symptom
             sids_not = input_dict['NotSids']
             tids = input_dict['Tids']
             tids_not = input_dict['NotTids']
-            age  = input_dict['Age']
-            with open('/var/www/djangoapi/file/symptom_drug/symptom_id_name_dict.json','r') as f:
-                symptom_id_name_dict = json.loads(f.read())
-            with open('/var/www/djangoapi/file/symptom_drug/drug_id_name_dict.json','r') as f:
-                medicine_id_name_dict = json.loads(f.read())
-            with open('/var/www/djangoapi/file/symptom_drug/taboo_id_name_dict.json','r') as f:
-                taboo_id_name_dict = json.loads(f.read())
-            with open('/var/www/djangoapi/file/symptom_drug/sid_didlist_dict.json','r') as f:
-                sid_midlist_dict = json.loads(f.read())
-            with open('/var/www/djangoapi/file/symptom_drug/did_tidlist_dict.json','r') as f:
-                mid_tidlist_dict = json.loads(f.read())
-            with open('/var/www/djangoapi/file/symptom_drug/did_sidlist_dict.json','r') as f:
-                mid_sidlist_dict = json.loads(f.read())
-            # posMed = [{ 'Name':medicine_id_name_dict[mid], 'Id':mid } for sid in sids for mid in sid_midlist_dict[sid] ]
-            for tid,name in taboo_id_name_dict.items():
-                break
-                if tid[1] == '2':
-                    name = '患有--' + name
-                elif tid[1] == '3':
-                    name = '过敏--' + name
-                elif tid[1] == '5':
-                    name = '同时服用--' + name
-                taboo_id_name_dict[tid] = name
-
+            age = input_dict['Age']
 
             midset = set()
             for sid in sids:
                 for mid in sid_midlist_dict[sid]:
                     if len(set(mid_tidlist_dict[mid]) & set(tids)) == 0:
-                        # mname = medicine_id_name_dict[mid]
                         midset.add(mid)
             posMed = []
             for mid in midset:
                 mname = medicine_id_name_dict[mid]
-                posMed.append({ 'Id':mid,'Name':mname })
-            # json_out["Results"]['PosSym'] = posSym
+                posMed.append({'Id': mid, 'Name': mname})
 
-            tid_num_dict = { }
+            tid_num_dict = {}
             for med in posMed:
                 mid = med['Id']
                 for tid in mid_tidlist_dict[mid]:
@@ -358,23 +439,31 @@ def get_symptom_medcine(request):  # get possible disease of symptom
                         tid_num_dict[tid] += 1
                     except:
                         tid_num_dict[tid] = 1
-            tid_list = sorted(tid_num_dict.keys(), key = lambda tid:abs(tid_num_dict[tid]*2 - len(posMed)))
-            tid_list = [tid for tid in tid_list if tid_num_dict[tid] != len(posMed)]
-            posTaboo = [{ 'Id':tid, 'Name': taboo_id_name_dict[tid] } for tid in tid_list ]
+            tid_list = sorted(
+                tid_num_dict.keys(),
+                key=lambda tid: abs(tid_num_dict[tid] * 2 - len(posMed)))
+            tid_list = [
+                tid for tid in tid_list if tid_num_dict[tid] != len(posMed)
+            ]
+            posTaboo = [{
+                'Id': tid,
+                'Name': taboo_id_name_dict[tid]
+            } for tid in tid_list]
 
             sidset = set()
-            for med in  posMed:
+            for med in posMed:
                 mid = med['Id']
                 for sid in mid_sidlist_dict[mid]:
                     sidset.add(sid)
             sidset = sidset - set(sids)
-            posSym= [{ 'Id':sid, 'Name':symptom_id_name_dict[sid] } for sid in sidset ]
+            posSym = [{
+                'Id': sid,
+                'Name': symptom_id_name_dict[sid]
+            } for sid in sidset]
 
             json_out["Results"] = OrderedDict()
             num = 20
 
-
-            # 
             posMedNew = []
             mednameset = set()
             for med in posMed:
@@ -389,5 +478,5 @@ def get_symptom_medcine(request):  # get possible disease of symptom
         except:
             traceback.print_exc()
             json_out["Return"] = 1
-        return HttpResponse(json.dumps(json_out), content_type="application/json")
-
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
