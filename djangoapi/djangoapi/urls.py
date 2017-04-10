@@ -25,4 +25,9 @@ urlpatterns = [
         'deep_serving.views.sentence_clfier_ner'),
     url(r'^deep_serving/sentence_ner_es/$',
         'deep_serving.views.sentence_ner_es'),
+
+    url(r'^kgInterface/getSymId/$', 'kgInterface.views.get_symptom_id'),
+    url(r'^kgInterface/getSymDis/$', 'kgInterface.views.get_symptom_disease'),
+    url(r'^kgInterface/getSymId2/$', 'kgInterface.views.get_symptom_id_2'),
+    url(r'^kgInterface/getSymMed/$', 'kgInterface.views.get_symptom_medcine'),
 ]
