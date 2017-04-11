@@ -37,7 +37,7 @@ def sentence_clfier(request):
     if request.method == "POST":
         json_out = {}
         try:
-            input_dict = json.loads(request.GET["q"])
+            input_dict = json.loads(request.body)
             sentence = input_dict['sentence']
             prediction = clfier(sentence)
             json_out['class'] = prediction
@@ -54,7 +54,7 @@ def sentence_ner(request):
     if request.method == "POST":
         json_out = {}
         try:
-            input_dict = json.loads(request.GET["q"])
+            input_dict = json.loads(request.body)
             sentence = input_dict['sentence']
             entity_result, type_result = ner(sentence)
             json_out['entities'] = entity_result
@@ -72,7 +72,7 @@ def sentence_clfier_ner(request):
     if request.method == "POST":
         json_out = {}
         try:
-            input_dict = json.loads(request.GET["q"])
+            input_dict = json.loads(request.body)
             sentence = input_dict['sentence']
 
             prediction = clfier(sentence)
@@ -94,7 +94,7 @@ def sentence_ner_es(request):
     if request.method == "POST":
         json_out = {}
         try:
-            input_dict = json.loads(request.GET["q"])
+            input_dict = json.loads(request.body)
             sentence = input_dict['sentence']
             entity_result, type_result = ner(sentence)
             json_out['entities'], json_out['types'] = entity_refine(
@@ -137,7 +137,7 @@ def sentence_process(request):
                     额外返回result: 
         
     """
-    if request.method == "POST":
+    if request.method == "GET":
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
