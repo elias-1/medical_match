@@ -11,44 +11,25 @@ Date: 2017/3/28 9:42
 import json
 import os
 import time
-from StringIO import StringIO
 
 import es_match
 import psycopg2
-import pycurl
 
 from ..utils.utils import config
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
 params = config(filename=config_file_dir, section='postgresql')
-conn = psycopg2.connect(**params)
-
-
-def ops_api(url):
-    storage = StringIO()
-    try:
-        nurl = url
-        c = pycurl.Curl()
-        c.setopt(pycurl.URL, nurl)
-        c.setopt(pycurl.HTTPHEADER, ['Content-Type: application/json'])
-        c.setopt(pycurl.CONNECTTIMEOUT, 3)
-        c.setopt(c.WRITEFUNCTION, storage.write)
-        c.perform()
-        c.close()
-    except:
-        return 2
-    response = storage.getvalue()
-    res = json.loads(response)
-    return res
 
 
 def search_sql(sql):
     try:
+        conn = psycopg2.connect(**params)
         cur = conn.cursor()
         cur.execute(sql)
         result_set = cur.fetchall()
         cur.close()
+        conn.close()
         return result_set
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
