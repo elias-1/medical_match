@@ -1,18 +1,27 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2017 www.drcubic.com, Inc. All Rights Reserved
+#
+"""
+File: serving_client.py
+Author: shileicao(shileicao@stu.xjtu.edu.cn)
+Date: 2017/3/28 9:42
+"""
 import json
 import traceback
+from collections import OrderedDict
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from elasticsearch import Elasticsearch
+from fuzzywuzzy import fuzz
 
 from .es_match.entity_refine import entity_refine
-from .postgresql_kg.kg_utils import *
-from .serving_client.serving_client import Clfier, Ner
-from .simple_qa.simple_query import *
 from .interactive_query.interactive_query import *
-
-from fuzzywuzzy import fuzz
-from collections import OrderedDict
+from .postgresql_kg import kg_utils
+from .serving_client.serving_client import Clfier, Ner
+from .simple_qa import simple_query
 
 ner = Ner()
 clfier = Clfier()
@@ -135,7 +144,7 @@ def sentence_process(request):
             sentence = input_dict['sentence']
             json_out["Return"] = 0
             if len(sentence) <= 4:
-                identify_result = kg_entity_identify(sentence)
+                identify_result = kg_utils.kg_entity_identify(sentence)
                 if identify_result['success']:
                     json_out['result'] = identify_result['result']
                     json_out['flag'] = 9
@@ -157,8 +166,7 @@ def sentence_process(request):
                 pass
 
             elif prediction == 7:
-                # TODO implementation
-                body_part, success = kg_search_body_part(entities)
+                body_part, success = kg_utils.kg_search_body_part(entities)
                 if success:
                     json_out['result'] = body_part
                 else:
@@ -166,8 +174,7 @@ def sentence_process(request):
                     json_out['result'] = [u'没能找到%s的相应部位' % u'、'.join(entities)]
 
             elif prediction == 8:
-                # TODO implementation
-                department, success = kg_search_department(entities)
+                department, success = kg_utils.kg_search_department(entities)
                 if success:
                     json_out['result'] = department
                 else:
@@ -175,7 +182,8 @@ def sentence_process(request):
                     json_out['result'] = [u'没能找到%s的相应科室' % u'、'.join(entities)]
 
             elif prediction == 9:
-                entitiy_summarys, success = kg_entity_summary(entities)
+                entitiy_summarys, success = kg_utils.kg_entity_summary(
+                    entities)
                 if success:
                     json_out['result'] = entitiy_summarys
                 else:
@@ -185,8 +193,7 @@ def sentence_process(request):
                     json.dumps(json_out), content_type="application/json")
 
             elif prediction == 10:
-                # TODO implementation
-                price, success = kg_search_price(entities)
+                price, success = kg_utils.kg_search_price(entities)
                 if success:
                     json_out['result'] = price
                 else:
@@ -194,7 +201,7 @@ def sentence_process(request):
                     json_out['result'] = u'没能找到%s的价格' % u'、'.join(entities)
 
             else:
-                json_result = simple_qa(entities, prediction)
+                json_result = simple_query.simple_qa(entities, prediction)
                 json_out['result'] = json_result['content']
                 if json_result['return'] == 1:
                     json_out['Return'] = 2

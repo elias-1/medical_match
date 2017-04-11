@@ -11,18 +11,16 @@ Date: 17-2-26 上午10:51
 
 import os
 
-# import pprint
 import pypinyin
 from elasticsearch import Elasticsearch
-from fuzzywuzzy import process
 from fuzzywuzzy.fuzz import ratio
 
 from ..utils.utils import config
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
-params = config(filename=config_file_dir, section='elasticsearch')
-es = Elasticsearch(**params)
+es_match_params = config(filename=config_file_dir, section='elasticsearch')
+es = Elasticsearch(**es_match_params)
 
 
 def hanzi2pinyin(word):
@@ -101,7 +99,6 @@ def search_index(query_string, return_number=1):
     entity_type_dict = {}
     max_score = 0
     max_item = ''
-    max_type = ''
     if len(res1['hits']['hits']) > 0:
         fuzz = res1['hits']['hits'][0]['_source']['Name']
         if fuzz == query_string:

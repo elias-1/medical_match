@@ -39,6 +39,88 @@ mid_tidlist_dict  = json.load(open(symptom_disease_dir + 'did_tidlist_dict.json'
 mid_sidlist_dict  = json.load(open(symptom_disease_dir + 'did_sidlist_dict.json'))
 
 
+class RDF_node:
+    def __init__(self, id, type):
+        self.id = id
+        self.type = type
+        if self.type == "dis":
+            self.abbraviation = ABBRAVIATION_DIS
+        elif self.type == "lab":
+            self.abbraviation = ABBRAVIATION_LAB
+        elif self.type == "sym":
+            self.abbraviation = ABBRAVIATION_SYM
+        elif self.type == "med":
+            self.abbraviation = ABBRAVIATION_MED
+        elif self.type == "dc":
+            self.abbraviation = ABBRAVIATION_DC
+        elif self.type == "mc":
+            self.abbraviation = ABBRAVIATION_MC
+        elif self.type == "sc":
+            self.abbraviation = ABBRAVIATION_SC
+        elif self.type == "sb":
+            self.abbraviation = ABBRAVIATION_SB
+        elif self.type == "lc":
+            self.abbraviation = ABBRAVIATION_LC
+        elif self.type == None:
+            # this serverd as a dummy node type
+            self.abbraviation = None
+        else:
+            raise ValueError("Invalid node type for RDF.")
+        prefix_str = "PREFIX " + ABBRAVIATION_PRO + PREFIX_PRO
+        prefix_str += " PREFIX " + ABBRAVIATION_DIS + PREFIX_DIS
+        prefix_str += " PREFIX " + ABBRAVIATION_LAB + PREFIX_LAB
+        prefix_str += " PREFIX " + ABBRAVIATION_SYM + PREFIX_SYM
+        prefix_str += " PREFIX " + ABBRAVIATION_MED + PREFIX_MED
+        prefix_str += " PREFIX " + ABBRAVIATION_DC + PREFIX_DC
+        prefix_str += " PREFIX " + ABBRAVIATION_MC + PREFIX_MC
+        prefix_str += " PREFIX " + ABBRAVIATION_SC + PREFIX_SC
+        prefix_str += " PREFIX " + ABBRAVIATION_SB + PREFIX_SB
+        prefix_str += " PREFIX " + ABBRAVIATION_LC + PREFIX_LC
+        self.prefix = prefix_str
+
+    def query_all(self):
+        '''
+        Obtain all the relations and nodes that are connects (both direction)
+        to the specific node
+        '''
+        query = self.prefix
+        query += ' SELECT DISTINCT ?r ?n WHERE {{?x ?r ?n FILTER (regex (?x, "' + str(
+            self.id) + '"))} UNION {?n ?r ?x FILTER (regex (?x, "' + str(
+                self.id) + '"))}}'
+        return query
+
+    def get_property(self):
+        '''
+        This function generate the query to obtain all the property
+        '''
+        query = self.prefix
+        query += ' SELECT DISTINCT ?r ?n WHERE { ' + self.abbraviation + self.id + ' ?r ?n FILTER (regex (?r, "property"))}'
+        return query
+
+    def get_path_one_node(self):
+        '''
+        This function generate the query to obtain all the 
+        node (both in or out link) that connects to the query node
+        The retrun result from RDF will be in the format of:
+        "relationship" "id" "chinese_name"
+        '''
+        query = self.prefix
+        query += ' SELECT DISTINCT ?r ?n ?p WHERE { ' + self.abbraviation + self.id + '?r ?n FILTER (!regex (?r, "property")). ?n pro:name ?p}'
+        return query
+
+    def get_path_one_node_cross_rel(self):
+        '''
+        It generates cross raltionships between all one degree node
+        The returned result is in the form of 
+        id1 chinese_name_1 relationship id2 chinese_name_2
+        where id1 and id2 are all the belongs to (subset of) the list
+        of ids that "get_path_one_node" returns
+        '''
+        query = self.prefix
+        query += ' SELECT DISTINCT ?n1 ?p1 ?r ?n2 ?p2 WHERE { ' + self.abbraviation + self.id + ' ?r1 ?n1 FILTER (!regex (?r1, "property")).' + self.abbraviation + self.id + ' ?r2 ?n2 FILTER (!regex (?r2, "property")).' + '?n1 ?r ?n2. ?n1 pro:name ?p1. ?n2 pro:name ?p2.}'
+        return query
+
+
 def get_id_name_list(ret):
     idname_list = []
     if 'empty' not in ret[0]:
