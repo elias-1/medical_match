@@ -16,7 +16,8 @@ from ..utils.utils import config
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
-kg_utils_params = config(filename=config_file_dir, section='postgresql')
+params = config(filename=config_file_dir, section='postgresql')
+conn = psycopg2.connect(**params)
 
 #conn = psycopg2.connect(host = 'localhost', database = 'kgdata', user = 'dbuser', password = '112233')
 
@@ -24,12 +25,10 @@ kg_utils_params = config(filename=config_file_dir, section='postgresql')
 def search_sql(sql):
     """ query parts from the parts table """
     try:
-        conn = psycopg2.connect(**kg_utils_params)
         cur = conn.cursor()
         cur.execute(sql)
         rows = cur.fetchall()
         cur.close()
-        conn.close()
         return rows
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
@@ -96,7 +95,6 @@ def kg_entity_summary(entities):
     return entitiy_summarys, success
 
 
-# TODO(zhanmengting)
 def kg_search_body_part(entities):
     """问部位
 
@@ -128,7 +126,6 @@ def kg_search_body_part(entities):
     return body_part, success
 
 
-# TODO(zhanmengting)
 def kg_search_price(entities):
     """问价格
 
@@ -161,7 +158,6 @@ def kg_search_price(entities):
     return entitiy_price, success
 
 
-# TODO(zhanmengting)
 def kg_search_department(entities):
     """问科室
 
