@@ -17,16 +17,17 @@ from ..utils.utils import config
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
 kg_utils_params = config(filename=config_file_dir, section='postgresql')
-conn = psycopg2.connect(**kg_utils_params)
 
 
 def search_sql(sql):
     """ query parts from the parts table """
     try:
+        conn = psycopg2.connect(**kg_utils_params)
         cur = conn.cursor()
         cur.execute(sql)
         rows = cur.fetchall()
         cur.close()
+        conn.close()
         return rows
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
