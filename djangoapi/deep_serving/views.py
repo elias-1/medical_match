@@ -11,6 +11,8 @@ from .serving_client.serving_client import Clfier, Ner
 from .simple_qa.simple_query import *
 from .interactive_query.interactive_query import *
 
+from fuzzywuzzy import fuzz
+
 ner = Ner()
 clfier = Clfier()
 
@@ -207,6 +209,20 @@ def sentence_process(request):
 # ycc
 @csrf_exempt
 def get_symptom_id(request):  # get symptom id
+    """
+    功能:
+        返回症状名字对应的ID，采用ES模糊匹配
+
+    示例:
+        http://yiliao1:9999/kgInterface/getSymId/?q={%22Name%22:%22%E5%A4%B4%E7%97%9B%22}
+
+    输入:
+        Name:症状名,字符串
+    返回:
+        Results: list:
+            Id:  症状ID
+            Name: 症状名字
+    """
     if request.method == "GET":
         json_out = {}
         try:
@@ -249,6 +265,31 @@ def get_symptom_id(request):  # get symptom id
 # ycc
 @csrf_exempt
 def get_symptom_disease(request):  # get possible disease of symptom 
+    """
+    功能:
+        返回症状的可能疾病,使用json文件存储的数据,应该改成rdf3x查询(速度太慢)
+
+    示例:
+        http://yiliao1:9999/kgInterface/getSymDis/?q={%22Ids%22:[%22s15670%22],%22NotIds%22:[],%22UnknownIds%22:[]}
+
+    输入:
+        Ids: 患者已有的症状
+        NotIds: 患者没有的症状
+        UnknowIds: 患者不确定是否含有的症状
+    返回:
+        Results: dict:
+            PosDep: 可能科室,list:
+                disease: 该科室对应的疾病ID
+                Id: 科室ID
+                Name: 科室名字
+            PosDis: 可能疾病,list:
+                department: 该疾病对应的科室ID
+                Id: 疾病ID
+                Name: 疾病名字
+            PosSym: 是否还有如下症状,list:
+                Id: 症状ID
+                Name: 症状名字
+    """
     if request.method == "GET":
         json_out = {}
         try:
@@ -265,16 +306,15 @@ def get_symptom_disease(request):  # get possible disease of symptom
                                                        unknown_sids)
 
             posdisset = set(didname_dict)
-            for fid in fids:
-                if len(fids) < 2:
-                    break
-                otherDis = get_fids_to_nodetype2list(
-                    set(fids) - set([fid]), nodetype1, nodetype2)
-                for d in otherDis:
-                    xid = d['Id']
-                    name = d['Name']
-                    if xid not in didname_dict:
-                        didname_dict[xid] = '________' + name
+            if len(fids) > 1:
+                for fid in fids:
+                    otherDis = get_fids_to_nodetype2list(
+                        set(fids) - set([fid]), nodetype1, nodetype2)
+                    for d in otherDis:
+                        xid = d['Id']
+                        name = d['Name']
+                        if xid not in didname_dict:
+                            didname_dict[xid] = '________' + name
 
             posdislist = sorted(
                 posdisset, key=lambda s: id_degree_dict[s], reverse=True)
@@ -299,6 +339,21 @@ def get_symptom_disease(request):  # get possible disease of symptom
 # ycc
 @csrf_exempt
 def get_symptom_id_2(request):  # get symptom id to find medicine
+    """
+    功能:
+        根据症状/疾病,询问药品
+        返回症状/疾病名字对应的ID，读取json文件,采用fuzz做模糊匹配
+
+    示例:
+        http://yiliao1:9999/kgInterface/getSymId2/?q={%22Name%22:%22%E5%A4%B4%E7%97%9B%22}
+
+    输入:
+        Name:症状名,字符串
+    返回:
+        Results: list:
+            Id:  症状/疾病ID
+            Name: 症状/疾病名字
+    """
     if request.method == "GET":
         json_out = {}
         try:
@@ -317,7 +372,6 @@ def get_symptom_id_2(request):  # get symptom id to find medicine
                 'Id': symptom_name_id_dict[name]
             } for name in name_list
                        if symptom_name_id_dict[name] in sid_midlist_dict]
-            # results = [ { 'Name':name, 'Id':symptom_name_id_dict[name] } for name in name_list ]
             json_out["Return"] = 0
             json_out["num"] = len(symptom_name_id_dict)
             json_out["Results"] = results[:20]
@@ -331,6 +385,31 @@ def get_symptom_id_2(request):  # get symptom id to find medicine
 # ycc
 @csrf_exempt
 def get_symptom_medcine(request):  # get possible disease of symptom 
+    """
+    功能:
+        返回症状/疾病的推荐药品,使用json文件存储的数据,应该改成rdf3x查询(速度太慢)
+
+    示例:
+        http://1.85.37.136:9999/kgInterface/getSymMed/?q={%22Sids%22:[%22s12097%22,%22s15063%22],%22NotSids%22:[],%22Tids%22:[],%22NotTids%22:[],%22Age%22:%22%22}
+
+    输入:
+        Sids: 患者已有的症状
+        NotSids: 患者没有的症状
+        Tids: 患者已有的禁忌症
+        NotTids: 患者没有的禁忌症
+        Age: 患者年龄
+    返回:
+        Results: dict:
+            PosMed: 可能疾病,list:
+                Id: 药品ID
+                Name: 药品名字
+            PosSym: 是否还有如下症状,list:
+                Id: 症状ID
+                Name: 症状名字
+            PosTaboo: 是否还有如下禁忌症,list:
+                Id: 禁忌症ID
+                Name: 禁忌症名字
+    """
     if request.method == "GET":
         json_out = {}
         try:

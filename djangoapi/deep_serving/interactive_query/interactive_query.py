@@ -6,62 +6,13 @@ import traceback
 from StringIO import StringIO
 import pycurl
 from ..utils.utils import config
+from ..simple_qa.simple_query import *
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-PREFIX_BASE = "<http://xianjiaotong.edu/"
-PREFIX_PRO = PREFIX_BASE + "property/>"
-PREFIX_DIS = PREFIX_BASE + "disease/>"
-PREFIX_LAB = PREFIX_BASE + "lab/>"
-PREFIX_SYM = PREFIX_BASE + "symptom/>"
-PREFIX_MED = PREFIX_BASE + "medicine/>"
-PREFIX_DC = PREFIX_BASE + "dclass/>"
-PREFIX_MC = PREFIX_BASE + "mclass/>"
-PREFIX_SC = PREFIX_BASE + "sclass/>"
-PREFIX_SB = PREFIX_BASE + "sbody/>"
-PREFIX_LC = PREFIX_BASE + "lclass/>"
-PREFIX_OP = PREFIX_BASE + "operation/>"
-PREFIX_DP = PREFIX_BASE + "department/>"
-PREFIX_BP = PREFIX_BASE + "bodypart/>"
-
-ABBRAVIATION_PRO = "pro:"
-ABBRAVIATION_DIS = "dis:"
-ABBRAVIATION_LAB = "lab:"
-ABBRAVIATION_SYM = "sym:"
-ABBRAVIATION_MED = "med:"
-ABBRAVIATION_DC = "dc:"
-ABBRAVIATION_MC = "mc:"
-ABBRAVIATION_SC = "sc:"
-ABBRAVIATION_SB = "sb:"
-ABBRAVIATION_LC = "lc:"
-ABBRAVIATION_OP = "op:"
-ABBRAVIATION_DP = "dp:"
-ABBRAVIATION_BP = "bp:"
-
-prefix_str = "PREFIX " + ABBRAVIATION_PRO + PREFIX_PRO
-prefix_str += " PREFIX " + ABBRAVIATION_DIS + PREFIX_DIS
-prefix_str += " PREFIX " + ABBRAVIATION_LAB + PREFIX_LAB
-prefix_str += " PREFIX " + ABBRAVIATION_SYM + PREFIX_SYM
-prefix_str += " PREFIX " + ABBRAVIATION_MED + PREFIX_MED
-prefix_str += " PREFIX " + ABBRAVIATION_DC + PREFIX_DC
-prefix_str += " PREFIX " + ABBRAVIATION_MC + PREFIX_MC
-prefix_str += " PREFIX " + ABBRAVIATION_SC + PREFIX_SC
-prefix_str += " PREFIX " + ABBRAVIATION_SB + PREFIX_SB
-prefix_str += " PREFIX " + ABBRAVIATION_LC + PREFIX_LC
-prefix_str += " PREFIX " + ABBRAVIATION_OP + PREFIX_OP
-prefix_str += " PREFIX " + ABBRAVIATION_DP + PREFIX_DP
-prefix_str += " PREFIX " + ABBRAVIATION_BP + PREFIX_BP
-
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
-
-# simple_qa_params = config(filename=config_file_dir, section='simple_qa')
-# RDF3X_API_DIR = simple_qa_params['RDF3X_API_DIR']
-# KG_DAT_DIR = simple_qa_params['KG_DAT_DIR']
-# KG_DATABASE = simple_qa_params['KG_DATABASE']
-# REQ_FILE_DIR = simple_qa_params['REQ_FILE_DIR']
-
 
 interactive_query_params = config(filename=config_file_dir, section='interactive_query')
 symptom_disease_dir = interactive_query_params['symptom_disease_dir']
@@ -85,6 +36,153 @@ medicine_id_name_dict = json.load(open(symptom_disease_dir + 'drug_id_name_dict.
 taboo_id_name_dict = json.load(open(symptom_disease_dir + 'taboo_id_name_dict.json'))
 mid_tidlist_dict  = json.load(open(symptom_disease_dir + 'did_tidlist_dict.json'))
 mid_sidlist_dict  = json.load(open(symptom_disease_dir + 'did_sidlist_dict.json'))
+
+
+def get_id_name_list(ret):
+    idname_list = []
+    if 'empty' not in ret[0]:
+        for line in ret:
+            line = line.strip()
+            url,name = line.split()
+            name = name.replace('"','')
+            xid = url.split('/')[-1].replace('>','')
+            idname_list.append({ 'Id':xid,'Name':name })
+    return idname_list
+
+def get_type_list(typ):
+    dummy_node = RDF_node(None, None)
+    query = dummy_node.prefix
+    query += '''SELECT DISTINCT ?n1 ?p1    WHERE {
+        ?n1 pro:type ?t1 FILTER (regex(?t1,"'''+typ+'''")).
+        ?n1 pro:name ?p1 
+        }
+    '''.replace('\n',' ')
+    ret = call_api_rdf3x(query)
+    typ_list = get_id_name_list(ret)
+    return typ_list
+
+def get_fid_to_nodetype2list(fid,nodetype1,nodetype2):
+    dummy_node = RDF_node(None, None)
+    query = dummy_node.prefix
+    xquery = ''
+    # { ?n2 ?r1 dis:'''+dis+'''. ?n2 pro:type ?t2 FILTER (regex(?r1,"Dis")) } 
+    query += '''SELECT DISTINCT ?n2 ?p2  WHERE {{
+        { '''+nodetype1[:3]+''':'''+fid+''' ?r1 ?n2. ?n2 pro:type ?t2 FILTER (regex(?t2,"'''+nodetype2+'''")) } UNION 
+        { ?n2 ?r2 '''+nodetype1[:3]+''':'''+fid+'''. ?n2 pro:type ?t2 FILTER (regex(?t2,"'''+nodetype2+'''")) } 
+        }.
+        { ?n2 pro:name ?p2}
+        }
+    '''
+    # print query.replace('PREFIX','\nPREFIX').replace('SELECT','\nSELECT')
+    query = query.replace('\n','').replace('    ','')
+    ret = call_api_rdf3x(query)
+    idname_list = get_id_name_list(ret)
+    return idname_list
+
+def get_fids_to_nodetype2list(fids,nodetype1,nodetype2):
+    dummy_node = RDF_node(None, None)
+    query = dummy_node.prefix
+    query += '''SELECT DISTINCT ?n0 ?p0  WHERE {\n'''
+    for index,fid in enumerate(fids):
+        index = index + 1
+        query1 = nodetype1[:3]+ ':'+fid+' ?r1 ?n0. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")).\n'
+        # query1 = 'sym:'+sid+' ?r ?n0 FILTER (regex(?r,"Dis")).'
+        query2 = '?n0 ?r2 '+nodetype1[:3]+':'+fid+'. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")).\n'
+        query += '{{'+query1+' } UNION { '+query2+'}}.'
+    query += '{ ?n0 pro:name ?p0}}'
+    query = query.replace('PREFIX','\nPREFIX')
+    query = query.replace('\n',' ')
+    ret = call_api_rdf3x(query)
+    idname_list = get_id_name_list(ret)
+    return idname_list
+
+def get_dis_sym_dict(ret):
+    dis_sym_dict = { }
+    sidname_dict = { }
+    if len(ret) and 'empty' not in ret[0]:
+        for line in ret:
+            line = line.strip()
+            disurl,symurl,symname = line.split()
+            symname = symname.replace('"','')
+            did = disurl.split('/')[-1].replace('>','')
+            sid = symurl.split('/')[-1].replace('>','')
+            # idname_list.append({ 'Id':xid,'Name':name })
+            if did not in dis_sym_dict:
+                dis_sym_dict[did] = []
+            dis_sym_dict[did].append(sid)
+            sidname_dict[sid] = symname
+    return dis_sym_dict, sidname_dict
+
+
+def get_fids_to_nodetype2all(fids,nodetype1,nodetype2):
+    dummy_node = RDF_node(None, None)
+    queryprefix = dummy_node.prefix
+    queryprefix += '''SELECT DISTINCT ?n ?n0 ?p0  WHERE {\n'''
+    fid = fids[0]
+    
+    query1 = '?n ?r1 ?n0. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")) FILTER (regex(?n,"'+fid+'"))\n'
+    query2 = '?n0 ?r2 ?n. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")) FILTER (regex(?n,"'+fid+'"))\n'
+    query = '{{'+query1+' } UNION { '+query2+'}'
+
+    for index,fid in enumerate(fids[:-1]):
+        query1 = '?n ?r1 ?n0. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")) FILTER (regex(?n,"'+fid+'"))\n'
+        query2 = '?n0 ?r2 ?n. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")) FILTER (regex(?n,"'+fid+'"))\n'
+        query += 'UNION {'+query1+' } UNION { '+query2+'}'
+
+    query += '} .'
+
+    query += '{ ?n0 pro:name ?p0}}'
+    query = queryprefix + query
+    # print query
+    query = query.replace('PREFIX','\nPREFIX')
+    query = query.replace('\n',' ')
+    ret = call_api_rdf3x(query)
+    # print ret
+    dis_sym_dict, sidname_dict = get_dis_sym_dict(ret)
+    # dis_sym_dict = get_id_name_list(ret)
+    return dis_sym_dict, sidname_dict
+
+
+def get_bodypart(request):  # get body list back
+    if request.method == "GET":
+        json_out = {}
+        try:
+            # input_dict = json.loads(request.GET["q"])
+            # json_out['Results'] = get_type_list(input_dict['Type'])
+            json_out['Results'] = get_type_list('sbody')
+            json_out["Return"] = 0
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(json.dumps(json_out), content_type="application/json")
+
+def get_symptom_id(request):  # get symptom id
+    if request.method == "GET":
+        json_out = {}
+        try:
+            input_dict = json.loads(request.GET["q"])
+            sname = input_dict['Name']
+            query_size = 200
+            es = Elasticsearch()
+            res = es.search( index='medknowledge', doc_type='search', 
+                    body={'size':query_size, 'query': { "query_string" : { 'fields': ['Name','Ename','Oname'], "query" :  sname } } })
+            answers = res['hits']['hits']
+            results = []
+            for i,answer in enumerate(answers):
+                d = answer['_source']
+                try:
+                    xid = d['Sid']
+                    xname = d['Name']
+                    if len(xid):
+                        results.append({ 'Id':xid,'Name':xname })
+                except:
+                    continue
+            json_out["Return"] = 0
+            json_out["Results"] = results[:20]
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(json.dumps(json_out), content_type="application/json")
 
 
 # ycc
