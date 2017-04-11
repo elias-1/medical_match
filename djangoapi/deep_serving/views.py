@@ -9,6 +9,7 @@ from .es_match.entity_refine import entity_refine
 from .postgresql_kg.kg_utils import *
 from .serving_client.serving_client import Clfier, Ner
 from .simple_qa.simple_query import *
+from .interactive_query.interactive_query import *
 
 ner = Ner()
 clfier = Clfier()
@@ -275,19 +276,13 @@ def get_symptom_disease(request):  # get possible disease of symptom
                     if xid not in didname_dict:
                         didname_dict[xid] = '________' + name
 
-            with open(
-                    '/var/www/djangoapi/file/symptom_disease/id-degree-dict.json',
-                    'r') as f:
-                id_degree_dict = json.loads(f.read())
             posdislist = sorted(
                 posdisset, key=lambda s: id_degree_dict[s], reverse=True)
-            # posDis = [{ 'Id':xid,'Name':didname_dict[xid]} for xid in posdislist]
             posDis = get_dis_list(posdislist)
 
             moredisset = set(didname_dict) - set(posdisset)
             moredislist = sorted(
                 moredisset, key=lambda s: id_degree_dict[s], reverse=True)
-            # moreDis = [{ 'Id':xid,'Name':didname_dict[xid]} for xid in moredislist]
             moreDis = get_dis_list(moredislist, '-----')
 
             json_out["Results"]['PosSym'] = posSym
@@ -309,14 +304,6 @@ def get_symptom_id_2(request):  # get symptom id to find medicine
         try:
             input_dict = json.loads(request.GET["q"])
             sname = input_dict['Name']
-            with open(
-                    '/var/www/djangoapi/file/symptom_drug/symptom_name_id_dict.json',
-                    'r') as f:
-                symptom_name_id_dict = json.loads(f.read())
-            with open(
-                    '/var/www/djangoapi/file/symptom_drug/sid_didlist_dict.json',
-                    'r') as f:
-                sid_midlist_dict = json.loads(f.read())
             name_score_dict = {
                 name: fuzz.partial_ratio(name, sname)
                 for name in symptom_name_id_dict
@@ -353,52 +340,16 @@ def get_symptom_medcine(request):  # get possible disease of symptom
             tids = input_dict['Tids']
             tids_not = input_dict['NotTids']
             age = input_dict['Age']
-            with open(
-                    '/var/www/djangoapi/file/symptom_drug/symptom_id_name_dict.json',
-                    'r') as f:
-                symptom_id_name_dict = json.loads(f.read())
-            with open(
-                    '/var/www/djangoapi/file/symptom_drug/drug_id_name_dict.json',
-                    'r') as f:
-                medicine_id_name_dict = json.loads(f.read())
-            with open(
-                    '/var/www/djangoapi/file/symptom_drug/taboo_id_name_dict.json',
-                    'r') as f:
-                taboo_id_name_dict = json.loads(f.read())
-            with open(
-                    '/var/www/djangoapi/file/symptom_drug/sid_didlist_dict.json',
-                    'r') as f:
-                sid_midlist_dict = json.loads(f.read())
-            with open(
-                    '/var/www/djangoapi/file/symptom_drug/did_tidlist_dict.json',
-                    'r') as f:
-                mid_tidlist_dict = json.loads(f.read())
-            with open(
-                    '/var/www/djangoapi/file/symptom_drug/did_sidlist_dict.json',
-                    'r') as f:
-                mid_sidlist_dict = json.loads(f.read())
-            # posMed = [{ 'Name':medicine_id_name_dict[mid], 'Id':mid } for sid in sids for mid in sid_midlist_dict[sid] ]
-            for tid, name in taboo_id_name_dict.items():
-                break
-                if tid[1] == '2':
-                    name = '患有--' + name
-                elif tid[1] == '3':
-                    name = '过敏--' + name
-                elif tid[1] == '5':
-                    name = '同时服用--' + name
-                taboo_id_name_dict[tid] = name
 
             midset = set()
             for sid in sids:
                 for mid in sid_midlist_dict[sid]:
                     if len(set(mid_tidlist_dict[mid]) & set(tids)) == 0:
-                        # mname = medicine_id_name_dict[mid]
                         midset.add(mid)
             posMed = []
             for mid in midset:
                 mname = medicine_id_name_dict[mid]
                 posMed.append({'Id': mid, 'Name': mname})
-            # json_out["Results"]['PosSym'] = posSym
 
             tid_num_dict = {}
             for med in posMed:
