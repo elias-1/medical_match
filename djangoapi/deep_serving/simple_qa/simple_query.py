@@ -62,8 +62,8 @@ KG_DAT_DIR = params['KG_DAT_DIR']
 KG_DATABASE = params['KG_DATABASE']
 REQ_FILE_DIR = params['REQ_FILE_DIR']
 
-sub_dict = json.load(open(params['sub_dict']))
-relations = json.load(open(params['relations']))
+sub_dict = json.load(open(os.path.join(REQ_FILE_DIR, params['sub_dict'])))
+relations = json.load(open(os.path.join(REQ_FILE_DIR, params['relations'])))
 nodes_type = {
     "disease": "dis:",
     "symptom": "sym:",
@@ -74,8 +74,8 @@ nodes_type = {
     "operation": "op:",
     "bodypart": "bp:"
 }
-q_template = json.load(open(params['q_template']))
-obj_ref = json.load(open(params['obj_ref']))
+q_template = json.load(open(os.path.join(REQ_FILE_DIR, params['q_template'])))
+obj_ref = json.load(open(os.path.join(REQ_FILE_DIR, params['obj_ref'])))
 
 root_token = params['root_token']
 
@@ -331,4 +331,3 @@ def simple_qa(entities, label):
         json_out["exception"] = traceback.print_exc()
         json_out["return"] = 1
     return json_out
-
