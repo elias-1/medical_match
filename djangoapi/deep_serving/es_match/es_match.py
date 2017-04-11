@@ -24,7 +24,6 @@ es = Elasticsearch(**es_match_params)
 
 
 def hanzi2pinyin(word):
-
     return [ch[0] for ch in pypinyin.pinyin(word, style=pypinyin.NORMAL)]
 
 
