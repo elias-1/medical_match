@@ -12,6 +12,7 @@ from .simple_qa.simple_query import *
 from .interactive_query.interactive_query import *
 
 from fuzzywuzzy import fuzz
+from collections import OrderedDict
 
 ner = Ner()
 clfier = Clfier()
