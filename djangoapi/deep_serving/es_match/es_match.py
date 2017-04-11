@@ -19,8 +19,8 @@ from ..utils.utils import config
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
-params = config(filename=config_file_dir, section='elasticsearch')
-es = Elasticsearch(**params)
+es_match_params = config(filename=config_file_dir, section='elasticsearch')
+es = Elasticsearch(**es_match_params)
 
 
 def hanzi2pinyin(word):

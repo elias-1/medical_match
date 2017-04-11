@@ -55,15 +55,17 @@ prefix_str += " PREFIX " + ABBRAVIATION_BP + PREFIX_BP
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
-params = config(filename=config_file_dir, section='simple_qa')
+simple_qa_params = config(filename=config_file_dir, section='simple_qa')
 
-RDF3X_API_DIR = params['RDF3X_API_DIR']
-KG_DAT_DIR = params['KG_DAT_DIR']
-KG_DATABASE = params['KG_DATABASE']
-REQ_FILE_DIR = params['REQ_FILE_DIR']
+RDF3X_API_DIR = simple_qa_params['RDF3X_API_DIR']
+KG_DAT_DIR = simple_qa_params['KG_DAT_DIR']
+KG_DATABASE = simple_qa_params['KG_DATABASE']
+REQ_FILE_DIR = simple_qa_params['REQ_FILE_DIR']
 
-sub_dict = json.load(open(os.path.join(REQ_FILE_DIR, params['sub_dict'])))
-relations = json.load(open(os.path.join(REQ_FILE_DIR, params['relations'])))
+sub_dict = json.load(
+    open(os.path.join(REQ_FILE_DIR, simple_qa_params['sub_dict'])))
+relations = json.load(
+    open(os.path.join(REQ_FILE_DIR, simple_qa_params['relations'])))
 nodes_type = {
     "disease": "dis:",
     "symptom": "sym:",
@@ -74,10 +76,12 @@ nodes_type = {
     "operation": "op:",
     "bodypart": "bp:"
 }
-q_template = json.load(open(os.path.join(REQ_FILE_DIR, params['q_template'])))
-obj_ref = json.load(open(os.path.join(REQ_FILE_DIR, params['obj_ref'])))
+q_template = json.load(
+    open(os.path.join(REQ_FILE_DIR, simple_qa_params['q_template'])))
+obj_ref = json.load(
+    open(os.path.join(REQ_FILE_DIR, simple_qa_params['obj_ref'])))
 
-root_token = params['root_token']
+root_token = simple_qa_params['root_token']
 
 
 def get_cat(id):

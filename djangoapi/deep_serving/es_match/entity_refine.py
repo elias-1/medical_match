@@ -19,12 +19,12 @@ from ..utils.utils import config
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
-params = config(filename=config_file_dir, section='postgresql')
+entity_refine_params = config(filename=config_file_dir, section='postgresql')
 
 
 def search_sql(sql):
     try:
-        conn = psycopg2.connect(**params)
+        conn = psycopg2.connect(**entity_refine_params)
         cur = conn.cursor()
         cur.execute(sql)
         result_set = cur.fetchall()
