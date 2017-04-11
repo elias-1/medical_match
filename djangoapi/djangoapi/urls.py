@@ -17,7 +17,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 
 urlpatterns = [
-    url(r'^admin/', include(admin.site.urls)),
+    # url(r'^admin/', include(admin.site.urls)),
     url(r'^deep_serving/sentence_clfier/$',
         'deep_serving.views.sentence_clfier'),
     url(r'^deep_serving/sentence_ner/$', 'deep_serving.views.sentence_ner'),
@@ -25,9 +25,12 @@ urlpatterns = [
         'deep_serving.views.sentence_clfier_ner'),
     url(r'^deep_serving/sentence_ner_es/$',
         'deep_serving.views.sentence_ner_es'),
-
-    url(r'^kgInterface/getSymId/$', 'kgInterface.views.get_symptom_id'),
-    url(r'^kgInterface/getSymDis/$', 'kgInterface.views.get_symptom_disease'),
-    url(r'^kgInterface/getSymId2/$', 'kgInterface.views.get_symptom_id_2'),
-    url(r'^kgInterface/getSymMed/$', 'kgInterface.views.get_symptom_medcine'),
+    url(r'^deep_serving/sentence_process/$',
+        'deep_serving.views.sentence_process'),
+    url(r'^deep_serving/getSymId/$', 'deep_serving.views.get_symptom_id'),
+    url(r'^deep_serving/getSymDis/$',
+        'deep_serving.views.get_symptom_disease'),
+    url(r'^deep_serving/getSymId2/$', 'deep_serving.views.get_symptom_id_2'),
+    url(r'^deep_serving/getSymMed/$',
+        'deep_serving.views.get_symptom_medcine'),
 ]
