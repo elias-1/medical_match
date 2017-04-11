@@ -17,7 +17,6 @@ from django.views.decorators.csrf import csrf_exempt
 from elasticsearch import Elasticsearch
 from fuzzywuzzy import fuzz
 
-from .es_match.entity_refine import entity_refine
 from .interactive_query.interactive_query import *
 from .postgresql_kg import kg_utils
 from .serving_client.serving_client import Clfier, Ner
@@ -89,22 +88,22 @@ def sentence_clfier_ner(request):
             json.dumps(json_out), content_type="application/json")
 
 
-@csrf_exempt
-def sentence_ner_es(request):
-    if request.method == "POST":
-        json_out = {}
-        try:
-            input_dict = json.loads(request.body)
-            sentence = input_dict['sentence']
-            entity_result, type_result = ner(sentence)
-            json_out['entities'], json_out['types'] = entity_refine(
-                entity_result, type_result)
-            json_out["Return"] = 0
-        except:
-            traceback.print_exc()
-            json_out["Return"] = 1
-        return HttpResponse(
-            json.dumps(json_out), content_type="application/json")
+# @csrf_exempt
+# def sentence_ner_es(request):
+#     if request.method == "POST":
+#         json_out = {}
+#         try:
+#             input_dict = json.loads(request.body)
+#             sentence = input_dict['sentence']
+#             entity_result, type_result = ner(sentence)
+#             json_out['entities'], json_out['types'] = entity_refine(
+#                 entity_result, type_result)
+#             json_out["Return"] = 0
+#         except:
+#             traceback.print_exc()
+#             json_out["Return"] = 1
+#         return HttpResponse(
+#             json.dumps(json_out), content_type="application/json")
 
 
 @csrf_exempt
@@ -154,7 +153,8 @@ def sentence_process(request):
                     json.dumps(json_out), content_type="application/json")
 
             entity_result, type_result = ner(sentence)
-            entities, types = entity_refine(entity_result, type_result)
+            # entities, types = entity_refine(entity_result, type_result)
+            entities = entity_result
             if not entity_result:
                 json_out['flag'] = 0
                 return HttpResponse(
