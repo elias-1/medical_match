@@ -137,10 +137,10 @@ def sentence_process(request):
                     额外返回result: 
         
     """
-    if request.method == "GET":
+    if request.method == "POST":
         json_out = {}
         try:
-            input_dict = json.loads(request.GET["q"])
+            input_dict = json.loads(request.body)
             sentence = input_dict['sentence']
             json_out["Return"] = 0
             if len(sentence) <= 4:
