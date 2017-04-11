@@ -57,10 +57,10 @@ app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
 simple_qa_params = config(filename=config_file_dir, section='simple_qa')
 
-RDF3X_API_DIR = simple_qa_params['RDF3X_API_DIR']
-KG_DAT_DIR = simple_qa_params['KG_DAT_DIR']
-KG_DATABASE = simple_qa_params['KG_DATABASE']
-REQ_FILE_DIR = simple_qa_params['REQ_FILE_DIR']
+RDF3X_API_DIR = simple_qa_params['rdf3x_api_dir']
+KG_DAT_DIR = simple_qa_params['kg_dat_dir']
+KG_DATABASE = simple_qa_params['kg_database']
+REQ_FILE_DIR = simple_qa_params['req_file_dir']
 
 sub_dict = json.load(
     open(os.path.join(REQ_FILE_DIR, simple_qa_params['sub_dict'])))

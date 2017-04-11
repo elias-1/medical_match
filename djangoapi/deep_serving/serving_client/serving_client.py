@@ -29,20 +29,20 @@ serving_params = config(filename=config_file_dir, section='deep_serving')
 
 data_dir = os.path.join(app_dir, 'data')
 
-NER_MAX_SENTENCE_LEN = serving_params['NER_MAX_SENTENCE_LEN']
-trainsMatrix = np.load(os.path.join(data_dir, serving_params['trainsMatrix']))
+NER_MAX_SENTENCE_LEN = serving_params['ner_max_sentence_len']
+trainsMatrix = np.load(os.path.join(data_dir, serving_params['trains_matrix']))
 ner_server = serving_params['ner_server']
 clfier_server = serving_params['clfier_server']
 ner_char2vec_path = os.path.join(data_dir, serving_params['ner_char2vec_path'])
-UNK = serving_params['UNK']
-ENTITY_TYPES = serving_params['ENTITY_TYPES'].split(',')
+UNK = serving_params['unk']
+ENTITY_TYPES = serving_params['entity_types'].split(',')
 
 clfier_word2vec_path = os.path.join(data_dir,
                                     serving_params['clfier_word2vec_path'])
 clfier_char2vec_path = os.path.join(data_dir,
                                     serving_params['clfier_char2vec_path'])
-C_MAX_SENTENCE_LEN = serving_params['C_MAX_SENTENCE_LEN']
-C_MAX_WORD_LEN = serving_params['C_MAX_WORD_LEN']
+C_MAX_SENTENCE_LEN = serving_params['c_max_sentence_len']
+C_MAX_WORD_LEN = serving_params['c_max_word_len']
 
 
 def _tokenizer(sentence):
