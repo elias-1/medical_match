@@ -144,48 +144,6 @@ def get_fids_to_nodetype2all(fids,nodetype1,nodetype2):
     return dis_sym_dict, sidname_dict
 
 
-def get_bodypart(request):  # get body list back
-    if request.method == "GET":
-        json_out = {}
-        try:
-            # input_dict = json.loads(request.GET["q"])
-            # json_out['Results'] = get_type_list(input_dict['Type'])
-            json_out['Results'] = get_type_list('sbody')
-            json_out["Return"] = 0
-        except:
-            traceback.print_exc()
-            json_out["Return"] = 1
-        return HttpResponse(json.dumps(json_out), content_type="application/json")
-
-def get_symptom_id(request):  # get symptom id
-    if request.method == "GET":
-        json_out = {}
-        try:
-            input_dict = json.loads(request.GET["q"])
-            sname = input_dict['Name']
-            query_size = 200
-            es = Elasticsearch()
-            res = es.search( index='medknowledge', doc_type='search', 
-                    body={'size':query_size, 'query': { "query_string" : { 'fields': ['Name','Ename','Oname'], "query" :  sname } } })
-            answers = res['hits']['hits']
-            results = []
-            for i,answer in enumerate(answers):
-                d = answer['_source']
-                try:
-                    xid = d['Sid']
-                    xname = d['Name']
-                    if len(xid):
-                        results.append({ 'Id':xid,'Name':xname })
-                except:
-                    continue
-            json_out["Return"] = 0
-            json_out["Results"] = results[:20]
-        except:
-            traceback.print_exc()
-            json_out["Return"] = 1
-        return HttpResponse(json.dumps(json_out), content_type="application/json")
-
-
 # ycc
 def get_disease_symptom(posDis, yes_sids, not_sids,
                         unknown_sids):  # get symptom of disease
