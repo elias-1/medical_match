@@ -63,15 +63,13 @@ def entity_refine(entity_result, type_result):
     entity_dict = {}
     score_list = []
     if len(entities) == 0:
-        result_list.append('none_enti')
-        type_list.append('none_type')
         return result_list, type_list
     if len(entities) == 1:
         entity_dict[entities[0]], _, type_dict = es_match.search_index(
             entities[0], 1)
         result_json[u'entity'] = entity_dict
         result_list.append(entity_dict[entities[0]][0])
-        type_list.append(type_dict.values())
+        type_list.append(type_dict[entity_dict[entities[0]][0]])
         return result_list, type_list
     all_type_dict = {}
     for entity in entities:
