@@ -34,7 +34,7 @@ es = Elasticsearch(**params)
 
 @csrf_exempt
 def sentence_clfier(request):
-    if request.method == "GET":
+    if request.method == "POST":
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
@@ -51,7 +51,7 @@ def sentence_clfier(request):
 
 @csrf_exempt
 def sentence_ner(request):
-    if request.method == "GET":
+    if request.method == "POST":
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
@@ -69,7 +69,7 @@ def sentence_ner(request):
 
 @csrf_exempt
 def sentence_clfier_ner(request):
-    if request.method == "GET":
+    if request.method == "POST":
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
@@ -91,7 +91,7 @@ def sentence_clfier_ner(request):
 
 @csrf_exempt
 def sentence_ner_es(request):
-    if request.method == "GET":
+    if request.method == "POST":
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
@@ -137,7 +137,7 @@ def sentence_process(request):
                     额外返回result: 
         
     """
-    if request.method == "GET":
+    if request.method == "POST":
         json_out = {}
         try:
             input_dict = json.loads(request.GET["q"])
