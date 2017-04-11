@@ -1,18 +1,27 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2017 www.drcubic.com, Inc. All Rights Reserved
+#
+"""
+File: serving_client.py
+Author: shileicao(shileicao@stu.xjtu.edu.cn)
+Date: 2017/3/28 9:42
+"""
 import json
 import traceback
+from collections import OrderedDict
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from elasticsearch import Elasticsearch
+from fuzzywuzzy import fuzz
 
 from .es_match.entity_refine import entity_refine
+from .interactive_query.interactive_query import *
 from .postgresql_kg.kg_utils import *
 from .serving_client.serving_client import Clfier, Ner
 from .simple_qa.simple_query import *
-from .interactive_query.interactive_query import *
-
-from fuzzywuzzy import fuzz
-from collections import OrderedDict
 
 ner = Ner()
 clfier = Clfier()
@@ -157,7 +166,6 @@ def sentence_process(request):
                 pass
 
             elif prediction == 7:
-                # TODO implementation
                 body_part, success = kg_search_body_part(entities)
                 if success:
                     json_out['result'] = body_part
@@ -166,7 +174,6 @@ def sentence_process(request):
                     json_out['result'] = [u'没能找到%s的相应部位' % u'、'.join(entities)]
 
             elif prediction == 8:
-                # TODO implementation
                 department, success = kg_search_department(entities)
                 if success:
                     json_out['result'] = department
@@ -185,7 +192,6 @@ def sentence_process(request):
                     json.dumps(json_out), content_type="application/json")
 
             elif prediction == 10:
-                # TODO implementation
                 price, success = kg_search_price(entities)
                 if success:
                     json_out['result'] = price
