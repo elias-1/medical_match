@@ -24,25 +24,17 @@ def kg_entity_identify(sentence):
         result_list: list; if success 0, None, 
         
     """
-    sql = """SELECT distinct pid, property_value
-             FROM deep_serving_property
-             WHERE property_name = 'desc'
-             and entity_id in (
-                  SELECT entity_id 
-                  FROM Property 
-                  WHERE property_name = 'name' 
-                  and property_value = '%s');"""
     inner_eid = Property.objects.filter(property_name='name').filter(
         property_value=sentence).values('entity_id')
     sql_result = Property.objects.filter(property_name='desc').filter(
-        entity_id__in=inner_eid).distinct()
+        entity_id__in=inner_eid).distinct('property_value')
 
     result_list = []
     success = 0
 
     for item in sql_result:
         success = 1
-        result_list.append(item.property_value)
+        result_list.append(sentence + '的概述：' + item.property_value)
     return result_list, success
 
 
@@ -87,22 +79,18 @@ def kg_search_body_part(entities):
         body_part: list
         success: 0/1
     """
-    evalues = "','".join(entities)
-    sql = """SELECT distinct entity_name1, entity_name2 
-             FROM deep_serving_entity_relation
-             WHERE relation like '%%Body%%' 
-                and entity_name1 IN ('%s')
-             ORDER BY entity_name1;"""
-    sql_result = Property.objects.raw(sql % (evalues))
+    sql_result = Property.objects.filter(relation__contains='Body').filter(
+        entity_name1__in=entities).order_by('entity_name1').distinct(
+            'entity_name1', 'entity_name2')
+
     body_part = []
     success = 0
     body_dict = {}
-    if len(sql_result) > 0:
+    for item in sql_result:
         success = 1
-        for item in sql_result:
-            if not body_dict.has_key(item[0]):
-                body_dict[item[0]] = []
-            body_dict[item[0]].append(item[1])
+        if not body_dict.has_key(item.entity_name1):
+            body_dict[item.entity_name1] = []
+        body_dict[item.entity_name1].append(item.entity_name2)
     for key in body_dict:
         re_sent = key + '的部位：' + " , ".join(body_dict[key])
         body_part.append(re_sent)
@@ -150,22 +138,18 @@ def kg_search_department(entities):
         department_list: list
         success: 0/1
     """
-    evalues = "','".join(entities)
-    sql = """SELECT distinct entity_name1, entity_name2 
-             FROM deep_serving_entity_relation
-             WHERE relation like '%%Dep%%' 
-                and entity_name1 IN ('%s')
-             ORDER BY entity_name1;"""
-    sql_result = Property.objects.raw(sql % (evalues))
+    sql_result = Property.objects.filter(relation__contains='Dep').filter(
+        entity_name1__in=entities).order_by('entity_name1').distinct(
+            'entity_name1', 'entity_name2')
+
     department_list = []
     success = 0
     department_dict = {}
-    if len(sql_result) > 0:
+    for item in sql_result:
         success = 1
-        for item in sql_result:
-            if not department_dict.has_key(item[0]):
-                department_dict[item[0]] = []
-            department_dict[item[0]].append(item[1])
+        if not department_dict.has_key(item.entity_name1):
+            department_dict[item.entity_name1] = []
+        department_dict[item.entity_name1].append(item.entity_name2)
     for key in department_dict:
         re_sent = key + '的科室：' + " , ".join(department_dict[key])
         department_list.append(re_sent)
