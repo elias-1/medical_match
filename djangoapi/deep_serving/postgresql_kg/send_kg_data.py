@@ -69,7 +69,7 @@ def extract_id_name(f):
 def insert2property(property_data):
     global COUNT
     col_name = ['entity_id', 'entity_type', 'property_name', 'property_value']
-    res = insert_record('Property', col_name, property_data)
+    res = insert_record('property', col_name, property_data)
     COUNT += 1
     print('process: %d, return: %d' % (COUNT, res))
 
@@ -80,7 +80,7 @@ def insert2relation(relation_data):
         'entity_id1', 'entity_name1', 'entity_type1', 'relation', 'entity_id2',
         'entity_name2', 'entity_type2'
     ]
-    res = insert_record('Entity_relation', col_name, relation_data)
+    res = insert_record('relation', col_name, relation_data)
     COUNT += 1
     print('process: %d, return: %d' % (COUNT, res))
 
