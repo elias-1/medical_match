@@ -36,10 +36,10 @@ def kg_entity_identify(sentence):
     sql_result = Property.objects.raw(sql % (sentence))
     result_list = []
     success = 0
-    if len(sql_result) > 0:
+
+    for item in sql_result:
         success = 1
-        for item in sql_result:
-            result_list.append(item.property_value)
+        result_list.append(item.property_value)
     return result_list, success
 
 
@@ -63,12 +63,12 @@ def kg_entity_summary(entities):
     entitiy_summarys = []
     success = 0
     summary_dict = {}
-    if len(sql_result) > 0:
+
+    for item in sql_result:
         success = 1
-        for item in sql_result:
-            if not summary_dict.has_key(item[0]):
-                summary_dict[item[0]] = []
-            summary_dict[item[0]].append(item[1])
+        if not summary_dict.has_key(item[0]):
+            summary_dict[item[0]] = []
+        summary_dict[item[0]].append(item[1])
     for key in summary_dict:
         re_sent = key + '的概述：' + " \n ".join(summary_dict[key])
         entitiy_summarys.append(re_sent)
