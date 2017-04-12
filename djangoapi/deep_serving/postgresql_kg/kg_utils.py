@@ -32,8 +32,11 @@ def kg_entity_identify(sentence):
                   FROM Property 
                   WHERE property_name = 'name' 
                   and property_value = '%s');"""
+    inner_eid = Property.object.filter(property_name='name').filter(
+        property_value=sentence).values('entity_id')
+    sql_result = Property.object.filter(property_name='desc').filter(
+        entity_id__in=inner_eid).distinct()
 
-    sql_result = Property.objects.raw(sql % (sentence))
     result_list = []
     success = 0
 
