@@ -25,7 +25,7 @@ def kg_entity_identify(sentence):
         
     """
     sql = """SELECT distinct property_value
-             FROM Property
+             FROM deep_serving_property
              WHERE property_name = 'desc'
              and entity_id in (
                   SELECT entity_id 
@@ -54,7 +54,7 @@ def kg_entity_summary(entities):
         """
     evalues = "','".join(entities)
     sql = """SELECT distinct a.property_value , b.property_value 
-             FROM Property a left join Property b 
+             FROM deep_serving_property a left join deep_serving_property b 
                 on a.entity_id = b.entity_id
              WHERE a.property_name = 'name' 
                 and a.property_value IN ('%s')
@@ -87,7 +87,7 @@ def kg_search_body_part(entities):
     """
     evalues = "','".join(entities)
     sql = """SELECT distinct entity_name1, entity_name2 
-             FROM Entity_relation
+             FROM deep_serving_entity_relation
              WHERE relation like '%%Body%%' 
                 and entity_name1 IN ('%s')
              ORDER BY entity_name1;"""
@@ -118,7 +118,7 @@ def kg_search_price(entities):
     """
     evalues = "','".join(entities)
     sql = """SELECT distinct a.property_value , b.property_value 
-             FROM Property a left join Property b 
+             FROM deep_serving_property a left join deep_serving_property b 
                 on a.entity_id = b.entity_id
              WHERE a.property_name = 'name' 
                 and a.property_value IN ('%s')
@@ -150,7 +150,7 @@ def kg_search_department(entities):
     """
     evalues = "','".join(entities)
     sql = """SELECT distinct entity_name1, entity_name2 
-             FROM Entity_relation
+             FROM deep_serving_entity_relation
              WHERE relation like '%%Dep%%' 
                 and entity_name1 IN ('%s')
              ORDER BY entity_name1;"""
