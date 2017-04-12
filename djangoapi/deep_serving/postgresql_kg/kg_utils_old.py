@@ -9,7 +9,31 @@ Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/4/7 13:51
 """
 
-from ..models import Property
+import os
+import psycopg2
+
+from ..utils.utils import config
+
+app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
+params = config(filename=config_file_dir, section='postgresql')
+
+#conn = psycopg2.connect(host = 'localhost', database = 'kgdata', user = 'dbuser', password = '112233')
+
+
+def search_sql(sql):
+    """ query parts from the parts table """
+    try:
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+        cur.execute(sql)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return rows
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        return None
 
 
 def kg_entity_identify(sentence):
@@ -30,14 +54,13 @@ def kg_entity_identify(sentence):
                   FROM property 
                   WHERE property_name = 'name' 
                   and property_value = '%s');"""
-
-    sql_result = Property.objects.raw(sql % (sentence))
+    sql_result = search_sql(sql % (sentence))
     result_list = []
     success = 0
     if len(sql_result) > 0:
         success = 1
         for item in sql_result:
-            result_list.append(item.property_value)
+            result_list.append(item[0])
     return result_list, success
 
 
@@ -57,7 +80,7 @@ def kg_entity_summary(entities):
              WHERE a.property_name = 'name' 
                 and a.property_value IN ('%s')
                 and b.property_name = 'desc' ;"""
-    sql_result = Property.objects.raw(sql % (evalues))
+    sql_result = search_sql(sql % (evalues))
     entitiy_summarys = []
     success = 0
     summary_dict = {}
@@ -88,7 +111,7 @@ def kg_search_body_part(entities):
              WHERE relation like '%%Body%%' 
                 and entity_name1 IN ('%s')
              ORDER BY entity_name1;"""
-    sql_result = Property.objects.raw(sql % (evalues))
+    sql_result = search_sql(sql % (evalues))
     body_part = []
     success = 0
     body_dict = {}
@@ -120,7 +143,7 @@ def kg_search_price(entities):
              WHERE a.property_name = 'name' 
                 and a.property_value IN ('%s')
                 and b.property_name = 'price' ;"""
-    sql_result = Property.objects.raw(sql % (evalues))
+    sql_result = search_sql(sql % (evalues))
     entitiy_price = []
     success = 0
     price_dict = {}
@@ -151,7 +174,7 @@ def kg_search_department(entities):
              WHERE relation like '%%Dep%%' 
                 and entity_name1 IN ('%s')
              ORDER BY entity_name1;"""
-    sql_result = Property.objects.raw(sql % (evalues))
+    sql_result = search_sql(sql % (evalues))
     department_list = []
     success = 0
     department_dict = {}
