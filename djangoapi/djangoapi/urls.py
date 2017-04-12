@@ -18,8 +18,8 @@ from django.conf.urls import include, url
 
 urlpatterns = [
     # url(r'^admin/', include(admin.site.urls)),
-    url(r'^deep_serving/property/$', 'testapi.views.property_op'),
-    url(r'^deep_serving/relation/$', 'testapi.views.relation_op'),
+    url(r'^deep_serving/property/$', 'deep_serving.views.property_op'),
+    url(r'^deep_serving/relation/$', 'deep_serving.views.relation_op'),
     url(r'^deep_serving/sentence_clfier/$',
         'deep_serving.views.sentence_clfier'),
     url(r'^deep_serving/sentence_ner/$', 'deep_serving.views.sentence_ner'),
