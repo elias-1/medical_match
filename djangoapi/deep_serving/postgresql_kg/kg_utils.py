@@ -24,7 +24,7 @@ def kg_entity_identify(sentence):
         result_list: list; if success 0, None, 
         
     """
-    sql = """SELECT distinct property_value
+    sql = """SELECT distinct pid, property_value
              FROM deep_serving_property
              WHERE property_name = 'desc'
              and entity_id in (
@@ -53,7 +53,7 @@ def kg_entity_summary(entities):
         success: 0/1
         """
     evalues = "','".join(entities)
-    sql = """SELECT distinct a.property_value , b.property_value 
+    sql = """SELECT distinct a.pid, a.property_value as name, b.property_value as desc 
              FROM deep_serving_property a left join deep_serving_property b 
                 on a.entity_id = b.entity_id
              WHERE a.property_name = 'name' 
@@ -66,10 +66,9 @@ def kg_entity_summary(entities):
 
     for item in sql_result:
         success = 1
-        print item
-        if not summary_dict.has_key(item[0]):
-            summary_dict[item[0]] = []
-        summary_dict[item[0]].append(item[1])
+        if not summary_dict.has_key(item.name):
+            summary_dict[item.name] = []
+        summary_dict[item.name].append(item.desc)
     for key in summary_dict:
         re_sent = key + '的概述：' + " \n ".join(summary_dict[key])
         entitiy_summarys.append(re_sent)
@@ -117,7 +116,7 @@ def kg_search_price(entities):
         success: 0/1
     """
     evalues = "','".join(entities)
-    sql = """SELECT distinct a.property_value , b.property_value 
+    sql = """SELECT distinct a.pid, a.property_value as name, b.property_value as price
              FROM deep_serving_property a left join deep_serving_property b 
                 on a.entity_id = b.entity_id
              WHERE a.property_name = 'name' 
@@ -127,12 +126,12 @@ def kg_search_price(entities):
     entitiy_price = []
     success = 0
     price_dict = {}
-    if len(sql_result) > 0:
+
+    for item in sql_result:
         success = 1
-        for item in sql_result:
-            if not price_dict.has_key(item[0]):
-                price_dict[item[0]] = []
-            price_dict[item[0]].append(item[1])
+        if not price_dict.has_key(item.name):
+            price_dict[item.name] = []
+        price_dict[item.name].append(item.price)
     for key in price_dict:
         re_sent = key + '的价格：' + " , ".join(price_dict[key])
         entitiy_price.append(re_sent)
