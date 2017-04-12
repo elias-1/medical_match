@@ -19,6 +19,7 @@ from fuzzywuzzy import fuzz
 
 from .es_match.entity_refine import entity_refine
 from .interactive_query.interactive_query import *
+from .models import Entity_relation, Property
 from .postgresql_kg import kg_utils
 from .serving_client.serving_client import Clfier, Ner
 from .simple_qa import simple_query
@@ -30,6 +31,189 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
 params = config(filename=config_file_dir, section='elasticsearch')
 es = Elasticsearch(**params)
+useless_list = ["", u"", None, False, " "]
+#===============================================================================
+
+
+@csrf_exempt
+def property_op(request):
+    if request.method == "GET":
+        json_out = {}
+        try:
+            input_dict = json.loads(request.GET["q"])
+            id = int(input_dict["id"])
+            property_info = Property.objects.filter(pid=id)
+            if property_info:
+                property_info = property_info.values()[0]
+                for key in property_info.keys():
+                    if property_info[key] not in useless_list:
+                        json_out[key] = property_info[key]
+                json_out["Return"] = 0
+            else:
+                json_out["Return"] = 1
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
+    elif request.method == "PUT":
+        json_out = {}
+        try:
+            input_dict = json.loads(request.body)
+            id = int(input_dict["pid"])
+            input_dict.pop("pid")
+            property_info = Property.objects.filter(pid=id)
+            if property_info:
+                n = property_info[0]
+                for key in input_dict.keys():
+                    if input_dict[key] not in useless_list:
+                        setattr(n, key, input_dict[key])
+                n.save()
+                json_out["Return"] = 0
+            else:
+                json_out["Return"] = 1
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
+    elif request.method == "POST":
+        json_out = {}
+        try:
+            input_dict = json.loads(request.body)
+            entity_id = input_dict["entity_id"]
+            entity_type = input_dict["entity_type"]
+            property_name = input_dict["property_name"]
+            property_value = input_dict["property_value"]
+
+            n = Property()
+            n.entity_id = entity_id
+            n.entity_type = entity_type
+            n.property_name = property_name
+            n.property_value = property_value
+
+            n.save()
+            json_out["pid"] = n.pid
+            json_out["Return"] = 0
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
+    elif request.method == "DELETE":
+        json_out = {}
+        try:
+            input_dict = json.loads(request.body)
+            nid = int(input_dict["pid"])
+            n = Property.objects.filter(pid=nid)
+            if n:
+                n[0].delete()
+            json_out["Return"] = 0
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
+
+#===============================================================================
+
+#===============================================================================
+
+
+@csrf_exempt
+def relation_op(request):
+    if request.method == "GET":
+        json_out = {}
+        try:
+            input_dict = json.loads(request.GET["q"])
+            id = int(input_dict["rid"])
+            relation_info = Entity_relation.objects.filter(rid=id)
+            if relation_info:
+                relation_info = relation_info.values()[0]
+                for key in relation_info.keys():
+                    if relation_info[key] not in useless_list:
+                        json_out[key] = relation_info[key]
+                json_out["Return"] = 0
+            else:
+                json_out["Return"] = 1
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
+    elif request.method == "PUT":
+        json_out = {}
+        try:
+            input_dict = json.loads(request.body)
+            nid = int(input_dict["rid"])
+            input_dict.pop("rid")
+            relation_info = Entity_relation.objects.filter(rid=nid)
+            if relation_info:
+                n = relation_info[0]
+                for key in input_dict.keys():
+                    setattr(n, key, input_dict[key])
+                n.save()
+                json_out["Return"] = 0
+            else:
+                json_out["Return"] = 1
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
+    elif request.method == "POST":
+        json_out = {}
+        try:
+            input_dict = json.loads(request.body)
+            entity_id1 = input_dict["entity_id1"]
+            entity_name1 = input_dict["entity_name1"]
+            entity_type1 = input_dict["entity_type1"]
+            relation = input_dict["relation"]
+            entity_id2 = input_dict["entity_id2"]
+            entity_name2 = input_dict["entity_name2"]
+            entity_type2 = input_dict["entity_type2"]
+
+            n = Entity_relation()
+            n.entity_id1 = entity_id1
+            n.entity_name1 = entity_name1
+            n.entity_type1 = entity_type1
+            n.relation = relation
+            n.entity_id2 = entity_id2
+            n.entity_name2 = entity_name2
+            n.entity_type2 = entity_type2
+
+            n.save()
+            json_out["rid"] = n.rid
+            json_out["Return"] = 0
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
+    elif request.method == "DELETE":
+        json_out = {}
+        try:
+            input_dict = json.loads(request.body)
+            nid = int(input_dict["rid"])
+            n = Entity_relation.objects.filter(rid=nid)
+            if n:
+                n[0].delete()
+            json_out["Return"] = 0
+        except:
+            traceback.print_exc()
+            json_out["Return"] = 1
+        return HttpResponse(
+            json.dumps(json_out), content_type="application/json")
+
+
+#===============================================================================
 
 
 @csrf_exempt

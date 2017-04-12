@@ -7,6 +7,8 @@
 File: kg_utils.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/4/7 13:51
+
+Not done!!
 """
 
 from ..models import Property

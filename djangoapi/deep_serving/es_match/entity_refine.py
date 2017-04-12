@@ -9,31 +9,10 @@ Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/28 9:42
 """
 import json
-import os
 import time
 
 import es_match
-import psycopg2
-
-from ..utils.utils import config
-
-app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
-entity_refine_params = config(filename=config_file_dir, section='postgresql')
-
-
-def search_sql(sql):
-    try:
-        conn = psycopg2.connect(**entity_refine_params)
-        cur = conn.cursor()
-        cur.execute(sql)
-        result_set = cur.fetchall()
-        cur.close()
-        conn.close()
-        return result_set
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-        return None
+from ..models import Property
 
 
 def entity_refine(entity_result, type_result):
@@ -120,7 +99,8 @@ def search_candidates(exact_list):
                   SELECT DISTINCT entity_name1
                   FROM entity_relation
                   where entity_name2 = '%s'"""
-        sql_result = search_sql(sql % (name, name))
+        sql_result = Property.objects.raw(sql % (name, name))
+
         #print len(sql_result)
         for en_result in sql_result:
             fuzz_candi_set.add(en_result[0])
