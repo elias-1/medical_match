@@ -92,18 +92,16 @@ def search_candidates(exact_list):
     fuzz_candi_set = set([])
     for name in exact_list:
         #print 'exact:  ' + name
-        sql = """SELECT DISTINCT entity_name2 
-                  FROM entity_relation 
-                  where entity_name1 = '%s'
-                  union 
-                  SELECT DISTINCT entity_name1
-                  FROM entity_relation
-                  where entity_name2 = '%s'"""
-        sql_result = Property.objects.raw(sql % (name, name))
-
+        sql_result1 = Property.objects.filter(
+            entity_name1=name).distinct('entity_name2').extra(
+                select={'entity_name2': 'entity_name'})
+        sql_result2 = Property.objects.filter(
+            entity_name2=name).distinct('entity_name1').extra(
+                select={'entity_name1': 'entity_name'})
+        sql_result = sql_result1 | sql_result2
         #print len(sql_result)
         for en_result in sql_result:
-            fuzz_candi_set.add(en_result[0])
+            fuzz_candi_set.add(en_result.entity_name)
     return fuzz_candi_set
 
 
