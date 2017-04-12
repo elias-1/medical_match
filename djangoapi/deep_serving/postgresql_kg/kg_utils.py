@@ -11,7 +11,7 @@ Date: 2017/4/7 13:51
 Not done!!
 """
 
-from ..models import Property
+from ..models import Entity_relation, Property
 
 
 def kg_entity_identify(sentence):
@@ -79,9 +79,10 @@ def kg_search_body_part(entities):
         body_part: list
         success: 0/1
     """
-    sql_result = Property.objects.filter(relation__contains='Body').filter(
-        entity_name1__in=entities).order_by('entity_name1').distinct(
-            'entity_name1', 'entity_name2')
+    sql_result = Entity_relation.objects.filter(
+        relation__contains='Body').filter(
+            entity_name1__in=entities).order_by('entity_name1').distinct(
+                'entity_name1', 'entity_name2')
 
     body_part = []
     success = 0
@@ -138,9 +139,10 @@ def kg_search_department(entities):
         department_list: list
         success: 0/1
     """
-    sql_result = Property.objects.filter(relation__contains='Dep').filter(
-        entity_name1__in=entities).order_by('entity_name1').distinct(
-            'entity_name1', 'entity_name2')
+    sql_result = Entity_relation.objects.filter(
+        relation__contains='Dep').filter(
+            entity_name1__in=entities).order_by('entity_name1').distinct(
+                'entity_name1', 'entity_name2')
 
     department_list = []
     success = 0
