@@ -328,9 +328,9 @@ def sentence_process(request):
             sentence = input_dict['sentence']
             json_out["Return"] = 0
             if len(sentence) <= 4:
-                identify_result = kg_utils.kg_entity_identify(sentence)
-                if identify_result['success']:
-                    json_out['result'] = identify_result['result']
+                result_list, success = kg_utils.kg_entity_identify(sentence)
+                if success:
+                    json_out['result'] = result_list
                     json_out['flag'] = 9
                 else:
                     json_out['flag'] = 0
