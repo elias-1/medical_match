@@ -93,11 +93,11 @@ def search_candidates(exact_list):
     for name in exact_list:
         #print 'exact:  ' + name
         sql_result1 = Entity_relation.objects.filter(
-            entity_name1=name).distinct('entity_name2').extra(
-                select={'entity_name2': 'entity_name'})
+            entity_name1=name).distinct('entity_name2').values(
+                'entity_name2').extra(select={'entity_name2': 'entity_name'})
         sql_result2 = Entity_relation.objects.filter(
-            entity_name2=name).distinct('entity_name1').extra(
-                select={'entity_name1': 'entity_name'})
+            entity_name2=name).distinct('entity_name1').values(
+                'entity_name1').extra(select={'entity_name1': 'entity_name'})
         sql_result = sql_result1 | sql_result2
         #print len(sql_result)
         for en_result in sql_result:
