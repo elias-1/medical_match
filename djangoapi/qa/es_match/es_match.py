@@ -9,13 +9,12 @@ Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 17-2-26 上午10:51
 """
 
-import json
 import os
 
 import pypinyin
 from elasticsearch import Elasticsearch
 from fuzzywuzzy.fuzz import ratio
-'''
+
 from ..utils.utils import config
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,8 +22,8 @@ config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
 es_match_params = config(filename=config_file_dir, section='elasticsearch')
 es_match_params['port'] = int(es_match_params['port'])
 es = Elasticsearch(**es_match_params)
-'''
-es = Elasticsearch()
+
+# es = Elasticsearch()
 
 
 def hanzi2pinyin(word):
