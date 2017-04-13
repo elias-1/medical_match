@@ -12,6 +12,8 @@ import json
 import time
 
 import es_match
+from django.db.models import Q
+
 from ..models import Entity_relation
 
 
@@ -92,16 +94,14 @@ def search_candidates(exact_list):
     fuzz_candi_set = set([])
     for name in exact_list:
         #print 'exact:  ' + name
-        sql_result1 = Entity_relation.objects.filter(
-            entity_name1=name).distinct('entity_name2').values(
-                'entity_name2').extra(select={'entity_name2': 'entity_name'})
-        sql_result2 = Entity_relation.objects.filter(
-            entity_name2=name).distinct('entity_name1').values(
-                'entity_name1').extra(select={'entity_name1': 'entity_name'})
-        sql_result = sql_result1 | sql_result2
-        #print len(sql_result)
+        sql_result = Entity_relation.objects.get(
+            Q(entity_name1=name) | Q(entity_name2=name))
+
         for en_result in sql_result:
-            fuzz_candi_set.add(en_result.entity_name)
+            if en_result.entity_name1 == name:
+                fuzz_candi_set.add(en_result.entity_name2)
+            else:
+                fuzz_candi_set.add(en_result.entity_name1)
     return fuzz_candi_set
 
 
