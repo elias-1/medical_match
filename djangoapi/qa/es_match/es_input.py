@@ -83,6 +83,6 @@ if __name__ == "__main__":
         for key in data.keys():
             words.append(key)
             entity_types.append(encode_entity_type(data[key]))
-            indexs = data[key]
+            indexs.append(data[key])
 
     insert2es(zip(words, entity_types, indexs))
