@@ -60,14 +60,17 @@ def encode_entity_type(id_list):
 
 def insert2es(entitys_with_types):
     id = 0
-    for word, entity_type, indexs in entitys_with_types:
+    for word, indexs in entitys_with_types:
         for entity_id in indexs:
             doc = {}
             doc['Name'] = word
             doc['Pinyin'] = encode_pinyin(word)
             doc['Pinyin2'] = encode_pinyin2(word)
             doc['Pinyin3'] = encode_pinyin3(word)
-            doc['Entity_type'] = entity_type
+            if indexs[1].isdigit():
+                doc['Entity_type'] = indexs[0:2]
+            else:
+                doc['Entity_type'] = indexs[0]
             doc['Entity_id'] = entity_id
             create_index(id, doc)
             id += 1
@@ -76,13 +79,11 @@ def insert2es(entitys_with_types):
 
 if __name__ == "__main__":
     words = []
-    entity_types = []
     indexs = []
     with open('../data/qadata/name-idlist-dict-all.json', 'r') as f:
         data = json.load(f)
         for key in data.keys():
             words.append(key)
-            entity_types.append(encode_entity_type(data[key]))
             indexs.append(data[key])
 
-    insert2es(zip(words, entity_types, indexs))
+    insert2es(zip(words, indexs))
