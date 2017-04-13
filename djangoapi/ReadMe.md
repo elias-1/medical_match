@@ -8,17 +8,17 @@ A Django based restful api for deep qa.
 
 ### Prerequisites
 #### tensorflow serving
-    > Refer to [tensorflow serving](https://github.com/tensorflow/serving)
+> Refer to [tensorflow serving](https://github.com/tensorflow/serving)
 
 #### elasticsearch
-    > Refer to [elasticsearch](https://www.elastic.co/downloads/elasticsearch)
+> Refer to [elasticsearch](https://www.elastic.co/downloads/elasticsearch)
 
 #### Install postgresql
 ---------------
 ##### Create the file **/etc/apt/sources.list.d/pgdg.list**, and add a line for the repository
-    ```Shell
-    deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main
-    ```
+```Shell
+deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main
+```
 
 ##### Import the repository signing key, and update the package lists
     ```Shell
