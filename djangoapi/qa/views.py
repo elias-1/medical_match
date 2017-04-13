@@ -18,6 +18,7 @@ from elasticsearch import Elasticsearch
 from fuzzywuzzy import fuzz
 
 from .es_match.entity_refine import entity_refine
+from .es_match.es_match import search_sym
 from .interactive_query.interactive_query import *
 from .models import Entity_relation, Property
 from .postgresql_kg import kg_utils
@@ -420,33 +421,9 @@ def get_symptom_id(request):  # get symptom id
         try:
             input_dict = json.loads(request.GET["q"])
             sname = input_dict['Name']
-            query_size = 200
-            es = Elasticsearch()
-            res = es.search(
-                index='medknowledge',
-                doc_type='search',
-                body={
-                    'size': query_size,
-                    'query': {
-                        "query_string": {
-                            'fields': ['Name', 'Ename', 'Oname'],
-                            "query": sname
-                        }
-                    }
-                })
-            answers = res['hits']['hits']
-            results = []
-            for i, answer in enumerate(answers):
-                d = answer['_source']
-                try:
-                    xid = d['Sid']
-                    xname = d['Name']
-                    if len(xid):
-                        results.append({'Id': xid, 'Name': xname})
-                except:
-                    continue
+            query_size = 20
             json_out["Return"] = 0
-            json_out["Results"] = results[:20]
+            json_out["Results"] = search_sym(sname, query_size)
         except:
             traceback.print_exc()
             json_out["Return"] = 1
