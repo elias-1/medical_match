@@ -8,55 +8,55 @@ A Django based restful api for deep qa.
 
 ### Prerequisites
 #### tensorflow serving
-Refer to [tensorflow serving](https://github.com/tensorflow/serving)
+    > Refer to [tensorflow serving](https://github.com/tensorflow/serving)
 
 #### elasticsearch
-Refer to [elasticsearch](https://www.elastic.co/downloads/elasticsearch)
+    > Refer to [elasticsearch](https://www.elastic.co/downloads/elasticsearch)
 
 #### Install postgresql
 ---------------
 ##### Create the file **/etc/apt/sources.list.d/pgdg.list**, and add a line for the repository
-```Shell
-deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main
-```
+    ```Shell
+    deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main
+    ```
 
 ##### Import the repository signing key, and update the package lists
-```Shell
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
-  sudo apt-key add -
-sudo apt-get update
-```
+    ```Shell
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
+      sudo apt-key add -
+    sudo apt-get update
+    ```
 
 ##### Install the db
-```Shell
-sudo apt-get install postgresql
-```
+    ```Shell
+    sudo apt-get install postgresql
+    ```
 
 ##### Add system user
-```Shell
-sudo adduser dbuser
-```
+    ```Shell
+    sudo adduser dbuser
+    ```
 
 ##### conifg the db
-```Shell
-sudo su - postgres
-psql
-\password postgres
-CREATE USER dbuser WITH PASSWORD 'password';
-CREATE DATABASE kgdata OWNER dbuser;
-GRANT ALL PRIVILEGES ON DATABASE kgdata to dbuser;
-\q
-```
+    ```Shell
+    sudo su - postgres
+    psql
+    \password postgres
+    CREATE USER dbuser WITH PASSWORD 'password';
+    CREATE DATABASE kgdata OWNER dbuser;
+    GRANT ALL PRIVILEGES ON DATABASE kgdata to dbuser;
+    \q
+    ```
 
 ##### Login
-```Shell
-psql -U dbuser -d kgdata -h 127.0.0.1 -p 5432
-```
+    ```Shell
+    psql -U dbuser -d kgdata -h 127.0.0.1 -p 5432
+    ```
 
 ##### Database administrative login by Unix domain socket
- ```Shell
- sudo vim /etc/postgresql/9.5/main/pg_hba.conf
- ```
+     ```Shell
+     sudo vim /etc/postgresql/9.5/main/pg_hba.conf
+     ```
 ---------------
 
 ### Files for Installation
@@ -139,6 +139,9 @@ psql -U dbuser -d kgdata -h 127.0.0.1 -p 5432
 
 3. Install [nginx](https://www.nginx.com/resources/wiki/start/topics/tutorials/install/)
    > A sample nginx config can be found at [uwsgi config](config/nginx.conf)
+   ```
+   sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ssl/qa.key -out ssl/qa.crt
+   ```
 
 4. Run migrate
     ```Shell
