@@ -9,12 +9,13 @@ Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 17-2-26 上午10:51
 """
 
+import json
 import os
 
 import pypinyin
 from elasticsearch import Elasticsearch
 from fuzzywuzzy.fuzz import ratio
-
+'''
 from ..utils.utils import config
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,6 +23,8 @@ config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
 es_match_params = config(filename=config_file_dir, section='elasticsearch')
 es_match_params['port'] = int(es_match_params['port'])
 es = Elasticsearch(**es_match_params)
+'''
+es = Elasticsearch()
 
 
 def hanzi2pinyin(word):
@@ -153,3 +156,102 @@ def search_index(query_string, return_number=1):
     score_dict[u'max_score'] = max_score
     score_dict[u'max_item'] = max_item
     return result_names, score_dict, entity_type_dict
+
+
+def search_sym(query_string, return_number=1):
+    query_pinyin = encode_pinyin(query_string)
+    res1 = es.search(
+        index='entity-index',
+        doc_type='search',
+        body={
+            'size': return_number,
+            'query': {
+                "query_string": {
+                    'fields': ['Name'],
+                    "query": query_string
+                }
+            }
+        })
+
+    res2 = es.search(
+        index='entity-index',
+        doc_type='search',
+        body={
+            'size': return_number,
+            'query': {
+                "query_string": {
+                    'fields': ['Pinyin'],
+                    "query": query_pinyin
+                }
+            }
+        })
+
+    res3 = es.search(
+        index='entity-index',
+        doc_type='search',
+        body={
+            'size': return_number,
+            'query': {
+                "fuzzy": {
+                    'Pinyin3': encode_pinyin3(query_string)
+                }
+            }
+        })
+
+    result_names = []
+    sym_list = []
+    if len(res1['hits']['hits']) > 0:
+        fuzz = res1['hits']['hits'][0]['_source']['Name']
+        if fuzz == query_string and 's' in res1['hits']['hits'][0]['_source'][
+                'Entity_id']:
+            result_names.append(fuzz)
+            sym_dict = {}
+            sym_dict['name'] = fuzz
+            sym_dict['id'] = res1['hits']['hits'][0]['_source']['Entity_id']
+            sym_list.append(sym_dict)
+        else:
+            fuzz = res2['hits']['hits'][0]['_source']['Pinyin']
+            if fuzz == query_pinyin and 's' in res2['hits']['hits'][0][
+                    '_source']['Entity_id']:
+                result_names.append(res2['hits']['hits'][0]['_source']['Name'])
+                sym_dict = {}
+                sym_dict['name'] = res2['hits']['hits'][0]['_source']['Name']
+                sym_dict['id'] = res2['hits']['hits'][0]['_source'][
+                    'Entity_id']
+                sym_list.append(sym_dict)
+
+            else:
+                if len(res3['hits']['hits']) > 0:
+                    word_ratio = ratio(
+                        query_string,
+                        res3['hits']['hits'][0]['_source']['Name'])
+                    if word_ratio > 40 and 's' in res3['hits']['hits'][0][
+                            '_source']['Entity_id']:
+                        result_names.append(
+                            res3['hits']['hits'][0]['_source']['Name'])
+                        sym_dict = {}
+                        sym_dict['name'] = res3['hits']['hits'][0]['_source'][
+                            'Name']
+                        sym_dict['id'] = res3['hits']['hits'][0]['_source'][
+                            'Entity_id']
+                        sym_list.append(sym_dict)
+
+    answers = res1['hits']['hits'] + res2['hits']['hits'] + res3['hits'][
+        'hits']
+
+    re_num = return_number - len(result_names)
+
+    if re_num >= 1:
+        for item in answers:
+            if item['_source']['Name'] not in result_names and 's' in item[
+                    '_source']['Entity_id']:
+                sym_dict = {}
+                sym_dict['name'] = item['_source']['Name']
+                sym_dict['id'] = item['_source']['Entity_id']
+                sym_list.append(sym_dict)
+                result_names.append(item['_source']['Name'])
+                re_num -= 1
+                if re_num == 0:
+                    break
+
+    return sym_list
