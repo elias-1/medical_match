@@ -86,10 +86,10 @@ A Django based restful api for deep qa.
     ```
 
 2. Install [uwsgi](https://uwsgi-docs.readthedocs.io/en/latest/WSGIquickstart.html)
-    A sample uwsgi config can be found at [uwsgi config](config/uwsgi.ini)
+    > A sample uwsgi config can be found at [uwsgi config](config/uwsgi.ini)
 
 3. Install [nginx](https://www.nginx.com/resources/wiki/start/topics/tutorials/install/)
-    A sample nginx config can be found at [uwsgi config](config/nginx.conf)
+   > A sample nginx config can be found at [uwsgi config](config/nginx.conf)
 
 4. Run migrate
     ```Shell
@@ -104,7 +104,7 @@ A Django based restful api for deep qa.
 5. Run the server for production env
     ```Shell
     $ uwsgi --ini config/uwsgi.ini -d config/uwsgi.log
-    sudo service nginx start
+    $ sudo service nginx start
      ```
 
 ### After Installation
