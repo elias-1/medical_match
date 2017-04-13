@@ -94,7 +94,7 @@ def search_candidates(exact_list):
     fuzz_candi_set = set([])
     for name in exact_list:
         #print 'exact:  ' + name
-        sql_result = Entity_relation.objects.get(
+        sql_result = Entity_relation.objects.filter(
             Q(entity_name1=name) | Q(entity_name2=name))
 
         for en_result in sql_result:
