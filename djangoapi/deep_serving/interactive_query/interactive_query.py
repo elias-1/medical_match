@@ -7,7 +7,7 @@ import traceback
 from StringIO import StringIO
 import pycurl
 from ..utils.utils import config
-from ..simple_qa.simple_query import *
+from ..simple_qa import simple_query
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -29,96 +29,15 @@ did_deplist_dict = json.load(open(symptom_disease_dir + 'disease-departmentlist-
 id_degree_dict = json.load(open(symptom_disease_dir + 'id-degree-dict.json'))
 
 # symptom_medication_dir
-# = json.load(open(symptom_disease_dir + 'json'))
-symptom_name_id_dict = json.load(open(symptom_disease_dir + 'symptom_name_id_dict.json'))
-sid_midlist_dict = json.load(open(symptom_disease_dir + 'sid_didlist_dict.json'))
-symptom_id_name_dict = json.load(open(symptom_disease_dir + 'symptom_id_name_dict.json'))
-medicine_id_name_dict = json.load(open(symptom_disease_dir + 'drug_id_name_dict.json'))
-taboo_id_name_dict = json.load(open(symptom_disease_dir + 'taboo_id_name_dict.json'))
-mid_tidlist_dict  = json.load(open(symptom_disease_dir + 'did_tidlist_dict.json'))
-mid_sidlist_dict  = json.load(open(symptom_disease_dir + 'did_sidlist_dict.json'))
+# = json.load(open(symptom_medication_dir+ 'json'))
+symptom_name_id_dict = json.load(open(symptom_medication_dir+ 'symptom_name_id_dict.json'))
+sid_midlist_dict = json.load(open(symptom_medication_dir+ 'sid_didlist_dict.json'))
+symptom_id_name_dict = json.load(open(symptom_medication_dir+ 'symptom_id_name_dict.json'))
+medicine_id_name_dict = json.load(open(symptom_medication_dir+ 'drug_id_name_dict.json'))
+taboo_id_name_dict = json.load(open(symptom_medication_dir+ 'taboo_id_name_dict.json'))
+mid_tidlist_dict  = json.load(open(symptom_medication_dir+ 'did_tidlist_dict.json'))
+mid_sidlist_dict  = json.load(open(symptom_medication_dir+ 'did_sidlist_dict.json'))
 
-
-class RDF_node:
-    def __init__(self, id, type):
-        self.id = id
-        self.type = type
-        if self.type == "dis":
-            self.abbraviation = ABBRAVIATION_DIS
-        elif self.type == "lab":
-            self.abbraviation = ABBRAVIATION_LAB
-        elif self.type == "sym":
-            self.abbraviation = ABBRAVIATION_SYM
-        elif self.type == "med":
-            self.abbraviation = ABBRAVIATION_MED
-        elif self.type == "dc":
-            self.abbraviation = ABBRAVIATION_DC
-        elif self.type == "mc":
-            self.abbraviation = ABBRAVIATION_MC
-        elif self.type == "sc":
-            self.abbraviation = ABBRAVIATION_SC
-        elif self.type == "sb":
-            self.abbraviation = ABBRAVIATION_SB
-        elif self.type == "lc":
-            self.abbraviation = ABBRAVIATION_LC
-        elif self.type == None:
-            # this serverd as a dummy node type
-            self.abbraviation = None
-        else:
-            raise ValueError("Invalid node type for RDF.")
-        prefix_str = "PREFIX " + ABBRAVIATION_PRO + PREFIX_PRO
-        prefix_str += " PREFIX " + ABBRAVIATION_DIS + PREFIX_DIS
-        prefix_str += " PREFIX " + ABBRAVIATION_LAB + PREFIX_LAB
-        prefix_str += " PREFIX " + ABBRAVIATION_SYM + PREFIX_SYM
-        prefix_str += " PREFIX " + ABBRAVIATION_MED + PREFIX_MED
-        prefix_str += " PREFIX " + ABBRAVIATION_DC + PREFIX_DC
-        prefix_str += " PREFIX " + ABBRAVIATION_MC + PREFIX_MC
-        prefix_str += " PREFIX " + ABBRAVIATION_SC + PREFIX_SC
-        prefix_str += " PREFIX " + ABBRAVIATION_SB + PREFIX_SB
-        prefix_str += " PREFIX " + ABBRAVIATION_LC + PREFIX_LC
-        self.prefix = prefix_str
-
-    def query_all(self):
-        '''
-        Obtain all the relations and nodes that are connects (both direction)
-        to the specific node
-        '''
-        query = self.prefix
-        query += ' SELECT DISTINCT ?r ?n WHERE {{?x ?r ?n FILTER (regex (?x, "' + str(
-            self.id) + '"))} UNION {?n ?r ?x FILTER (regex (?x, "' + str(
-                self.id) + '"))}}'
-        return query
-
-    def get_property(self):
-        '''
-        This function generate the query to obtain all the property
-        '''
-        query = self.prefix
-        query += ' SELECT DISTINCT ?r ?n WHERE { ' + self.abbraviation + self.id + ' ?r ?n FILTER (regex (?r, "property"))}'
-        return query
-
-    def get_path_one_node(self):
-        '''
-        This function generate the query to obtain all the 
-        node (both in or out link) that connects to the query node
-        The retrun result from RDF will be in the format of:
-        "relationship" "id" "chinese_name"
-        '''
-        query = self.prefix
-        query += ' SELECT DISTINCT ?r ?n ?p WHERE { ' + self.abbraviation + self.id + '?r ?n FILTER (!regex (?r, "property")). ?n pro:name ?p}'
-        return query
-
-    def get_path_one_node_cross_rel(self):
-        '''
-        It generates cross raltionships between all one degree node
-        The returned result is in the form of 
-        id1 chinese_name_1 relationship id2 chinese_name_2
-        where id1 and id2 are all the belongs to (subset of) the list
-        of ids that "get_path_one_node" returns
-        '''
-        query = self.prefix
-        query += ' SELECT DISTINCT ?n1 ?p1 ?r ?n2 ?p2 WHERE { ' + self.abbraviation + self.id + ' ?r1 ?n1 FILTER (!regex (?r1, "property")).' + self.abbraviation + self.id + ' ?r2 ?n2 FILTER (!regex (?r2, "property")).' + '?n1 ?r ?n2. ?n1 pro:name ?p1. ?n2 pro:name ?p2.}'
-        return query
 
 
 def get_id_name_list(ret):
@@ -133,19 +52,19 @@ def get_id_name_list(ret):
     return idname_list
 
 def get_type_list(typ):
-    dummy_node = RDF_node(None, None)
+    dummy_node = simple_query.RDF_node(None, None)
     query = dummy_node.prefix
     query += '''SELECT DISTINCT ?n1 ?p1    WHERE {
         ?n1 pro:type ?t1 FILTER (regex(?t1,"'''+typ+'''")).
         ?n1 pro:name ?p1 
         }
     '''.replace('\n',' ')
-    ret = call_api_rdf3x(query)
+    ret = simple_query.call_api_rdf3x(query)
     typ_list = get_id_name_list(ret)
     return typ_list
 
 def get_fid_to_nodetype2list(fid,nodetype1,nodetype2):
-    dummy_node = RDF_node(None, None)
+    dummy_node = simple_query.RDF_node(None, None)
     query = dummy_node.prefix
     xquery = ''
     # { ?n2 ?r1 dis:'''+dis+'''. ?n2 pro:type ?t2 FILTER (regex(?r1,"Dis")) } 
@@ -158,12 +77,12 @@ def get_fid_to_nodetype2list(fid,nodetype1,nodetype2):
     '''
     # print query.replace('PREFIX','\nPREFIX').replace('SELECT','\nSELECT')
     query = query.replace('\n','').replace('    ','')
-    ret = call_api_rdf3x(query)
+    ret = simple_query.call_api_rdf3x(query)
     idname_list = get_id_name_list(ret)
     return idname_list
 
 def get_fids_to_nodetype2list(fids,nodetype1,nodetype2):
-    dummy_node = RDF_node(None, None)
+    dummy_node = simple_query.RDF_node(None, None)
     query = dummy_node.prefix
     query += '''SELECT DISTINCT ?n0 ?p0  WHERE {\n'''
     for index,fid in enumerate(fids):
@@ -175,7 +94,7 @@ def get_fids_to_nodetype2list(fids,nodetype1,nodetype2):
     query += '{ ?n0 pro:name ?p0}}'
     query = query.replace('PREFIX','\nPREFIX')
     query = query.replace('\n',' ')
-    ret = call_api_rdf3x(query)
+    ret = simple_query.call_api_rdf3x(query)
     idname_list = get_id_name_list(ret)
     return idname_list
 
@@ -198,7 +117,7 @@ def get_dis_sym_dict(ret):
 
 
 def get_fids_to_nodetype2all(fids,nodetype1,nodetype2):
-    dummy_node = RDF_node(None, None)
+    dummy_node = simple_query.RDF_node(None, None)
     queryprefix = dummy_node.prefix
     queryprefix += '''SELECT DISTINCT ?n ?n0 ?p0  WHERE {\n'''
     fid = fids[0]
@@ -219,7 +138,7 @@ def get_fids_to_nodetype2all(fids,nodetype1,nodetype2):
     # print query
     query = query.replace('PREFIX','\nPREFIX')
     query = query.replace('\n',' ')
-    ret = call_api_rdf3x(query)
+    ret = simple_query.call_api_rdf3x(query)
     # print ret
     dis_sym_dict, sidname_dict = get_dis_sym_dict(ret)
     # dis_sym_dict = get_id_name_list(ret)
