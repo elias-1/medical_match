@@ -17,6 +17,8 @@ DEBUG = False
 #     ('Antonio M', 'antonio.mele@zenxit.com'),
 # )
 
+ALLOWED_HOSTS = ['*']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
