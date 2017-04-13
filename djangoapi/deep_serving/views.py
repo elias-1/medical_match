@@ -509,12 +509,16 @@ def get_symptom_disease(request):  # get possible disease of symptom
                             didname_dict[xid] = '________' + name
 
             posdislist = sorted(
-                posdisset, key=lambda s: id_degree_dict[s], reverse=True)
+                posdisset,
+                key=lambda s: id_degree_dict[s] if s in id_degree_dict else 0,
+                reverse=True)
             posDis = get_dis_list(posdislist)
 
             moredisset = set(didname_dict) - set(posdisset)
             moredislist = sorted(
-                moredisset, key=lambda s: id_degree_dict[s], reverse=True)
+                moredisset,
+                key=lambda s: id_degree_dict[s] if s in id_degree_dict else 0,
+                reverse=True)
             moreDis = get_dis_list(moredislist, '-----')
 
             json_out["Results"]['PosSym'] = posSym
