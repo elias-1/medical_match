@@ -25,7 +25,7 @@ useless_list = [
 
 
 def insert_record(table_name, col, row):
-    url = 'http://202.117.16.221:9999/deep_serving/%s/' % table_name
+    url = 'http://202.117.16.221:9999/qa/%s/' % table_name
     insert_data = {}
     for i, j in zip(col, row):
         if j not in useless_list:

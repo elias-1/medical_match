@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 import json
 import os
 import sys
 import traceback
 from StringIO import StringIO
+
+import numpy as np
 import pycurl
-from ..utils.utils import config
+
 from ..simple_qa import simple_query
+from ..utils.utils import config
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -15,29 +17,41 @@ sys.setdefaultencoding('utf-8')
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
 
-interactive_query_params = config(filename=config_file_dir, section='interactive_query')
+interactive_query_params = config(
+    filename=config_file_dir, section='interactive_query')
 symptom_disease_dir = interactive_query_params['symptom_disease_dir']
 symptom_medication_dir = interactive_query_params['symptom_medication_dir']
 
 # symptom_disease_dir
-did_sid_all = json.load(open(symptom_disease_dir + 'disease-symptomlist-dict.json'))
-sid_name_all = json.load(open(symptom_disease_dir + 'symptom-id-name-dict.json'))
-did_name_dict = json.load(open(symptom_disease_dir + 'disease-id-name-dict.json'))
-dep_name_dict = json.load(open(symptom_disease_dir + 'department-id-name-dict.json'))
-did_deplist_dict = json.load(open(symptom_disease_dir + 'disease-departmentlist-dict.json'))
+did_sid_all = json.load(
+    open(symptom_disease_dir + 'disease-symptomlist-dict.json'))
+sid_name_all = json.load(
+    open(symptom_disease_dir + 'symptom-id-name-dict.json'))
+did_name_dict = json.load(
+    open(symptom_disease_dir + 'disease-id-name-dict.json'))
+dep_name_dict = json.load(
+    open(symptom_disease_dir + 'department-id-name-dict.json'))
+did_deplist_dict = json.load(
+    open(symptom_disease_dir + 'disease-departmentlist-dict.json'))
 
 id_degree_dict = json.load(open(symptom_disease_dir + 'id-degree-dict.json'))
 
 # symptom_medication_dir
 # = json.load(open(symptom_medication_dir+ 'json'))
-symptom_name_id_dict = json.load(open(symptom_medication_dir+ 'symptom_name_id_dict.json'))
-sid_midlist_dict = json.load(open(symptom_medication_dir+ 'sid_didlist_dict.json'))
-symptom_id_name_dict = json.load(open(symptom_medication_dir+ 'symptom_id_name_dict.json'))
-medicine_id_name_dict = json.load(open(symptom_medication_dir+ 'drug_id_name_dict.json'))
-taboo_id_name_dict = json.load(open(symptom_medication_dir+ 'taboo_id_name_dict.json'))
-mid_tidlist_dict  = json.load(open(symptom_medication_dir+ 'did_tidlist_dict.json'))
-mid_sidlist_dict  = json.load(open(symptom_medication_dir+ 'did_sidlist_dict.json'))
-
+symptom_name_id_dict = json.load(
+    open(symptom_medication_dir + 'symptom_name_id_dict.json'))
+sid_midlist_dict = json.load(
+    open(symptom_medication_dir + 'sid_didlist_dict.json'))
+symptom_id_name_dict = json.load(
+    open(symptom_medication_dir + 'symptom_id_name_dict.json'))
+medicine_id_name_dict = json.load(
+    open(symptom_medication_dir + 'drug_id_name_dict.json'))
+taboo_id_name_dict = json.load(
+    open(symptom_medication_dir + 'taboo_id_name_dict.json'))
+mid_tidlist_dict = json.load(
+    open(symptom_medication_dir + 'did_tidlist_dict.json'))
+mid_sidlist_dict = json.load(
+    open(symptom_medication_dir + 'did_sidlist_dict.json'))
 
 
 def get_id_name_list(ret):
@@ -45,69 +59,77 @@ def get_id_name_list(ret):
     if 'empty' not in ret[0]:
         for line in ret:
             line = line.strip()
-            url,name = line.split()
-            name = name.replace('"','')
-            xid = url.split('/')[-1].replace('>','')
-            idname_list.append({ 'Id':xid,'Name':name })
+            url, name = line.split()
+            name = name.replace('"', '')
+            xid = url.split('/')[-1].replace('>', '')
+            idname_list.append({'Id': xid, 'Name': name})
     return idname_list
+
 
 def get_type_list(typ):
     dummy_node = simple_query.RDF_node(None, None)
     query = dummy_node.prefix
     query += '''SELECT DISTINCT ?n1 ?p1    WHERE {
-        ?n1 pro:type ?t1 FILTER (regex(?t1,"'''+typ+'''")).
+        ?n1 pro:type ?t1 FILTER (regex(?t1,"''' + typ + '''")).
         ?n1 pro:name ?p1 
         }
-    '''.replace('\n',' ')
+    '''.replace('\n', ' ')
     ret = simple_query.call_api_rdf3x(query)
     typ_list = get_id_name_list(ret)
     return typ_list
 
-def get_fid_to_nodetype2list(fid,nodetype1,nodetype2):
+
+def get_fid_to_nodetype2list(fid, nodetype1, nodetype2):
     dummy_node = simple_query.RDF_node(None, None)
     query = dummy_node.prefix
     xquery = ''
     # { ?n2 ?r1 dis:'''+dis+'''. ?n2 pro:type ?t2 FILTER (regex(?r1,"Dis")) } 
     query += '''SELECT DISTINCT ?n2 ?p2  WHERE {{
-        { '''+nodetype1[:3]+''':'''+fid+''' ?r1 ?n2. ?n2 pro:type ?t2 FILTER (regex(?t2,"'''+nodetype2+'''")) } UNION 
-        { ?n2 ?r2 '''+nodetype1[:3]+''':'''+fid+'''. ?n2 pro:type ?t2 FILTER (regex(?t2,"'''+nodetype2+'''")) } 
+        { ''' + nodetype1[:
+                          3] + ''':''' + fid + ''' ?r1 ?n2. ?n2 pro:type ?t2 FILTER (regex(?t2,"''' + nodetype2 + '''")) } UNION 
+        { ?n2 ?r2 ''' + nodetype1[:
+                                  3] + ''':''' + fid + '''. ?n2 pro:type ?t2 FILTER (regex(?t2,"''' + nodetype2 + '''")) } 
         }.
         { ?n2 pro:name ?p2}
         }
     '''
     # print query.replace('PREFIX','\nPREFIX').replace('SELECT','\nSELECT')
-    query = query.replace('\n','').replace('    ','')
+    query = query.replace('\n', '').replace('    ', '')
     ret = simple_query.call_api_rdf3x(query)
     idname_list = get_id_name_list(ret)
     return idname_list
 
-def get_fids_to_nodetype2list(fids,nodetype1,nodetype2):
+
+def get_fids_to_nodetype2list(fids, nodetype1, nodetype2):
     dummy_node = simple_query.RDF_node(None, None)
     query = dummy_node.prefix
     query += '''SELECT DISTINCT ?n0 ?p0  WHERE {\n'''
-    for index,fid in enumerate(fids):
+    for index, fid in enumerate(fids):
         index = index + 1
-        query1 = nodetype1[:3]+ ':'+fid+' ?r1 ?n0. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")).\n'
+        query1 = nodetype1[:
+                           3] + ':' + fid + ' ?r1 ?n0. ?n0 pro:type ?t0 FILTER (regex(?t0,"' + nodetype2 + '")).\n'
         # query1 = 'sym:'+sid+' ?r ?n0 FILTER (regex(?r,"Dis")).'
-        query2 = '?n0 ?r2 '+nodetype1[:3]+':'+fid+'. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")).\n'
-        query += '{{'+query1+' } UNION { '+query2+'}}.'
+        query2 = '?n0 ?r2 ' + nodetype1[:
+                                        3] + ':' + fid + '. ?n0 pro:type ?t0 FILTER (regex(?t0,"' + nodetype2 + '")).\n'
+        query += '{{' + query1 + ' } UNION { ' + query2 + '}}.'
     query += '{ ?n0 pro:name ?p0}}'
-    query = query.replace('PREFIX','\nPREFIX')
-    query = query.replace('\n',' ')
+    query = query.replace('PREFIX', '\nPREFIX')
+    query = query.replace('\n', ' ')
     ret = simple_query.call_api_rdf3x(query)
     idname_list = get_id_name_list(ret)
     return idname_list
 
+
 def get_dis_sym_dict(ret):
-    dis_sym_dict = { }
-    sidname_dict = { }
+    dis_sym_dict = {}
+    sidname_dict = {}
     if len(ret) and 'empty' not in ret[0]:
         for line in ret:
             line = line.strip()
-            disurl,symurl,symname = line.split()
-            symname = symname.replace('"','')
-            did = disurl.split('/')[-1].replace('>','')
-            sid = symurl.split('/')[-1].replace('>','')
+            disurl, symurl, symname = line.split()
+            symname = symname.replace('"', '')
+            did = disurl.split('/')[-1].replace('>', '')
+            sid = symurl.split('/')[-1].replace('>', '')
             # idname_list.append({ 'Id':xid,'Name':name })
             if did not in dis_sym_dict:
                 dis_sym_dict[did] = []
@@ -116,28 +138,28 @@ def get_dis_sym_dict(ret):
     return dis_sym_dict, sidname_dict
 
 
-def get_fids_to_nodetype2all(fids,nodetype1,nodetype2):
+def get_fids_to_nodetype2all(fids, nodetype1, nodetype2):
     dummy_node = simple_query.RDF_node(None, None)
     queryprefix = dummy_node.prefix
     queryprefix += '''SELECT DISTINCT ?n ?n0 ?p0  WHERE {\n'''
     fid = fids[0]
-    
-    query1 = '?n ?r1 ?n0. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")) FILTER (regex(?n,"'+fid+'"))\n'
-    query2 = '?n0 ?r2 ?n. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")) FILTER (regex(?n,"'+fid+'"))\n'
-    query = '{{'+query1+' } UNION { '+query2+'}'
 
-    for index,fid in enumerate(fids[:-1]):
-        query1 = '?n ?r1 ?n0. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")) FILTER (regex(?n,"'+fid+'"))\n'
-        query2 = '?n0 ?r2 ?n. ?n0 pro:type ?t0 FILTER (regex(?t0,"'+nodetype2+'")) FILTER (regex(?n,"'+fid+'"))\n'
-        query += 'UNION {'+query1+' } UNION { '+query2+'}'
+    query1 = '?n ?r1 ?n0. ?n0 pro:type ?t0 FILTER (regex(?t0,"' + nodetype2 + '")) FILTER (regex(?n,"' + fid + '"))\n'
+    query2 = '?n0 ?r2 ?n. ?n0 pro:type ?t0 FILTER (regex(?t0,"' + nodetype2 + '")) FILTER (regex(?n,"' + fid + '"))\n'
+    query = '{{' + query1 + ' } UNION { ' + query2 + '}'
+
+    for index, fid in enumerate(fids[:-1]):
+        query1 = '?n ?r1 ?n0. ?n0 pro:type ?t0 FILTER (regex(?t0,"' + nodetype2 + '")) FILTER (regex(?n,"' + fid + '"))\n'
+        query2 = '?n0 ?r2 ?n. ?n0 pro:type ?t0 FILTER (regex(?t0,"' + nodetype2 + '")) FILTER (regex(?n,"' + fid + '"))\n'
+        query += 'UNION {' + query1 + ' } UNION { ' + query2 + '}'
 
     query += '} .'
 
     query += '{ ?n0 pro:name ?p0}}'
     query = queryprefix + query
     # print query
-    query = query.replace('PREFIX','\nPREFIX')
-    query = query.replace('\n',' ')
+    query = query.replace('PREFIX', '\nPREFIX')
+    query = query.replace('\n', ' ')
     ret = simple_query.call_api_rdf3x(query)
     # print ret
     dis_sym_dict, sidname_dict = get_dis_sym_dict(ret)
@@ -157,8 +179,8 @@ def get_disease_symptom(posDis, yes_sids, not_sids,
         for did in dids if did in did_sid_all
     }
     sidall = set([
-        sid for sids in dis_sym_dict.values() 
-        for sid in sids if sid in sid_name_all
+        sid for sids in dis_sym_dict.values() for sid in sids
+        if sid in sid_name_all
     ])
     sidname_dict = {sid: sid_name_all[sid].strip('"') for sid in sidall}
     sidall = set(sidname_dict)

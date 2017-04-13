@@ -29,7 +29,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = ('django.contrib.admin', 'django.contrib.auth',
                   'django.contrib.contenttypes', 'django.contrib.sessions',
                   'django.contrib.messages', 'django.contrib.staticfiles',
-                  'deep_serving', )
+                  'qa', )
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
