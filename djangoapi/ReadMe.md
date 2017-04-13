@@ -2,13 +2,62 @@
 # Welcome to [Drcubic Lab](http://www.drcubic.com/)
 
 @(Djangoapi)[DeepQA|Django|Tensorflow]
-# DeepQA
+
+## DeepQA
 A Django based restful api for deep qa.
 
 ### Prerequisites
-  - **tensorflow serving**
-  - **elasticsearch**
-  - **postgresql**
+#### tensorflow serving
+Refer to [tensorflow serving](https://github.com/tensorflow/serving)
+
+#### elasticsearch
+Refer to [elasticsearch](https://www.elastic.co/downloads/elasticsearch)
+
+#### Install postgresql
+---------------
+##### Create the file **/etc/apt/sources.list.d/pgdg.list**, and add a line for the repository
+```Shell
+deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main
+```
+
+##### Import the repository signing key, and update the package lists
+```Shell
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
+  sudo apt-key add -
+sudo apt-get update
+```
+
+##### Install the db
+```Shell
+sudo apt-get install postgresql
+```
+
+##### Add system user
+```Shell
+sudo adduser dbuser
+```
+
+##### conifg the db
+```Shell
+sudo su - postgres
+psql
+\password postgres
+CREATE USER dbuser WITH PASSWORD 'password';
+CREATE DATABASE kgdata OWNER dbuser;
+GRANT ALL PRIVILEGES ON DATABASE kgdata to dbuser;
+\q
+```
+
+##### Login
+```Shell
+psql -U dbuser -d kgdata -h 127.0.0.1 -p 5432
+```
+
+##### Database administrative login by Unix domain socket
+ ```Shell
+ sudo vim /etc/postgresql/9.5/main/pg_hba.conf
+ ```
+---------------
 
 ### Files for Installation
 1. Files for tensorflow serving
