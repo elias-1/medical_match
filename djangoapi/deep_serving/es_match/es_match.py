@@ -47,10 +47,6 @@ def encode_pinyin3(word):
     return ''.join(pinyin)
 
 
-def create_index(id, doc):
-    es.index(index="entity-index", doc_type='search', id=id, body=doc)
-
-
 def refresh_index():
     es.indices.refresh(index="entity-index")
 

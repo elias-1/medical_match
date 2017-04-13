@@ -10,8 +10,37 @@ Date: 17-2-26 下午8:15
 """
 import json
 
-from es_match import (create_index, encode_pinyin, encode_pinyin2,
-                      encode_pinyin3)
+import pypinyin
+from elasticsearch import Elasticsearch
+
+es = Elasticsearch()
+
+
+def hanzi2pinyin(word):
+    return [ch[0] for ch in pypinyin.pinyin(word, style=pypinyin.NORMAL)]
+
+
+def encode_pinyin(word):
+    pinyin_ = []
+    pinyin = hanzi2pinyin(word)
+    for ch in pinyin:
+        pinyin_.append('@'.join(list(ch)))
+    return '@@'.join(pinyin_)
+
+
+def encode_pinyin2(word):
+    pinyin = hanzi2pinyin(word)
+    return ' '.join(pinyin)
+
+
+def encode_pinyin3(word):
+    pinyin_ = []
+    pinyin = hanzi2pinyin(word)
+    return ''.join(pinyin)
+
+
+def create_index(id, doc):
+    es.index(index="entity-index", doc_type='search', id=id, body=doc)
 
 
 def encode_entity_type(id_list):
