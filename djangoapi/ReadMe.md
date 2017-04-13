@@ -163,7 +163,7 @@ A Django based restful api for deep qa.
 
 1. Insert data into Postgresql for sql-based knowledge graph
 
-   **Note** This need run django api
+   **Note** This need run django api, Make sure the api url in send_kg_data.py is right
     ```Shell
     $ cd ../postgresql_kg/
     $ python send_kg_data.py  ../data/kg_data.nt
