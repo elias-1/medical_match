@@ -25,7 +25,7 @@ useless_list = [
 
 
 def insert_record(table_name, col, row):
-    url = 'http://202.117.16.221:9999/qa/%s/' % table_name
+    url = 'https://202.117.16.221:7777/qa/%s/' % table_name
     insert_data = {}
     for i, j in zip(col, row):
         if j not in useless_list:
@@ -33,6 +33,9 @@ def insert_record(table_name, col, row):
     insert_data = json.dumps(insert_data)
     storage = StringIO()
     c = pycurl.Curl()
+    if url.startswith('https'):
+        c.setopt(pycurl.SSL_VERIFYPEER, 0)
+        c.setopt(pycurl.SSL_VERIFYHOST, 0)
     c.setopt(pycurl.URL, url)
     c.setopt(pycurl.HTTPHEADER, ['Content-Type: application/json'])
     c.setopt(pycurl.CUSTOMREQUEST, "POST")
