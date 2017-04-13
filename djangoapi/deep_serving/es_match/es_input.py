@@ -74,7 +74,7 @@ def insert2es(entitys_with_types):
 if __name__ == "__main__":
     words = []
     entity_types = []
-    with open('../data/name-idlist-dict-all.json', 'r') as f:
+    with open('../data/qadata/name-idlist-dict-all.json', 'r') as f:
         data = json.load(f)
         for key in data.keys():
             words.append(key)
