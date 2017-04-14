@@ -268,19 +268,25 @@ def get_med_content(ids, table, ckeys):
             med_name = res['Results']['Name']
             if type(ckeys) is not list:
                 meds[med_name] = ckeys + ': '
-                for var in res['Results']['Content'][ckeys]:
-                    meds[med_name] += var[1]
-                meds[med_name] += '\n'
+                if ckeys in res['Results']['Content']:
+                    for var in res['Results']['Content'][ckeys]:
+                        meds[med_name] += var[1]
+                    meds[med_name] += '\n'
+                else:
+                    meds[med_name] += u'暂无\n'
             else:
                 meds[med_name] = ''
                 for ckey in ckeys:
                     meds[med_name] += ckey + ': '
-                    for var in res['Results']['Content'][ckey]:
-                        if len(var) > 1:
-                            meds[med_name] += var[1]
-                        else:
-                            continue
-                    meds[med_name] += '\n'
+                    if ckey in res['Results']['Content']:
+                        for var in res['Results']['Content'][ckey]:
+                            if len(var) > 1:
+                                meds[med_name] += var[1]
+                            else:
+                                continue
+                        meds[med_name] += '\n'
+                    else:
+                        meds[med_name] += u'暂无\n'
     return meds
 
 
