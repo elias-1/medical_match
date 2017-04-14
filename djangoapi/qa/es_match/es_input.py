@@ -67,7 +67,7 @@ def insert2es(entitys_with_types):
             doc['Pinyin'] = encode_pinyin(word)
             doc['Pinyin2'] = encode_pinyin2(word)
             doc['Pinyin3'] = encode_pinyin3(word)
-            if entity_id[1].isdigit():
+            if not entity_id[1].isdigit():
                 doc['Entity_type'] = entity_id[0:2]
             else:
                 doc['Entity_type'] = entity_id[0]
