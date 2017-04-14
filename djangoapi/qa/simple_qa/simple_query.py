@@ -322,7 +322,7 @@ def query_multi_sub(sub_names, obj_type):
     sub_types_ids = get_sub_types(sub_names)
     query_str = prefix_str
 
-    if obj_type == '2':
+    if obj_type == 2:
         if len(sub_names) == 1 and 'medicine' in sub_types_ids:
             sub_id = sub_types_ids.values()
             return get_med_content(sub_id, 'medication',
@@ -332,7 +332,7 @@ def query_multi_sub(sub_names, obj_type):
             return get_med_content(sub_ids, 'medication', [u'适应证', u'禁忌证'])
         else:
             return None
-    elif obj_type == '11':
+    elif obj_type == 11:
         if len(sub_names) >= 1 and 'medicine' in sub_types_ids:
             sub_ids = sub_types_ids['medicine']
             return get_med_content(sub_ids, 'medication', [u'用法用量'])  # type 11
