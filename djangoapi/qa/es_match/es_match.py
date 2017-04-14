@@ -157,7 +157,9 @@ def search_index(query_string, return_number=1):
     return result_names, score_dict, entity_type_dict
 
 
-def search_sym(query_string, return_number=1):
+def search_with_type(query_string, return_number, type_list):
+    if 's' in type_list:
+        type_list.append('sc')
     query_pinyin = encode_pinyin(query_string)
     res1 = es.search(
         index='entity-index',
@@ -201,8 +203,8 @@ def search_sym(query_string, return_number=1):
     sym_list = []
     if len(res1['hits']['hits']) > 0:
         fuzz = res1['hits']['hits'][0]['_source']['Name']
-        if fuzz == query_string and 's' in res1['hits']['hits'][0]['_source'][
-                'Entity_id']:
+        if fuzz == query_string and res1['hits']['hits'][0]['_source'][
+                'Entity_type'] in type_list:
             result_names.append(fuzz)
             sym_dict = {}
             sym_dict['name'] = fuzz
@@ -210,8 +212,8 @@ def search_sym(query_string, return_number=1):
             sym_list.append(sym_dict)
         else:
             fuzz = res2['hits']['hits'][0]['_source']['Pinyin']
-            if fuzz == query_pinyin and 's' in res2['hits']['hits'][0][
-                    '_source']['Entity_id']:
+            if fuzz == query_pinyin and res2['hits']['hits'][0]['_source'][
+                    'Entity_type'] in type_list:
                 result_names.append(res2['hits']['hits'][0]['_source']['Name'])
                 sym_dict = {}
                 sym_dict['name'] = res2['hits']['hits'][0]['_source']['Name']
@@ -224,8 +226,8 @@ def search_sym(query_string, return_number=1):
                     word_ratio = ratio(
                         query_string,
                         res3['hits']['hits'][0]['_source']['Name'])
-                    if word_ratio > 40 and 's' in res3['hits']['hits'][0][
-                            '_source']['Entity_id']:
+                    if word_ratio > 40 and res3['hits']['hits'][0]['_source'][
+                            'Entity_type'] in type_list:
                         result_names.append(
                             res3['hits']['hits'][0]['_source']['Name'])
                         sym_dict = {}
@@ -242,8 +244,8 @@ def search_sym(query_string, return_number=1):
 
     if re_num >= 1:
         for item in answers:
-            if item['_source']['Name'] not in result_names and 's' in item[
-                    '_source']['Entity_id']:
+            if item['_source']['Name'] not in result_names and item['_source'][
+                    'Entity_type'] in type_list:
                 sym_dict = {}
                 sym_dict['name'] = item['_source']['Name']
                 sym_dict['id'] = item['_source']['Entity_id']
