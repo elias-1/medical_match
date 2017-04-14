@@ -49,7 +49,7 @@ def kg_entity_summary(entities):
         """
     evalues = "','".join(entities)
     sql = """SELECT distinct a.pid, a.property_value as name, b.property_value as desc 
-             FROM deep_serving_property a left join deep_serving_property b 
+             FROM qa_property a left join qa_property b 
                 on a.entity_id = b.entity_id
              WHERE a.property_name = 'name' 
                 and a.property_value IN ('%s')
@@ -109,7 +109,7 @@ def kg_search_price(entities):
     """
     evalues = "','".join(entities)
     sql = """SELECT distinct a.pid, a.property_value as name, b.property_value as price
-             FROM deep_serving_property a left join deep_serving_property b 
+             FROM qa_property a left join qa_property b 
                 on a.entity_id = b.entity_id
              WHERE a.property_name = 'name' 
                 and a.property_value IN ('%s')
