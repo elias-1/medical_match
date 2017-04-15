@@ -18,7 +18,7 @@ from elasticsearch import Elasticsearch
 from fuzzywuzzy import fuzz
 
 from .es_match.entity_refine import entity_refine
-from .es_match.es_match import search_sym
+from .es_match.es_match import search_with_type
 from .interactive_query.interactive_query import *
 from .models import Entity_relation, Property
 from .postgresql_kg import kg_utils
@@ -423,7 +423,7 @@ def get_symptom_id(request):  # get symptom id
             sname = input_dict['Name']
             query_size = 20
             json_out["Return"] = 0
-            json_out["Results"] = search_sym(sname, query_size)
+            json_out["Results"] = search_with_type(sname, query_size,['s'])
         except:
             traceback.print_exc()
             json_out["Return"] = 1
