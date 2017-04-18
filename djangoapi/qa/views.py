@@ -328,7 +328,7 @@ def sentence_process(request):
             input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
             json_out["Return"] = 0
-            if len(sentence) <= 6:
+            if len(sentence) <= 8:
                 result_list, success = kg_utils.kg_entity_identify(sentence)
                 if success:
                     json_out['result'] = result_list
