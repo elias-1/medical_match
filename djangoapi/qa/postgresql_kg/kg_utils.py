@@ -25,14 +25,14 @@ def kg_entity_identify(sentence):
     inner_eid = Property.objects.filter(property_name='name').filter(
         property_value=sentence).values('entity_id')
     sql_result = Property.objects.filter(property_name='desc').filter(
-        entity_id__in=inner_eid).distinct('property_value')
+        entity_id__in=inner_eid).values('property_value').distinct()
 
     result_list = []
     success = 0
 
     for item in sql_result:
         success = 1
-        result_list.append(sentence + '的概述：' + item.property_value)
+        result_list.append(sentence + '的概述：' + item['property_value'])
     return result_list, success
 
 
@@ -79,17 +79,17 @@ def kg_search_body_part(entities):
     """
     sql_result = Entity_relation.objects.filter(
         relation__contains='Body').filter(
-            entity_name1__in=entities).order_by('entity_name1').distinct(
-                'entity_name1', 'entity_name2')
+            entity_name1__in=entities).order_by('entity_name1').values(
+                'entity_name1', 'entity_name2').distinct()
 
     body_part = []
     success = 0
     body_dict = {}
     for item in sql_result:
         success = 1
-        if not body_dict.has_key(item.entity_name1):
-            body_dict[item.entity_name1] = []
-        body_dict[item.entity_name1].append(item.entity_name2)
+        if not body_dict.has_key(item['entity_name1']):
+            body_dict[item['entity_name1']] = []
+        body_dict[item['entity_name1']].append(item['entity_name2'])
     for key in body_dict:
         re_sent = key + '的部位：' + " , ".join(body_dict[key])
         body_part.append(re_sent)
@@ -139,17 +139,17 @@ def kg_search_department(entities):
     """
     sql_result = Entity_relation.objects.filter(
         relation__contains='Dep').filter(
-            entity_name1__in=entities).order_by('entity_name1').distinct(
-                'entity_name1', 'entity_name2')
+            entity_name1__in=entities).order_by('entity_name1').values(
+                'entity_name1', 'entity_name2').distinct()
 
     department_list = []
     success = 0
     department_dict = {}
     for item in sql_result:
         success = 1
-        if not department_dict.has_key(item.entity_name1):
-            department_dict[item.entity_name1] = []
-        department_dict[item.entity_name1].append(item.entity_name2)
+        if not department_dict.has_key(item['entity_name1']):
+            department_dict[item['entity_name1']] = []
+        department_dict[item['entity_name1']].append(item['entity_name2'])
     for key in department_dict:
         re_sent = key + '的科室：' + " , ".join(department_dict[key])
         department_list.append(re_sent)
