@@ -328,15 +328,17 @@ def sentence_process(request):
             input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
             json_out["Return"] = 0
-            if len(sentence) <= 4:
+            if len(sentence) <= 6:
                 result_list, success = kg_utils.kg_entity_identify(sentence)
                 if success:
                     json_out['result'] = result_list
                     json_out['flag'] = 9
-                else:
+                    return HttpResponse(
+                        json.dumps(json_out), content_type="application/json")
+                elif len(sentence) <= 4:
                     json_out['flag'] = 0
-                return HttpResponse(
-                    json.dumps(json_out), content_type="application/json")
+                    return HttpResponse(
+                        json.dumps(json_out), content_type="application/json")
 
             entity_result, type_result = ner(sentence)
             entities, types = entity_refine(entity_result, type_result)
