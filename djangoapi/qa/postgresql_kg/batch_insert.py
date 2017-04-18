@@ -158,7 +158,7 @@ class Batcher(object):
             'entity_id', 'entity_type', 'property_name', 'property_value'
         ]
         res = insert_record('property', col_name, property_data)
-        self._inc_done(self, res)
+        self._inc_done(res)
 
     def _insert2relation(self, relation_data):
         col_name = [
@@ -166,7 +166,7 @@ class Batcher(object):
             'entity_id2', 'entity_name2', 'entity_type2'
         ]
         res = insert_record('relation', col_name, relation_data)
-        self._inc_done(self, res)
+        self._inc_done(res)
 
     def _FillInputQueue(self):
         """Fill input queue with ModelInput."""
