@@ -47,6 +47,7 @@ useless_list = [
 
 
 def insert_record(table_name, col, row):
+    time.sleep(2)
     return 0
     url = 'https://202.117.16.221:7777/qa/%s/' % table_name
     insert_data = {}
@@ -214,7 +215,8 @@ class Batcher(object):
 def main(argc, argv):
     if argc < 2:
         print("Usage:%s <data>" % (argv[0]))
-    Batcher(argv[1])
+    batch_insert = Batcher(argv[1])
+    batch_insert.processing()
 
 
 if __name__ == "__main__":
