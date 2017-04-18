@@ -10,6 +10,55 @@ A Django based restful api for deep qa.
 #### tensorflow serving
 > Refer to [tensorflow serving](https://github.com/tensorflow/serving)
 
+> Refer to [bazel](https://bazel.build/versions/master/docs/install-ubuntu.html)
+```
+sudo apt-get update && sudo apt-get install -y \
+        build-essential \
+        curl \
+        libcurl3-dev \
+        git \
+        libfreetype6-dev \
+        libpng12-dev \
+        libzmq3-dev \
+        pkg-config \
+        python-dev \
+        python-numpy \
+        python-pip \
+        software-properties-common \
+        swig \
+        zip \
+        zlib1g-dev
+
+virtualenv serving-env
+source serving-env/bin/activate
+pip install numpy
+
+pip install grpcio
+
+git clone --recurse-submodules https://github.com/tensorflow/serving
+cd serving
+
+cd tensorflow
+./configure
+cd ..
+
+bazel build tensorflow_serving/...
+
+bazel build //tensorflow_serving/example/ner:ner_serving
+bazel-bin/tensorflow_serving/example/ner_serving /tmp/ner_output
+
+bazel build //tensorflow_serving/example/ner:sentence_clfier_serving
+bazel-bin/tensorflow_serving/example/sentence_clfier_serving /tmp/clfier_output
+
+
+bazel build //tensorflow_serving/model_servers:tensorflow_model_server
+bazel-bin/tensorflow_serving/model_servers/tensorflow_model_server --port=9000 --model_name=ner --model_base_path=/tmp/ner_output/
+
+bazel build //tensorflow_serving/example/ner:ner_client
+bazel-bin/tensorflow_serving/example/ner/ner_client --server=localhost:9000
+```
+
+
 #### elasticsearch
 > Refer to [elasticsearch](https://www.elastic.co/downloads/elasticsearch)
 
