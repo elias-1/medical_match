@@ -48,7 +48,7 @@ def kg_entity_summary(entities):
         success: 0/1
         """
     evalues = "','".join(entities)
-    sql = """SELECT distinct a.pid, a.property_value as name, b.property_value as desc 
+    sql = """SELECT distinct a.pid, a.property_value as name, b.property_value as description 
              FROM qa_property a left join qa_property b 
                 on a.entity_id = b.entity_id
              WHERE a.property_name = 'name' 
@@ -63,7 +63,7 @@ def kg_entity_summary(entities):
         success = 1
         if not summary_dict.has_key(item.name):
             summary_dict[item.name] = []
-        summary_dict[item.name].append(item.desc)
+        summary_dict[item.name].append(item.description)
     for key in summary_dict:
         re_sent = key + '的概述：' + " \n ".join(summary_dict[key])
         entitiy_summarys.append(re_sent)
