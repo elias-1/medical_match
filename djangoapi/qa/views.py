@@ -219,10 +219,10 @@ def relation_op(request):
 
 @csrf_exempt
 def sentence_clfier(request):
-    if request.method == "POST":
+    if request.method == "GET":
         json_out = {}
         try:
-            input_dict = json.loads(request.body)
+            input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
             prediction = clfier(sentence)
             json_out['class'] = prediction
@@ -236,10 +236,10 @@ def sentence_clfier(request):
 
 @csrf_exempt
 def sentence_ner(request):
-    if request.method == "POST":
+    if request.method == "GET":
         json_out = {}
         try:
-            input_dict = json.loads(request.body)
+            input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
             entity_result, type_result = ner(sentence)
             json_out['entities'] = entity_result
@@ -254,10 +254,10 @@ def sentence_ner(request):
 
 @csrf_exempt
 def sentence_clfier_ner(request):
-    if request.method == "POST":
+    if request.method == "GET":
         json_out = {}
         try:
-            input_dict = json.loads(request.body)
+            input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
 
             prediction = clfier(sentence)
@@ -276,10 +276,10 @@ def sentence_clfier_ner(request):
 
 @csrf_exempt
 def sentence_ner_es(request):
-    if request.method == "POST":
+    if request.method == "GET":
         json_out = {}
         try:
-            input_dict = json.loads(request.body)
+            input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
             entity_result, type_result = ner(sentence)
             json_out['entities'], json_out['types'] = entity_refine(
@@ -322,10 +322,10 @@ def sentence_process(request):
                     额外返回result: 
         
     """
-    if request.method == "POST":
+    if request.method == "GET":
         json_out = {}
         try:
-            input_dict = json.loads(request.body)
+            input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
             json_out["Return"] = 0
             if len(sentence) <= 4:
@@ -423,7 +423,7 @@ def get_symptom_id(request):  # get symptom id
             sname = input_dict['Name']
             query_size = 20
             json_out["Return"] = 0
-            json_out["Results"] = search_with_type(sname, query_size,['s'])
+            json_out["Results"] = search_with_type(sname, query_size, ['s'])
         except:
             traceback.print_exc()
             json_out["Return"] = 1
