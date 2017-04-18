@@ -400,7 +400,7 @@ def simple_qa(entities, label):
         rdf_strings = query_multi_sub(entities, label)
         if rdf_strings is None:  # question is unsupported
             json_out['return'] = 1
-            json_out['content'] = [u'句子分类或实体识别可能存在错误']
+            json_out['content'] = [u'暂无答案~要不换个姿势']
         elif type(rdf_strings) is list:
             rdf_anw = call_api_rdf3x(rdf_strings[-1])
             anws_dict = get_nodes_degree_list(rdf_anw)
