@@ -95,7 +95,7 @@ class Batcher(object):
 
         self._output_threads = []
         for _ in xrange(MAX_OUTPUT_THREAD):
-            self._output_threads.append(Thread(target=self._FillOuputQueue))
+            self._output_threads.append(Thread(target=self._OuputQueue))
             self._output_threads[-1].daemon = True
             self._output_threads[-1].start()
 
@@ -179,7 +179,7 @@ class Batcher(object):
         while True:
             self._input_queue.put([])
 
-    def _FillOuputQueue(self):
+    def _OuputQueue(self):
         """Fill bucketed batches into the bucket_input_queue."""
         while True:
             try:
@@ -202,7 +202,7 @@ class Batcher(object):
             while len(self._output_threads
                       ) < MAX_OUTPUT_THREAD and self._input_queue:
                 # can start some more threads
-                new_t = Thread(target=self._FillInputQueue)
+                new_t = Thread(target=self._OuputQueue)
                 new_t.setDaemon(
                     True
                 )  # set daemon so main thread can exit when receives ctrl-c
