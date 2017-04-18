@@ -55,6 +55,7 @@ prefix_str += " PREFIX " + ABBRAVIATION_BP + PREFIX_BP
 
 
 class RDF_node:
+
     def __init__(self, id, type):
         self.id = id
         self.type = type
@@ -109,7 +110,8 @@ class RDF_node:
         This function generate the query to obtain all the property
         '''
         query = self.prefix
-        query += ' SELECT DISTINCT ?r ?n WHERE { ' + self.abbraviation + self.id + ' ?r ?n FILTER (regex (?r, "property"))}'
+        query += ' SELECT DISTINCT ?r ?n WHERE { ' + self.abbraviation + \
+            self.id + ' ?r ?n FILTER (regex (?r, "property"))}'
         return query
 
     def get_path_one_node(self):
@@ -120,7 +122,8 @@ class RDF_node:
         "relationship" "id" "chinese_name"
         '''
         query = self.prefix
-        query += ' SELECT DISTINCT ?r ?n ?p WHERE { ' + self.abbraviation + self.id + '?r ?n FILTER (!regex (?r, "property")). ?n pro:name ?p}'
+        query += ' SELECT DISTINCT ?r ?n ?p WHERE { ' + self.abbraviation + \
+            self.id + '?r ?n FILTER (!regex (?r, "property")). ?n pro:name ?p}'
         return query
 
     def get_path_one_node_cross_rel(self):
@@ -132,7 +135,10 @@ class RDF_node:
         of ids that "get_path_one_node" returns
         '''
         query = self.prefix
-        query += ' SELECT DISTINCT ?n1 ?p1 ?r ?n2 ?p2 WHERE { ' + self.abbraviation + self.id + ' ?r1 ?n1 FILTER (!regex (?r1, "property")).' + self.abbraviation + self.id + ' ?r2 ?n2 FILTER (!regex (?r2, "property")).' + '?n1 ?r ?n2. ?n1 pro:name ?p1. ?n2 pro:name ?p2.}'
+        query += ' SELECT DISTINCT ?n1 ?p1 ?r ?n2 ?p2 WHERE { ' + self.abbraviation + self.id + \
+            ' ?r1 ?n1 FILTER (!regex (?r1, "property")).' + self.abbraviation + self.id + \
+            ' ?r2 ?n2 FILTER (!regex (?r2, "property")).' + \
+            '?n1 ?r ?n2. ?n1 pro:name ?p1. ?n2 pro:name ?p2.}'
         return query
 
 
@@ -178,6 +184,8 @@ def get_cat(id):
         return 'medicine'
     elif id[0] == 'o':
         return 'operation'
+    elif id[0] == 'b':
+        return 'bodypart'
 
 
 def get_nodes_list(content_list):
@@ -349,6 +357,8 @@ def query_multi_sub(sub_names, obj_type):
         query_str = prefix_str
         query_str += ' SELECT DISTINCT ?n ?p WHERE { '
         for idx, sub_type in enumerate(sub_types_ids.keys()):
+            if obj_ref[str(obj_type)] not in relations[sub_type]:
+                return None
             sub_ids = sub_types_ids[sub_type]  # 同一类型可能会有多个node
             sub_values = ''
             filter_values = ''
@@ -390,7 +400,7 @@ def simple_qa(entities, label):
         rdf_strings = query_multi_sub(entities, label)
         if rdf_strings is None:  # question is unsupported
             json_out['return'] = 1
-            json_out['content'] = [u'意图识别不明确,句子分类可能存在错误']
+            json_out['content'] = [u'句子分类或实体识别可能存在错误']
         elif type(rdf_strings) is list:
             rdf_anw = call_api_rdf3x(rdf_strings[-1])
             anws_dict = get_nodes_degree_list(rdf_anw)
@@ -424,3 +434,8 @@ def simple_qa(entities, label):
         json_out["exception"] = traceback.print_exc()
         json_out["return"] = 1
     return json_out
+
+
+if __name__ == "__main__":
+    s = simple_qa([u'心脏'], 6)
+    json.dump(s, open('./res.json', 'w'), indent=4, ensure_ascii=False)
