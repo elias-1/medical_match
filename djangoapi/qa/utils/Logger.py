@@ -11,7 +11,7 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 log_dir = os.path.join(app_dir, 'log')
 logger_config_dir = os.path.join(app_dir, 'config', 'logger.conf')
 
-if not os.path.exists():
+if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
 
