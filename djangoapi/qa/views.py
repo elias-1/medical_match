@@ -346,10 +346,11 @@ def sentence_process(request):
 
             timer.tic()
             entity_result, type_result = ner(sentence)
-            print('ner cost: %f' % timer.toc(average=False))
+            print >> sys.stderr, 'ner cost: %f' % timer.toc(average=False)
             timer.tic()
             entities, types = entity_refine(entity_result, type_result)
-            print('entity_refine cost: %f' % timer.toc(average=False))
+            print >> sys.stderr, 'entity_refine cost: %f' % timer.toc(
+                average=False)
 
             if not entity_result:
                 json_out['flag'] = 0
@@ -381,7 +382,8 @@ def sentence_process(request):
                 timer.tic()
                 entitiy_summarys, success = kg_utils.kg_entity_summary(
                     entities)
-                print('ner cost: %f' % timer.toc(average=False))
+                print >> sys.stderr, 'kg_entity_summary cost: %f' % timer.toc(
+                    average=False)
                 if success:
                     json_out['result'] = entitiy_summarys
                 else:
