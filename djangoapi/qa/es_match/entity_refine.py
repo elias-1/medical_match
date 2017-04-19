@@ -105,16 +105,15 @@ def entity_fuzz(entity_dict, score_list):
 
 def search_candidates(exact_list):
     fuzz_candi_set = set([])
-    for name in exact_list:
-        #print 'exact:  ' + name
-        sql_result = Entity_relation.objects.filter(
-            Q(entity_name1=name) | Q(entity_name2=name))
 
-        for en_result in sql_result:
-            if en_result.entity_name1 == name:
-                fuzz_candi_set.add(en_result.entity_name2)
-            else:
-                fuzz_candi_set.add(en_result.entity_name1)
+    sql_result = Entity_relation.objects.filter(
+        Q(entity_name1__in=exact_list) | Q(entity_name2__in=exact_list))
+
+    for en_result in sql_result:
+        if en_result.entity_name1 in exact_list:
+            fuzz_candi_set.add(en_result.entity_name2)
+        else:
+            fuzz_candi_set.add(en_result.entity_name1)
     return fuzz_candi_set
 
 
