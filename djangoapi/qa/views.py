@@ -24,6 +24,7 @@ from .models import Entity_relation, Property
 from .postgresql_kg import kg_utils
 from .serving_client.serving_client import Clfier, Ner
 from .simple_qa import simple_query
+from .utils.timer import Timer
 
 ner = Ner()
 clfier = Clfier()
@@ -33,6 +34,9 @@ config_file_dir = os.path.join(app_dir, 'config', 'config.conf')
 params = config(filename=config_file_dir, section='elasticsearch')
 es = Elasticsearch(**params)
 useless_list = ["", u"", None, False, " "]
+
+timer = Timer()
+
 #===============================================================================
 
 
@@ -340,8 +344,13 @@ def sentence_process(request):
                     return HttpResponse(
                         json.dumps(json_out), content_type="application/json")
 
+            timer.tic()
             entity_result, type_result = ner(sentence)
+            print('ner cost: %f' % timer.toc(average=False))
+            timer.tic()
             entities, types = entity_refine(entity_result, type_result)
+            print('entity_refine cost: %f' % timer.toc(average=False))
+
             if not entity_result:
                 json_out['flag'] = 0
                 return HttpResponse(
@@ -369,8 +378,10 @@ def sentence_process(request):
             #         json_out['result'] = [u'没能找到%s的相应科室' % u'、'.join(entities)]
 
             elif prediction == 9:
+                timer.tic()
                 entitiy_summarys, success = kg_utils.kg_entity_summary(
                     entities)
+                print('ner cost: %f' % timer.toc(average=False))
                 if success:
                     json_out['result'] = entitiy_summarys
                 else:
