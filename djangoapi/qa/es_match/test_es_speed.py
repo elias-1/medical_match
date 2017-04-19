@@ -14,10 +14,7 @@ import pypinyin
 from elasticsearch import Elasticsearch
 from fuzzywuzzy.fuzz import ratio
 
-para = {}
-para['port'] = 9200
-para['host'] = '202.117.16.221'
-es = Elasticsearch(**para)
+es = Elasticsearch()
 
 
 def hanzi2pinyin(word):
