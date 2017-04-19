@@ -16,9 +16,12 @@ import es_match
 from django.db.models import Q
 
 from ..models import Entity_relation
+from ..utils.Logger import Logger
 from ..utils.timer import Timer
 
 timer = Timer()
+
+logger = Logger().getLogger()
 
 
 def entity_refine(entity_result, type_result):
@@ -45,7 +48,7 @@ def entity_refine(entity_result, type_result):
         score_list.append(score_dict)
         for key in type_dict:
             all_type_dict[key] = type_dict[key]
-    print >> sys.stderr, 'search_index cost: %f' % timer.toc(average=False)
+    logger.info('search_index cost: %f' % timer.toc(average=False))
     result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
 
     result_dict = {}
@@ -82,8 +85,7 @@ def entity_fuzz(entity_dict, score_list):
     if len(fuzz_list) > 0 and len(exact_list) > 0:
         timer.tic()
         fuzz_candidates = search_candidates(exact_list)
-        print >> sys.stderr, 'search_candidates cost: %f' % timer.toc(
-            average=False)
+        logger.info('search_candidates cost: %f' % timer.toc(average=False))
 
         for name in fuzz_list:
             #print 'fu:  ' + name
