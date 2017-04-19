@@ -9,12 +9,16 @@ Author: mengtingzhan(476615360@qq.com), shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/3/28 9:42
 """
 import json
+import sys
 import time
 
 import es_match
 from django.db.models import Q
 
 from ..models import Entity_relation
+from ..utils.timer import Timer
+
+timer = Timer()
 
 
 def entity_refine(entity_result, type_result):
@@ -34,13 +38,16 @@ def entity_refine(entity_result, type_result):
         type_list.append(type_dict[entity_dict[entities[0]][0]])
         return result_list, type_list
     all_type_dict = {}
+    timer.tic()
     for entity in entities:
         entity_dict[entity], score_dict, type_dict = es_match.search_index(
             entity, 5)
         score_list.append(score_dict)
         for key in type_dict:
             all_type_dict[key] = type_dict[key]
+    print >> sys.stderr, 'search_index cost: %f' % timer.toc(average=False)
     result_json[u'entity'] = entity_fuzz(entity_dict, score_list)
+
     result_dict = {}
     for key in result_json[u'entity']:
         e_name = result_json[u'entity'][key]
@@ -73,7 +80,11 @@ def entity_fuzz(entity_dict, score_list):
         exact_list.append(score_sort[0][u'max_item'])
     #存在全匹配和模糊匹配
     if len(fuzz_list) > 0 and len(exact_list) > 0:
+        timer.tic()
         fuzz_candidates = search_candidates(exact_list)
+        print >> sys.stderr, 'search_candidates cost: %f' % timer.toc(
+            average=False)
+
         for name in fuzz_list:
             #print 'fu:  ' + name
             flag = 0
