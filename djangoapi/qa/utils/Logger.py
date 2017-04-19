@@ -7,7 +7,7 @@ import traceback
 
 import Singleton
 
-app_dir = os.path.dirname(os.path.abspath(__file__))
+app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 logger_config_dir = os.path.join(app_dir, 'config', 'logger.conf')
 
 
