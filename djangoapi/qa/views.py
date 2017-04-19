@@ -345,23 +345,16 @@ def sentence_process(request):
                     return HttpResponse(
                         json.dumps(json_out), content_type="application/json")
 
-            timer.tic()
             entity_result, type_result = ner(sentence)
-            json_out['debug'].append('ner cost: %f' % timer.toc(average=False))
-            timer.tic()
+
             entities, types = entity_refine(entity_result, type_result)
-            json_out['debug'].append('entity_refine cost: %f' %
-                                     timer.toc(average=False))
 
             if not entity_result:
                 json_out['flag'] = 0
                 return HttpResponse(
                     json.dumps(json_out), content_type="application/json")
 
-            timer.tic()
             prediction = clfier(sentence)
-            json_out['debug'].append('clfier cost: %f' %
-                                     timer.toc(average=False))
 
             json_out['flag'] = prediction
             if prediction in [1, 3, 8]:
@@ -384,11 +377,9 @@ def sentence_process(request):
             #         json_out['result'] = [u'没能找到%s的相应科室' % u'、'.join(entities)]
 
             elif prediction == 9:
-                timer.tic()
                 entitiy_summarys, success = kg_utils.kg_entity_summary(
                     entities)
-                json_out['debug'].append('kg_entity_summary cost: %f' %
-                                         timer.toc(average=False))
+
                 if success:
                     json_out['result'] = entitiy_summarys
                 else:
