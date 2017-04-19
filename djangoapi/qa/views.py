@@ -349,7 +349,7 @@ def sentence_process(request):
 
             prediction = clfier(sentence)
             json_out['flag'] = prediction
-            if prediction == 1 or prediction == 3:
+            if prediction in [1, 3, 8]:
                 pass
 
             elif prediction == 7:
@@ -360,13 +360,13 @@ def sentence_process(request):
                     json_out['Return'] = 2
                     json_out['result'] = [u'没能找到%s的相应部位' % u'、'.join(entities)]
 
-            elif prediction == 8:
-                department, success = kg_utils.kg_search_department(entities)
-                if success:
-                    json_out['result'] = department
-                else:
-                    json_out['Return'] = 2
-                    json_out['result'] = [u'没能找到%s的相应科室' % u'、'.join(entities)]
+            # elif prediction == 8:
+            #     department, success = kg_utils.kg_search_department(entities)
+            #     if success:
+            #         json_out['result'] = department
+            #     else:
+            #         json_out['Return'] = 2
+            #         json_out['result'] = [u'没能找到%s的相应科室' % u'、'.join(entities)]
 
             elif prediction == 9:
                 entitiy_summarys, success = kg_utils.kg_entity_summary(
