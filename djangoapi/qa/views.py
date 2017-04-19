@@ -358,7 +358,11 @@ def sentence_process(request):
                 return HttpResponse(
                     json.dumps(json_out), content_type="application/json")
 
+            timer.tic()
             prediction = clfier(sentence)
+            json_out['debug'].append('clfier cost: %f' %
+                                     timer.toc(average=False))
+
             json_out['flag'] = prediction
             if prediction in [1, 3, 8]:
                 pass
