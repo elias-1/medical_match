@@ -328,6 +328,7 @@ def sentence_process(request):
     """
     if request.method == "GET":
         json_out = {}
+        json_out['debug'] = []
         try:
             input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
@@ -346,11 +347,11 @@ def sentence_process(request):
 
             timer.tic()
             entity_result, type_result = ner(sentence)
-            print >> sys.stderr, 'ner cost: %f' % timer.toc(average=False)
+            json_out['debug'].append('ner cost: %f' % timer.toc(average=False))
             timer.tic()
             entities, types = entity_refine(entity_result, type_result)
-            print >> sys.stderr, 'entity_refine cost: %f' % timer.toc(
-                average=False)
+            json_out['debug'].append('entity_refine cost: %f' %
+                                     timer.toc(average=False))
 
             if not entity_result:
                 json_out['flag'] = 0
@@ -382,8 +383,8 @@ def sentence_process(request):
                 timer.tic()
                 entitiy_summarys, success = kg_utils.kg_entity_summary(
                     entities)
-                print >> sys.stderr, 'kg_entity_summary cost: %f' % timer.toc(
-                    average=False)
+                json_out['debug'].append('kg_entity_summary cost: %f' %
+                                         timer.toc(average=False))
                 if success:
                     json_out['result'] = entitiy_summarys
                 else:
