@@ -12,11 +12,18 @@ Date: 2017/4/19 10:33
 import json
 import sys
 import time
+import urllib
 from StringIO import StringIO
 
 import pycurl
 
-curl_url = """http://202.117.16.221:7777/qa/sentence_process/?q={"sentence": %s}"""
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+# url = """http://59.110.52.133:9999/qa/sentence_process/?q={%22sentence%22:%22%E4%BD%A0%E5%A5%BD%22}"""
+base_url = "http://202.117.16.221:7777"
+# curl_url = """/qa/sentence_process/?q={{%22sentence%22:%22{sentence}%22}}"""
+curl_url = """/qa/sentence_process/?q={{"sentence":"{sentence}"}}"""
 
 
 def ops_api(url):
@@ -42,7 +49,10 @@ def ops_api(url):
 
 def process_sent(sentence):
     start = time.time()
-    result = ops_api(curl_url % sentence)
+    url_other = curl_url.format(
+        sentence=urllib.quote(sentence.encode('utf-8')))
+    url = base_url + url_other
+    result = ops_api(url)
     end = time.time()
     return end - start, result
 
