@@ -23,8 +23,8 @@ sys.setdefaultencoding('utf-8')
 # url = """http://59.110.52.133:9999/qa/sentence_process/?q={%22sentence%22:%22%E4%BD%A0%E5%A5%BD%22}"""
 # curl_url = """http://202.117.16.221:7777/qa/sentence_process/?q={{%22sentence%22:%22{sentence}%22}}"""
 
-#curl_url = """http://59.110.52.133:9999/qa/sentence_process/?q={{"sentence":"{sentence}"}}"""
-curl_url = """http://202.117.16.221:7777/qa/sentence_process/?q={{"sentence":"{sentence}"}}"""
+curl_url = """http://59.110.52.133:9999/qa/sentence_process/?q={{"sentence":"{sentence}"}}"""
+#curl_url = """http://202.117.16.221:7777/qa/sentence_process/?q={{"sentence":"{sentence}"}}"""
 
 
 def ops_api(url):
@@ -70,8 +70,8 @@ def main(argc, argv):
                 use_time, result = process_sent(sent)
                 if result:
                     result = result.items()
-                print('processing %d, use time: %f, result: %s' %
-                      (num, use_time, result))
+                print('processing %d,sentence: %s, use time: %f, result: %s' %
+                      (num, sent,use_time, result))
                 total_time += use_time
 
     average_time = total_time / num
