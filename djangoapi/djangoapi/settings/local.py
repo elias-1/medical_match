@@ -35,7 +35,7 @@ DATABASES = {
     # },
 }
 
-DATABASE_ROUTERS = ['djangoapi.database_router.DatabaseAppsRouter']
-DATABASE_APPS_MAPPING = {
-    'qa': 'postgresql',
-}
+# DATABASE_ROUTERS = ['djangoapi.database_router.DatabaseAppsRouter']
+# DATABASE_APPS_MAPPING = {
+#     'qa': 'postgresql',
+# }

@@ -176,9 +176,6 @@ class Batcher(object):
             for line in f.readlines():
                 self._process_row(line, 'entity_relation')
 
-        while True:
-            self._input_queue.put([])
-
     def _OuputQueue(self):
         """Fill bucketed batches into the bucket_input_queue."""
         while True:
