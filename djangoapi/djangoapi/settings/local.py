@@ -26,5 +26,16 @@ DATABASES = {
         'NAME': 'kgdata',
         'USER': 'dbuser',
         'PASSWORD': '112233',
-    }
+    },
+    # 'postgresql': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'NAME': 'kgdata',
+    #     'USER': 'dbuser',
+    #     'PASSWORD': '112233',
+    # },
+}
+
+DATABASE_ROUTERS = ['djangoapi.database_router.DatabaseAppsRouter']
+DATABASE_APPS_MAPPING = {
+    'qa': 'postgresql',
 }
