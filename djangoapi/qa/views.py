@@ -400,6 +400,8 @@ def sentence_process(request):
                 json_out[
                     'result'] = '出错了啊，亲，我马上修复' if 'exception' in json_result else json_result[
                         'content']
+                if 'exception' in json_result:
+                    json_out['Return'] = 1
                 if json_result['return'] == 1:
                     json_out['Return'] = 2
             return HttpResponse(
