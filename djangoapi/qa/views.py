@@ -328,7 +328,6 @@ def sentence_process(request):
     """
     if request.method == "GET":
         json_out = {}
-        json_out['debug'] = []
         try:
             input_dict = json.loads(request.GET["q"])
             sentence = input_dict['sentence']
@@ -398,7 +397,9 @@ def sentence_process(request):
 
             else:
                 json_result = simple_query.simple_qa(entities, prediction)
-                json_out['result'] = json_result['content']
+                json_out[
+                    'result'] = '出错了啊，亲，我马上修复' if 'exception' in json_result else json[
+                        'content']
                 if json_result['return'] == 1:
                     json_out['Return'] = 2
             return HttpResponse(

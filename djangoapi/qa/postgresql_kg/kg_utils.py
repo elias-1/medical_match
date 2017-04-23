@@ -10,6 +10,7 @@ Date: 2017/4/7 13:51
 """
 
 from ..models import Entity_relation, Property
+from ..simple_qa import simple_query
 
 
 def kg_entity_identify(sentence):
@@ -30,9 +31,23 @@ def kg_entity_identify(sentence):
     result_list = []
     success = 0
 
-    for item in sql_result:
+    if sql_result:
         success = 1
-        result_list.append(sentence + '的概述：' + item['property_value'])
+        for item in sql_result:
+            result_list.append(sentence + '的概述：' + item['property_value'])
+    else:
+        sql_result = Property.objects.filter(property_name='name').filter(
+            property_value=sentence).filter(entity_type='medicine')
+        if sql_result:
+            json_result = simple_query.simple_qa([sentence], 11)
+            if 'exception' in json_result:
+                result_list.append('出错了啊，亲，我马上修复')
+            else:
+                result_list = json_result['content'] if isinstance(
+                    json_result['content'],
+                    list) else [json_result['content']]
+            success = 0 if json_result['return'] == 1 else 1
+
     return result_list, success
 
 
