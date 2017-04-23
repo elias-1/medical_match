@@ -398,7 +398,7 @@ def sentence_process(request):
             else:
                 json_result = simple_query.simple_qa(entities, prediction)
                 json_out[
-                    'result'] = '出错了啊，亲，我马上修复' if 'exception' in json_result else json[
+                    'result'] = '出错了啊，亲，我马上修复' if 'exception' in json_result else json_result[
                         'content']
                 if json_result['return'] == 1:
                     json_out['Return'] = 2
