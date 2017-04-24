@@ -9,6 +9,8 @@ Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/4/7 13:51
 """
 
+from django.db.models import Q
+
 from ..models import Entity_relation, Property
 from ..simple_qa import simple_query
 
@@ -23,8 +25,10 @@ def kg_entity_identify(sentence):
         result_list: list; if success 0, None, 
         
     """
-    inner_eid = Property.objects.filter(property_name='name').filter(
-        property_value=sentence).values('entity_id')
+    inner_eid = Property.objects.filter(
+        Q(property_name='name') | Q(property_name='enname') | Q(
+            property_name='othername')).filter(
+                property_value=sentence).values('entity_id')
     sql_result = Property.objects.filter(property_name='desc').filter(
         entity_id__in=inner_eid).values('property_value').distinct()
 
@@ -64,7 +68,7 @@ def kg_entity_summary(entities):
     sql = """SELECT distinct a.pid, a.property_value as name, b.property_value as description 
              FROM qa_property a left join qa_property b 
                 on a.entity_id = b.entity_id
-             WHERE a.property_name = 'name' 
+             WHERE a.property_name = 'name' or a.property_name = 'enname' or a.property_name = 'othername'
                 and a.property_value IN ('%s')
                 and b.property_name = 'desc' ;"""
     sql_result = Property.objects.raw(sql % (evalues))
