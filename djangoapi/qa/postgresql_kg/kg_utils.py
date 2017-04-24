@@ -40,8 +40,10 @@ def kg_entity_identify(sentence):
         for item in sql_result:
             result_list.append(sentence + '的概述：' + item['property_value'])
     else:
-        sql_result = Property.objects.filter(property_name='name').filter(
-            property_value=sentence).filter(entity_type='medicine')
+        sql_result = Property.objects.filter(
+            Q(property_name='name') | Q(property_name='enname') | Q(
+                property_name='othername')).filter(
+                    property_value=sentence).filter(entity_type='medicine')
         if sql_result:
             json_result = simple_query.simple_qa([sentence], 11)
             if 'exception' in json_result:
@@ -68,7 +70,7 @@ def kg_entity_summary(entities):
     sql = """SELECT distinct a.pid, a.property_value as name, b.property_value as description 
              FROM qa_property a left join qa_property b 
                 on a.entity_id = b.entity_id
-             WHERE a.property_name = 'name' or a.property_name = 'enname' or a.property_name = 'othername'
+             WHERE (a.property_name = 'name' or a.property_name = 'enname' or a.property_name = 'othername')
                 and a.property_value IN ('%s')
                 and b.property_name = 'desc' ;"""
     sql_result = Property.objects.raw(sql % (evalues))
