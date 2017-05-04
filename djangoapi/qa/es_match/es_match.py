@@ -207,8 +207,8 @@ def search_with_type(query_string, return_number, type_list):
                 'Entity_type'] in type_list:
             result_names.append(fuzz)
             sym_dict = {}
-            sym_dict['name'] = fuzz
-            sym_dict['id'] = res1['hits']['hits'][0]['_source']['Entity_id']
+            sym_dict['Name'] = fuzz
+            sym_dict['Id'] = res1['hits']['hits'][0]['_source']['Entity_id']
             sym_list.append(sym_dict)
         else:
             fuzz = res2['hits']['hits'][0]['_source']['Pinyin']
@@ -216,8 +216,8 @@ def search_with_type(query_string, return_number, type_list):
                     'Entity_type'] in type_list:
                 result_names.append(res2['hits']['hits'][0]['_source']['Name'])
                 sym_dict = {}
-                sym_dict['name'] = res2['hits']['hits'][0]['_source']['Name']
-                sym_dict['id'] = res2['hits']['hits'][0]['_source'][
+                sym_dict['Name'] = res2['hits']['hits'][0]['_source']['Name']
+                sym_dict['Id'] = res2['hits']['hits'][0]['_source'][
                     'Entity_id']
                 sym_list.append(sym_dict)
 
@@ -231,9 +231,9 @@ def search_with_type(query_string, return_number, type_list):
                         result_names.append(
                             res3['hits']['hits'][0]['_source']['Name'])
                         sym_dict = {}
-                        sym_dict['name'] = res3['hits']['hits'][0]['_source'][
+                        sym_dict['Name'] = res3['hits']['hits'][0]['_source'][
                             'Name']
-                        sym_dict['id'] = res3['hits']['hits'][0]['_source'][
+                        sym_dict['Id'] = res3['hits']['hits'][0]['_source'][
                             'Entity_id']
                         sym_list.append(sym_dict)
 
@@ -247,8 +247,8 @@ def search_with_type(query_string, return_number, type_list):
             if item['_source']['Name'] not in result_names and item['_source'][
                     'Entity_type'] in type_list:
                 sym_dict = {}
-                sym_dict['name'] = item['_source']['Name']
-                sym_dict['id'] = item['_source']['Entity_id']
+                sym_dict['Name'] = item['_source']['Name']
+                sym_dict['Id'] = item['_source']['Entity_id']
                 sym_list.append(sym_dict)
                 result_names.append(item['_source']['Name'])
                 re_num -= 1
