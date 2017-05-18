@@ -53,20 +53,20 @@ tf.flags.DEFINE_float('l2_reg_lambda', 0,
 def linear(args, output_size, bias, bias_start=0.0, scope=None, reuse=None):
     """Linear map: sum_i(args[i] * W[i]), where W[i] is a variable.
 
-  Args:
-    args: a 2D Tensor or a list of 2D, batch x n, Tensors.
-    output_size: int, second dimension of W[i].
-    bias: boolean, whether to add a bias term or not.
-    bias_start: starting value to initialize the bias; 0 by default.
-    scope: VariableScope for the created subgraph; defaults to "Linear".
+    Args:
+        args: a 2D Tensor or a list of 2D, batch x n, Tensors.
+        output_size: int, second dimension of W[i].
+        bias: boolean, whether to add a bias term or not.
+        bias_start: starting value to initialize the bias; 0 by default.
+        scope: VariableScope for the created subgraph; defaults to "Linear".
 
-  Returns:
-    A 2D Tensor with shape [batch x output_size] equal to
-    sum_i(args[i] * W[i]), where W[i]s are newly created matrices.
+    Returns:
+        A 2D Tensor with shape [batch x output_size] equal to
+        sum_i(args[i] * W[i]), where W[i]s are newly created matrices.
 
-  Raises:
-    ValueError: if some of the arguments has unspecified or wrong shape.
-  """
+    Raises:
+        ValueError: if some of the arguments has unspecified or wrong shape.
+    """
     if args is None or (isinstance(args, (list, tuple)) and not args):
         raise ValueError('`args` must be specified')
     if not isinstance(args, (list, tuple)):
