@@ -235,11 +235,11 @@ class TextCNN(object):
         # Add dropout
         if trainMode:
             with tf.name_scope('dropout'):
-                self.h_drop = tf.nn.dropout(clfier_pooled_flat,
-                                            FLAGS.dropout_keep_prob)
+                self.clfier_pooled_flat = tf.nn.dropout(
+                    clfier_pooled_flat, FLAGS.dropout_keep_prob)
 
-        scores = tf.nn.xw_plus_b(self.h_drop, self.clfier_softmax_W,
-                                 self.clfier_softmax_b)
+        scores = tf.nn.xw_plus_b(self.clfier_pooled_flat,
+                                 self.clfier_softmax_W, self.clfier_softmax_b)
 
         return scores
 

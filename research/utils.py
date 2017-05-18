@@ -177,7 +177,6 @@ def do_load_data_char_common(path, max_sentence_len):
                   (ln, len(ss), len(line), line))
         assert (len(ss) == (max_sentence_len + 1))
         lcx = []
-        lentity_info = []
         for i in range(max_sentence_len):
             lcx.append(int(ss[i]))
 
