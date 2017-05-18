@@ -41,6 +41,7 @@ tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
 tf.app.flags.DEFINE_integer("train_steps", 2000, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
+tf.app.flags.DEFINE_float("filter_size", 5, "The clfier's conv fileter size")
 tf.app.flags.DEFINE_float("num_filters", 128, "Number of filters")
 tf.app.flags.DEFINE_float("num_classes", 7, "Number of classes to classify")
 tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
@@ -56,10 +57,21 @@ class Model:
         self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
         self.chars = tf.Variable(self.c2v, name="chars")
 
+        with tf.variable_scope('Transform') as scope:
+            self.transform_W = tf.get_variable(
+                "transform_W",
+                shape=[
+                    1, 1, FLAGS.embedding_char_size + self.numHidden * 2,
+                    self.numHidden * 2
+                ],
+                regularizer=tf.contrib.layers.l2_regularizer(0.0001),
+                initializer=tf.truncated_normal_initializer(stddev=0.01),
+                dtype=tf.float32)
+
         with tf.variable_scope('Clfier_output') as scope:
             self.clfier_softmax_W = tf.get_variable(
                 "clfier_W",
-                shape=[numHidden * 2, FLAGS.num_classes],
+                shape=[FLAGS.numHidden * 2, FLAGS.num_classes],
                 regularizer=tf.contrib.layers.l2_regularizer(0.0001),
                 initializer=tf.truncated_normal_initializer(stddev=0.01),
                 dtype=tf.float32)
@@ -105,11 +117,23 @@ class Model:
         backward_output = tf.reverse_sequence(
             backward_output_, length_64, seq_dim=1)
 
-        output = tf.concat([forward_output, backward_output], 2)
-        if trainMode:
-            output = tf.nn.dropout(output, FLAGS.dropout_keep_prob)
+        left_self_right = tf.concat(
+            [forward_output, char_vectors, backward_output], 2)
 
-        ds = tf.reduce_sum(output, axis=1)
+        hidden = tf.reshape(left_self_right, [
+            -1, FLAGS.max_sentence_len, 1,
+            FLAGS.embedding_char_size + self.numHidden * 2
+        ])
+        transform_feature = tf.nn.conv2d(hidden, self.transform_W,
+                                         [1, 1, 1, 1], "SAME")
+
+        output = tf.nn.max_pool(
+            transform_feature,
+            ksize=[1, FLAGS.max_sentence_len, 1, 1],
+            strides=[1, 1, 1, 1],
+            padding='VALID')
+
+        ds = tf.reshape(output, [-1, self.numHidden * 2])
         scores = tf.nn.xw_plus_b(ds, self.clfier_softmax_W,
                                  self.clfier_softmax_b)
         return scores
