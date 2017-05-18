@@ -219,8 +219,8 @@ def train(total_loss):
     return tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(total_loss)
 
 
-def test_evaluate(sess, test_clfier_score, inp_w, inp_c, entity_info,
-                  clfier_tX, clfier_tcX, clfier_tY, tentity_info):
+def test_evaluate(sess, test_clfier_score, inp_w, inp_c, clfier_tX, clfier_tcX,
+                  clfier_tY):
     batchSize = FLAGS.batch_size
     totalLen = clfier_tX.shape[0]
     numBatch = int((totalLen - 1) / batchSize) + 1
@@ -233,7 +233,6 @@ def test_evaluate(sess, test_clfier_score, inp_w, inp_c, entity_info,
         feed_dict = {
             inp_w: clfier_tX[i * batchSize:endOff],
             inp_c: clfier_tcX[i * batchSize:endOff],
-            entity_info: tentity_info[i * batchSize:endOff]
         }
         clfier_score_val = sess.run([test_clfier_score], feed_dict)
         predictions = np.argmax(clfier_score_val[0], 1)
