@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 www.drcubic.com, Inc. All Rights Reserved
+# Copyright (c) 2017 www.drcubic.com, Inc. All Rights Reserved
 #
 """
-File: char_clfier_attend.py
+File: char_lstm.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017-04-02 16:11:46
-
-python char_clfier_attend.py --dropout_keep_prob=0.7 --matrix_norm=0.01 
-85.551
 """
 
 from __future__ import absolute_import, division, print_function
@@ -19,15 +16,15 @@ import os
 import numpy as np
 import tensorflow as tf
 from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN,
-                   do_load_data_char_attend, load_w2v)
+                   do_load_data_char_common, load_w2v)
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "char_clfier_train_attend.txt",
+tf.app.flags.DEFINE_string('train_data_path', "char_clfier_train_common.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "char_clfier_test_attend.txt",
+tf.app.flags.DEFINE_string('test_data_path', "char_clfier_test_common.txt",
                            'Test data dir')
-tf.app.flags.DEFINE_string('clfier_log_dir', "char_clfier_attend_logs",
+tf.app.flags.DEFINE_string('clfier_log_dir', "char_clfier_common_logs",
                            'The log  dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
 
@@ -52,91 +49,12 @@ tf.app.flags.DEFINE_float('dropout_keep_prob', 0.5,
 tf.flags.DEFINE_float('l2_reg_lambda', 0,
                       'L2 regularization lambda (default: 0.0)')
 
-tf.flags.DEFINE_float('matrix_norm', 1, 'frobieums norm (default: 1)')
-
-
-def linear(args, output_size, bias, bias_start=0.0, scope=None, reuse=None):
-    """Linear map: sum_i(args[i] * W[i]), where W[i] is a variable.
-
-  Args:
-    args: a 2D Tensor or a list of 2D, batch x n, Tensors.
-    output_size: int, second dimension of W[i].
-    bias: boolean, whether to add a bias term or not.
-    bias_start: starting value to initialize the bias; 0 by default.
-    scope: VariableScope for the created subgraph; defaults to "Linear".
-
-  Returns:
-    A 2D Tensor with shape [batch x output_size] equal to
-    sum_i(args[i] * W[i]), where W[i]s are newly created matrices.
-
-  Raises:
-    ValueError: if some of the arguments has unspecified or wrong shape.
-  """
-    if args is None or (isinstance(args, (list, tuple)) and not args):
-        raise ValueError('`args` must be specified')
-    if not isinstance(args, (list, tuple)):
-        args = [args]
-
-    # Calculate the total size of arguments on dimension 1.
-    total_arg_size = 0
-    shapes = [a.get_shape().as_list() for a in args]
-    for shape in shapes:
-        if len(shape) != 2:
-            raise ValueError('Linear is expecting 2D arguments: %s' %
-                             str(shapes))
-        if not shape[1]:
-            raise ValueError('Linear expects shape[1] of arguments: %s' %
-                             str(shapes))
-        else:
-            total_arg_size += shape[1]
-
-    # Now the computation.
-    with tf.variable_scope(scope or 'Linear', reuse=reuse):
-        matrix = tf.get_variable('Matrix', [total_arg_size, output_size])
-        if len(args) == 1:
-            res = tf.matmul(args[0], matrix)
-        else:
-            res = tf.matmul(tf.concat(axis=1, values=args), matrix)
-        if not bias:
-            return res
-        bias_term = tf.get_variable(
-            'Bias', [output_size],
-            initializer=tf.constant_initializer(bias_start))
-    return res + bias_term
-
 
 class Model:
     def __init__(self, c2vPath, numHidden):
         self.numHidden = numHidden
         self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
         self.chars = tf.Variable(self.c2v, name="chars")
-
-        self.common_id_embedding_pad = tf.constant(
-            0.0, shape=[1, numHidden * 2], name="common_id_embedding_pad")
-
-        self.common_id_embedding = tf.Variable(
-            tf.random_uniform([len(ENTITY_TYPES), numHidden * 2], -1.0, 1.0),
-            name="common_id_embedding")
-
-        self.common_embedding = tf.concat(
-            [self.common_id_embedding_pad, self.common_id_embedding],
-            0,
-            name='common_embedding')
-
-        with tf.variable_scope('Attention') as scope:
-            self.attend_W = tf.get_variable(
-                "attend_W",
-                shape=[1, 1, self.numHidden * 2, self.numHidden * 2],
-                regularizer=tf.contrib.layers.l2_regularizer(0.0001),
-                initializer=tf.truncated_normal_initializer(stddev=0.01),
-                dtype=tf.float32)
-
-            self.attend_V = tf.get_variable(
-                "attend_V",
-                shape=[self.numHidden * 2],
-                regularizer=tf.contrib.layers.l2_regularizer(0.0001),
-                initializer=tf.truncated_normal_initializer(stddev=0.01),
-                dtype=tf.float32)
 
         with tf.variable_scope('Clfier_output') as scope:
             self.clfier_softmax_W = tf.get_variable(
@@ -156,16 +74,13 @@ class Model:
         self.inp_c = tf.placeholder(
             tf.int32, shape=[None, FLAGS.max_sentence_len], name="input_words")
 
-        self.entity_info = tf.placeholder(
-            tf.int32, shape=[None, MAX_COMMON_LEN], name="entity_info")
-
     def length(self, data):
         used = tf.sign(tf.abs(data))
         length = tf.reduce_sum(used, reduction_indices=1)
         length = tf.cast(length, tf.int32)
         return length
 
-    def inference(self, clfier_cX, entity_info, reuse=None, trainMode=True):
+    def inference(self, clfier_cX, reuse=None, trainMode=True):
 
         char_vectors = tf.nn.embedding_lookup(self.chars, clfier_cX)
         length = self.length(clfier_cX)
@@ -194,45 +109,24 @@ class Model:
         if trainMode:
             output = tf.nn.dropout(output, FLAGS.dropout_keep_prob)
 
-        entity_emb = tf.nn.embedding_lookup(self.common_embedding, entity_info)
-
-        hidden = tf.reshape(
-            output, [-1, FLAGS.max_sentence_len, 1, self.numHidden * 2])
-        hidden_feature = tf.nn.conv2d(hidden, self.attend_W, [1, 1, 1, 1],
-                                      "SAME")
-        query = tf.reduce_sum(entity_emb, axis=1)
-        y = linear(query, self.numHidden * 2, True, reuse=reuse)
-        y = tf.reshape(y, [-1, 1, 1, self.numHidden * 2])
-        # Attention mask is a softmax of v^T * tanh(...).
-        s = tf.reduce_sum(self.attend_V * tf.tanh(hidden_feature + y), [2, 3])
-        a = tf.nn.softmax(s)
-        # Now calculate the attention-weighted vector d.
-        d = tf.reduce_sum(
-            tf.reshape(a, [-1, FLAGS.max_sentence_len, 1, 1]) * hidden, [1, 2])
-        ds = tf.reshape(d, [-1, self.numHidden * 2])
-
+        ds = tf.reduce_sum(output, axis=1)
         scores = tf.nn.xw_plus_b(ds, self.clfier_softmax_W,
                                  self.clfier_softmax_b)
         return scores
 
-    def loss(self, clfier_cX, clfier_Y, entity_info):
-        self.scores = self.inference(clfier_cX, entity_info)
+    def loss(self, clfier_cX, clfier_Y):
+        self.scores = self.inference(clfier_cX)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self.scores, labels=clfier_Y)
         loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
         regularization_loss = tf.add_n(
             tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
 
-        normed_embedding = tf.nn.l2_normalize(self.common_id_embedding, dim=1)
-        similarity_matrix = tf.matmul(normed_embedding,
-                                      tf.transpose(normed_embedding, [1, 0]))
-        fro_norm = tf.reduce_sum(tf.nn.l2_loss(similarity_matrix))
-        final_loss = loss + regularization_loss * FLAGS.l2_reg_lambda + fro_norm * FLAGS.matrix_norm
+        final_loss = loss + regularization_loss * FLAGS.l2_reg_lambda
         return final_loss
 
     def test_clfier_score(self):
-        scores = self.inference(
-            self.inp_c, self.entity_info, reuse=True, trainMode=False)
+        scores = self.inference(self.inp_c, reuse=True, trainMode=False)
         return scores
 
 
@@ -246,9 +140,7 @@ def read_csv(batch_size, file_name):
     decoded = tf.decode_csv(
         value,
         field_delim=' ',
-        record_defaults=[
-            [0] for i in range(FLAGS.max_sentence_len + 1 + MAX_COMMON_LEN)
-        ])
+        record_defaults=[[0] for i in range(FLAGS.max_sentence_len + 1)])
 
     # batch actually reads the file and loads "batch_size" rows in a single tensor
     return tf.train.shuffle_batch(
@@ -263,16 +155,14 @@ def inputs(path):
     features = tf.transpose(tf.stack(whole[0:FLAGS.max_sentence_len]))
     len_features = FLAGS.max_sentence_len
     label = tf.transpose(tf.concat(whole[len_features:len_features + 1], 0))
-    entity_info = tf.transpose(tf.stack(whole[len_features + 1:]))
-    return features, label, entity_info
+    return features, label
 
 
 def train(total_loss):
     return tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(total_loss)
 
 
-def test_evaluate(sess, test_clfier_score, inp_c, entity_info, clfier_tcX,
-                  clfier_tY, tentity_info):
+def test_evaluate(sess, test_clfier_score, inp_c, clfier_tcX, clfier_tY):
     batchSize = FLAGS.batch_size
     totalLen = clfier_tcX.shape[0]
     numBatch = int((totalLen - 1) / batchSize) + 1
@@ -284,7 +174,6 @@ def test_evaluate(sess, test_clfier_score, inp_c, entity_info, clfier_tcX,
         y = clfier_tY[i * batchSize:endOff]
         feed_dict = {
             inp_c: clfier_tcX[i * batchSize:endOff],
-            entity_info: tentity_info[i * batchSize:endOff]
         }
         clfier_score_val = sess.run([test_clfier_score], feed_dict)
         predictions = np.argmax(clfier_score_val[0], 1)
@@ -295,16 +184,16 @@ def test_evaluate(sess, test_clfier_score, inp_c, entity_info, clfier_tcX,
 
 
 def main(unused_argv):
-    trainDataPath = tf.app.flags.FLAGS.train_data_path
+    trainDataPath = FLAGS.train_data_path
     graph = tf.Graph()
     # ner_checkpoint_file = tf.train.latest_checkpoint(FLAGS.ner_log_dir)
     with graph.as_default():
         model = Model(FLAGS.char2vec_path, FLAGS.num_hidden)
         print("train data path:", trainDataPath)
-        clfier_cX, clfier_Y, entity_info = inputs(trainDataPath)
-        clfier_tcX, clfier_tY, tentity_info = do_load_data_char_attend(
+        clfier_cX, clfier_Y = inputs(trainDataPath)
+        clfier_tcX, clfier_tY = do_load_data_char_common(
             FLAGS.test_data_path, FLAGS.max_sentence_len)
-        total_loss = model.loss(clfier_cX, clfier_Y, entity_info)
+        total_loss = model.loss(clfier_cX, clfier_Y)
         train_op = train(total_loss)
         test_clfier_score = model.test_clfier_score()
 
@@ -354,8 +243,7 @@ def main(unused_argv):
                               (step + 1, sess.run(total_loss)))
                     if (step + 1) % 20 == 0:
                         test_evaluate(sess, test_clfier_score, model.inp_c,
-                                      model.entity_info, clfier_tcX, clfier_tY,
-                                      tentity_info)
+                                      clfier_tcX, clfier_tY)
                 except KeyboardInterrupt, e:
                     #     sv.saver.save(
                     #         sess,

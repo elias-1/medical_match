@@ -7,6 +7,8 @@
 File: cnn_clfier.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 17-2-12 上午9:16
+
+unuse
 """
 
 from __future__ import absolute_import, division, print_function
