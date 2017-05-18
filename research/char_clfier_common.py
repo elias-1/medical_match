@@ -136,7 +136,7 @@ class Model:
         length = self.length(clfier_cX)
         length_64 = tf.cast(length, tf.int64)
 
-        #if trainMode:
+        # if trainMode:
         #  char_vectors = tf.nn.dropout(char_vectors, FLAGS.dropout_keep_prob)
         with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
             forward_output, _ = tf.nn.dynamic_rnn(
@@ -147,8 +147,7 @@ class Model:
                 scope="RNN_forward")
             backward_output_, _ = tf.nn.dynamic_rnn(
                 tf.contrib.rnn.LSTMCell(self.numHidden),
-                inputs=tf.reverse_sequence(
-                    char_vectors, length_64, seq_dim=1),
+                inputs=tf.reverse_sequence(char_vectors, length_64, seq_dim=1),
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_backword")
@@ -223,7 +222,9 @@ def test_evaluate(sess, test_clfier_score, inp_c, clfier_tcX, clfier_tY):
         if endOff > totalLen:
             endOff = totalLen
         y = clfier_tY[i * batchSize:endOff]
-        feed_dict = {inp_c: clfier_tcX[i * batchSize:endOff], }
+        feed_dict = {
+            inp_c: clfier_tcX[i * batchSize:endOff],
+        }
         clfier_score_val = sess.run([test_clfier_score], feed_dict)
         predictions = np.argmax(clfier_score_val[0], 1)
         correct_clfier_labels += np.sum(np.equal(predictions, y))
