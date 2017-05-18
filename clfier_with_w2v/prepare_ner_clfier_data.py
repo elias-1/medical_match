@@ -173,12 +173,12 @@ def entity_id_to_common(chari, entity_location, aspects_id_in_vob):
     return common_chari
 
 
-def generate_clfier_line(clfier_cout,
-                         char_vob,
-                         words_with_class,
-                         entity_location,
-                         entity_with_types,
-                         for_research=False):
+def generate_clfier_common_line(clfier_cout,
+                                char_vob,
+                                words_with_class,
+                                entity_location,
+                                entity_with_types,
+                                for_research=False):
     if for_research:
         label_id = RESEARCH_LABEL[words_with_class[0]]
     else:
@@ -454,6 +454,27 @@ def generate_research_char_attend_line(clfier_cout, char_vob, words_with_class,
     return clfier_line
 
 
+def generate_clfier_normal_line(clfier_cout, char_vob, words_with_class):
+
+    label_id = RESEARCH_LABEL[words_with_class[0]]
+
+    chars = words_with_class[1]
+    chari = []
+    nl = len(chars)
+    for ti in xrange(nl):
+        char = chars[ti]
+        idx = char_vob.GetWordIndex(char)
+        chari.append(str(idx))
+
+    for i in xrange(nl, MAX_SENTENCE_LEN):
+        chari.append('0')
+
+    clfier_line = ' '.join(chari) + ' ' + label_id
+
+    clfier_cout.write("%s\n" % (clfier_line))
+    return clfier_line
+
+
 def processLine(out, output_type, data, char_vob, word_vob):
     for row in data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
@@ -466,8 +487,8 @@ def processLine(out, output_type, data, char_vob, word_vob):
         if output_type == '1':
             generate_ner_line(out, char_vob, row[1], entity_labels)
         elif output_type == '2':
-            generate_clfier_line(out, char_vob, row[:2], entity_location,
-                                 entity_with_types)
+            generate_clfier_common_line(out, char_vob, row[:2],
+                                        entity_location, entity_with_types)
         elif output_type == '3':
             generate_clfier2_line(out, char_vob, word_vob, row[:2],
                                   entity_location, entity_with_types)
@@ -490,13 +511,15 @@ def processLine(out, output_type, data, char_vob, word_vob):
                 out, char_vob, row[:2], entity_location, entity_with_types)
 
         elif output_type == '8':
-            generate_clfier_line(
+            generate_clfier_common_line(
                 out,
                 char_vob,
                 row[:2],
                 entity_location,
                 entity_with_types,
                 for_research=True)
+        elif output_type == '9':
+            generate_clfier_normal_line(out, char_vob, row[:2])
         else:
             raise ValueError('output type error!')
 
@@ -510,7 +533,8 @@ output_type:
 5   research_clfier just clfier
 6   research_clfier_attend
 7   research_char_clfier_attend
-8   research_char_clfier_common
+8   research_char_common
+9   research_char_normal
 """
 
 
