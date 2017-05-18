@@ -20,13 +20,12 @@ from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN,
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "char_clfier_train_common.txt",
+tf.app.flags.DEFINE_string('train_data_path', "char_clfier_normal_train.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "char_clfier_test_common.txt",
+tf.app.flags.DEFINE_string('test_data_path', "char_clfier_normal_test.txt",
                            'Test data dir')
-tf.app.flags.DEFINE_string('clfier_log_dir', "char_clfier_common_logs",
+tf.app.flags.DEFINE_string('clfier_log_dir', "char_clfier_normal_logs",
                            'The log  dir')
-tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
 
 tf.app.flags.DEFINE_string("char2vec_path",
                            "../clfier_with_w2v/chars_vec_100.txt",
