@@ -173,8 +173,8 @@ class Model:
                                  self.clfier_softmax_b)
         return scores
 
-    def loss(self, clfier_X, clfier_cX, clfier_Y, entity_info):
-        self.scores = self.inference(clfier_X, clfier_cX, entity_info)
+    def loss(self, clfier_X, clfier_cX, clfier_Y):
+        self.scores = self.inference(clfier_X, clfier_cX)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self.scores, labels=clfier_Y)
         loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
