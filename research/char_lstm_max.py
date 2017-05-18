@@ -71,7 +71,7 @@ class Model:
         with tf.variable_scope('Clfier_output') as scope:
             self.clfier_softmax_W = tf.get_variable(
                 "clfier_W",
-                shape=[FLAGS.numHidden * 2, FLAGS.num_classes],
+                shape=[self.numHidden * 2, FLAGS.num_classes],
                 regularizer=tf.contrib.layers.l2_regularizer(0.0001),
                 initializer=tf.truncated_normal_initializer(stddev=0.01),
                 dtype=tf.float32)
