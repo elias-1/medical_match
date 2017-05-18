@@ -56,7 +56,7 @@ class Model:
         self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
         self.chars = tf.Variable(self.c2v, name="chars")
         self.common_id_embedding = tf.Variable(
-            tf.random_uniform([len(ENTITY_TYPES), FLAGS.embedding_word_size],
+            tf.random_uniform([len(ENTITY_TYPES), FLAGS.embedding_char_size],
                               -1.0, 1.0),
             name="common_id_embedding")
         self.chars_emb = tf.concat(
