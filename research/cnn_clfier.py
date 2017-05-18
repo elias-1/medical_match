@@ -185,7 +185,7 @@ class TextCNN(object):
         pool1 = tf.squeeze(pool1, [1, 2])
         return pool1
 
-    def inference(self, clfier_X, clfier_cX):
+    def inference(self, clfier_X, clfier_cX, trainMode=True):
         # word_vectors = tf.nn.embedding_lookup(self.words_emb, clfier_X)
         word_vectors = tf.nn.embedding_lookup(self.words, clfier_X)
         char_vectors = tf.nn.embedding_lookup(self.chars, clfier_cX)
@@ -201,8 +201,8 @@ class TextCNN(object):
         char_vectors_x = tf.transpose(char_vectors_x, perm=[1, 0, 2])
         word_vectors = tf.concat([word_vectors, char_vectors_x], 2)
 
-        # if trainMode:
-        #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
+        if trainMode:
+            word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
 
         word_vectors_expanded = tf.expand_dims(word_vectors, -1)
 
@@ -250,7 +250,8 @@ class TextCNN(object):
         return loss + regularization_loss * FLAGS.l2_reg_lambda
 
     def test_clfier_score(self):
-        scores = self.inference(self.inp_w, self.inp_c)
+        scores = self.inference(
+            self.inp_w, self.inp_c, reuse=True, trainMode=False)
         return scores
 
 

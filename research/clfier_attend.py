@@ -225,8 +225,8 @@ class Model:
         char_vectors_x = tf.transpose(char_vectors_x, perm=[1, 0, 2])
         word_vectors = tf.concat([word_vectors, char_vectors_x], 2)
 
-        #if trainMode:
-        #  word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
+        if trainMode:
+            word_vectors = tf.nn.dropout(word_vectors, FLAGS.dropout_keep_prob)
         with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
             forward_output, _ = tf.nn.dynamic_rnn(
                 tf.contrib.rnn.LSTMCell(self.numHidden),
