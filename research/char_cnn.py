@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 www.drcubic.com, Inc. All Rights Reserved
+# Copyright (c) 2017 www.drcubic.com, Inc. All Rights Reserved
 #
 """
-File: char_clfier_common.py
+File: char_lstm.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017-04-02 16:11:46
-default 80.608
+
 """
 
 from __future__ import absolute_import, division, print_function
@@ -21,13 +21,12 @@ from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN,
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "char_clfier_train_common.txt",
+tf.app.flags.DEFINE_string('train_data_path', "char_clfier_normal_train.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "char_clfier_test_common.txt",
+tf.app.flags.DEFINE_string('test_data_path', "char_clfier_normal_test.txt",
                            'Test data dir')
-tf.app.flags.DEFINE_string('clfier_log_dir', "char_clfier_common_logs",
+tf.app.flags.DEFINE_string('clfier_log_dir', "char_cnn_clfier_normal_logs",
                            'The log  dir')
-tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
 
 tf.app.flags.DEFINE_string("char2vec_path",
                            "../clfier_with_w2v/chars_vec_100.txt",
@@ -56,12 +55,29 @@ class Model:
         self.numHidden = numHidden
         self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
         self.chars = tf.Variable(self.c2v, name="chars")
-        self.common_id_embedding = tf.Variable(
-            tf.random_uniform([len(ENTITY_TYPES), FLAGS.embedding_char_size],
-                              -1.0, 1.0),
-            name="common_id_embedding")
-        self.chars_emb = tf.concat(
-            [self.chars, self.common_id_embedding], 0, name='concat')
+
+        self.filter_sizes = list(map(int, FLAGS.filter_sizes.split(',')))
+
+        self.clfier_filters = [None] * len(self.filter_sizes)
+        self.clfier_bs = [None] * len(self.filter_sizes)
+        for i, filter_size in enumerate(self.filter_sizes):
+            with tf.variable_scope('Clfier_conv_maxpool') as scope:
+                self.clfier_filters[i] = tf.get_variable(
+                    "clfier_filter_%d" % i,
+                    shape=[
+                        filter_size, FLAGS.embedding_char_size, 1,
+                        FLAGS.num_filters
+                    ],
+                    regularizer=tf.contrib.layers.l2_regularizer(0.0001),
+                    initializer=tf.truncated_normal_initializer(stddev=0.01),
+                    dtype=tf.float32)
+
+                self.clfier_bs[i] = tf.get_variable(
+                    "clfier_b_%d" % i,
+                    shape=[FLAGS.num_filters],
+                    regularizer=tf.contrib.layers.l2_regularizer(0.0001),
+                    initializer=tf.truncated_normal_initializer(stddev=0.01),
+                    dtype=tf.float32)
 
         with tf.variable_scope('Clfier_output') as scope:
             self.clfier_softmax_W = tf.get_variable(
@@ -81,43 +97,41 @@ class Model:
         self.inp_c = tf.placeholder(
             tf.int32, shape=[None, FLAGS.max_sentence_len], name="input_words")
 
-    def length(self, data):
-        used = tf.sign(tf.abs(data))
-        length = tf.reduce_sum(used, reduction_indices=1)
-        length = tf.cast(length, tf.int32)
-        return length
-
     def inference(self, clfier_cX, reuse=None, trainMode=True):
 
-        char_vectors = tf.nn.embedding_lookup(self.chars_emb, clfier_cX)
-        length = self.length(clfier_cX)
-        length_64 = tf.cast(length, tf.int64)
+        char_vectors = tf.nn.embedding_lookup(self.chars, clfier_cX)
+        char_vectors_expanded = tf.expand_dims(char_vectors, -1)
 
-        # if trainMode:
-        #  char_vectors = tf.nn.dropout(char_vectors, FLAGS.dropout_keep_prob)
-        with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
-            forward_output, _ = tf.nn.dynamic_rnn(
-                tf.contrib.rnn.LSTMCell(self.numHidden),
-                char_vectors,
-                dtype=tf.float32,
-                sequence_length=length,
-                scope="RNN_forward")
-            backward_output_, _ = tf.nn.dynamic_rnn(
-                tf.contrib.rnn.LSTMCell(self.numHidden),
-                inputs=tf.reverse_sequence(char_vectors, length_64, seq_dim=1),
-                dtype=tf.float32,
-                sequence_length=length,
-                scope="RNN_backword")
+        pooled_outputs = []
 
-        backward_output = tf.reverse_sequence(
-            backward_output_, length_64, seq_dim=1)
+        for i, filter_size in enumerate(self.filter_sizes):
+            conv = tf.nn.conv2d(
+                char_vectors_expanded,
+                self.clfier_filters[i],
+                strides=[1, 1, 1, 1],
+                padding='VALID')
+            # Apply nonlinearity
+            h = tf.nn.relu(tf.nn.bias_add(conv, self.clfier_bs[i]))
+            # Maxpooling over the outputs
+            pooled = tf.nn.max_pool(
+                h,
+                ksize=[1, FLAGS.max_sentence_len - filter_size + 1, 1, 1],
+                strides=[1, 1, 1, 1],
+                padding='VALID')
+            pooled_outputs.append(pooled)
 
-        output = tf.concat([forward_output, backward_output], 2)
+        # Combine all the pooled features
+        num_filters_total = FLAGS.num_filters * len(self.filter_sizes)
+        clfier_pooled = tf.concat(pooled_outputs, 3)
+        clfier_pooled_flat = tf.reshape(clfier_pooled, [-1, num_filters_total])
+
+        # Add dropout
         if trainMode:
-            output = tf.nn.dropout(output, FLAGS.dropout_keep_prob)
+            with tf.name_scope('dropout'):
+                self.h_drop = tf.nn.dropout(clfier_pooled_flat,
+                                            FLAGS.dropout_keep_prob)
 
-        ds = tf.reduce_sum(output, axis=1)
-        scores = tf.nn.xw_plus_b(ds, self.clfier_softmax_W,
+        scores = tf.nn.xw_plus_b(self.h_drop, self.clfier_softmax_W,
                                  self.clfier_softmax_b)
         return scores
 

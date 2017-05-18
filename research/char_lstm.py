@@ -7,6 +7,8 @@
 File: char_lstm.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017-04-02 16:11:46
+python char_lstm.py -dropout_keep_prob=0.8 
+80.228
 """
 
 from __future__ import absolute_import, division, print_function

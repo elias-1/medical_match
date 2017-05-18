@@ -233,11 +233,12 @@ class TextCNN(object):
         clfier_pooled_flat = tf.reshape(clfier_pooled, [-1, num_filters_total])
 
         # Add dropout
-        with tf.name_scope('dropout'):
-            self.h_drop = tf.nn.dropout(clfier_pooled_flat,
-                                        FLAGS.dropout_keep_prob)
+        if trainMode:
+            with tf.name_scope('dropout'):
+                self.h_drop = tf.nn.dropout(clfier_pooled_flat,
+                                            FLAGS.dropout_keep_prob)
 
-        scores = tf.nn.xw_plus_b(clfier_pooled_flat, self.clfier_softmax_W,
+        scores = tf.nn.xw_plus_b(self.h_drop, self.clfier_softmax_W,
                                  self.clfier_softmax_b)
 
         return scores
