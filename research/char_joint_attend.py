@@ -291,7 +291,7 @@ def read_csv(batch_size, file_name):
         value,
         field_delim=' ',
         record_defaults=[
-            [0] for i in range(FLAGS.max_sentence_len + 1 + MAX_COMMON_LEN)
+            [0] for i in range(FLAGS.max_sentence_len * 2 + 1 + MAX_COMMON_LEN)
         ])
 
     # batch actually reads the file and loads "batch_size" rows in a single tensor
@@ -458,7 +458,8 @@ def main(unused_argv):
         )
         clfier_total_loss = model.clfier_loss(clfier_cX, clfier_Y, entity_info)
         clfier_var_list = [
-            v for v in tf.global_variables() if 'Ner_output' not in v.name
+            v for v in tf.global_variables()
+            if 'Ner_output' not in v.name and 'transitions' not in v.name
         ]
         print('clfier var list:')
         print([v.name for v in clfier_var_list])
