@@ -25,7 +25,6 @@ tf.app.flags.DEFINE_string('train_data_path', "joint_train.txt",
                            'Training data dir')
 tf.app.flags.DEFINE_string('test_data_path', "joint_test.txt", 'Test data dir')
 tf.app.flags.DEFINE_string('joint_log_dir', "joint_logs", 'The log  dir')
-tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
 
 tf.app.flags.DEFINE_string("char2vec_path",
                            "../clfier_with_w2v/chars_vec_100.txt",
@@ -485,7 +484,7 @@ def main(unused_argv):
         clfier_seperate_op = train(
             ner_total_loss, var_list=clfier_seperate_list)
 
-        sv = tf.train.Supervisor(graph=graph, logdir=FLAGS.ner_clfier_log_dir)
+        sv = tf.train.Supervisor(graph=graph, logdir=FLAGS.joint_log_dir)
 
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
         with sv.managed_session(
