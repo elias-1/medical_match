@@ -305,7 +305,7 @@ def read_csv(batch_size, file_name):
 def inputs(path):
     whole = read_csv(FLAGS.batch_size, path)
     ner_train_len = FLAGS.max_sentence_len * 2
-    ner_features, clfier_features = tf.transpose(
+    ner_features = clfier_features = tf.transpose(
         tf.stack(whole[0:FLAGS.max_sentence_len]))
 
     ner_label = tf.transpose(
