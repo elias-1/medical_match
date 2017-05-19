@@ -312,9 +312,8 @@ def inputs(path):
         tf.stack(whole[FLAGS.max_sentence_len:2 * FLAGS.max_sentence_len]))
 
     clfier_label = tf.transpose(
-        tf.concat(0, whole[ner_train_len + FLAGS.max_sentence_len:]))
-    entity_info = tf.transpose(
-        tf.stack(whole[FLAGS.max_sentence_len * 2 + 1:]))
+        tf.concat(0, whole[ner_train_len:ner_train_len + 1]))
+    entity_info = tf.transpose(tf.stack(whole[ner_train_len + 1:]))
     return ner_features, ner_label, clfier_features, clfier_label, entity_info
 
 
