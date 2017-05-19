@@ -23,8 +23,7 @@ FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string('train_data_path', "joint_train.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "joint_train_test.txt",
-                           'Test data dir')
+tf.app.flags.DEFINE_string('test_data_path', "joint_test.txt", 'Test data dir')
 tf.app.flags.DEFINE_string('joint_log_dir', "joint_logs", 'The log  dir')
 tf.app.flags.DEFINE_string('ner_log_dir', "ner_logs", 'The log  dir')
 
