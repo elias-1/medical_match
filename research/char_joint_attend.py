@@ -376,7 +376,7 @@ def clfier_test_evaluate(sess, test_clfier_score, inp_c, entity_info,
         correct_clfier_labels += np.sum(np.equal(predictions, y))
 
     accuracy = 100.0 * correct_clfier_labels / float(totalLen)
-    print("Accuracy: %.3f%%" % accuracy)
+    print("Clfier Accuracy: %.3f%%" % accuracy)
 
 
 def decode_entity_location(entity_info):
@@ -526,10 +526,10 @@ def main(unused_argv):
                 except KeyboardInterrupt, e:
                     sv.saver.save(
                         sess,
-                        FLAGS.ner_clfier_log_dir + '/model',
+                        FLAGS.joint_log_dir + '/model',
                         global_step=(step + 1))
                     raise e
-            sv.saver.save(sess, FLAGS.ner_clfier_log_dir + '/finnal-model')
+            sv.saver.save(sess, FLAGS.joint_log_dir + '/finnal-model')
 
 
 if __name__ == '__main__':
