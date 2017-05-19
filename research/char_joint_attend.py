@@ -505,7 +505,7 @@ def main(unused_argv):
                     # for debugging and learning purposes, see how the loss gets decremented thru training steps
                     if (step + 1) % 10 == 0:
                         print(
-                            "[%d] NER loss: [%r]    Sentiment Classification loss: [%r]"
+                            "[%d] NER loss: [%r]    Classification loss: [%r]"
                             % (step + 1, sess.run(ner_total_loss),
                                sess.run(clfier_total_loss)))
                     if (step + 1) % 20 == 0:
@@ -519,7 +519,8 @@ def main(unused_argv):
                                              clfier_tcX, clfier_tY,
                                              tentity_info)
                     if step < FLAGS.joint_steps:
-                        _ = sess.run([clfier_train_op])
+                        if step > 200:
+                            _ = sess.run([clfier_train_op])
                     else:
                         _ = sess.run([clfier_seperate_op])
 
