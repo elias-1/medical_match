@@ -462,7 +462,8 @@ def main(unused_argv):
         clfier_total_loss = model.clfier_loss(clfier_cX, clfier_Y, entity_info)
         clfier_var_list = [
             v for v in tf.global_variables()
-            if 'Ner_output' not in v.name and 'transitions' not in v.name
+            if 'Ner_output' not in v.name and 'transitions' not in v.name and
+            'rnn_fwbw' not in v.name
         ]
         print('clfier var list:')
         print([v.name for v in clfier_var_list])
