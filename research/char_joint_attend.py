@@ -271,7 +271,7 @@ class Model:
         return P, sequence_length
 
     def test_clfier_score(self):
-        scores = self.inference(
+        scores, _ = self.inference(
             self.inp_c,
             model='clfier',
             entity_info=self.entity_info,
