@@ -174,7 +174,8 @@ class Model:
                   clfier_cX,
                   model='ner',
                   entity_info=None,
-                  reuse=None,
+                  rnn_reuse=None,
+                  linear_resue=None,
                   trainMode=True):
 
         char_vectors = tf.nn.embedding_lookup(self.chars, clfier_cX)
@@ -183,7 +184,7 @@ class Model:
 
         # if trainMode:
         #  char_vectors = tf.nn.dropout(char_vectors, FLAGS.dropout_keep_prob)
-        with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
+        with tf.variable_scope("rnn_fwbw", reuse=rnn_reuse) as scope:
             forward_output, _ = tf.nn.dynamic_rnn(
                 tf.contrib.rnn.LSTMCell(self.numHidden),
                 char_vectors,
@@ -222,7 +223,7 @@ class Model:
             hidden_feature = tf.nn.conv2d(hidden, self.attend_W, [1, 1, 1, 1],
                                           "SAME")
             query = tf.reduce_sum(entity_emb, axis=1)
-            y = linear(query, self.numHidden * 2, True, reuse=reuse)
+            y = linear(query, self.numHidden * 2, True, reuse=linear_resue)
             y = tf.reshape(y, [-1, 1, 1, self.numHidden * 2])
             # Attention mask is a softmax of v^T * tanh(...).
             s = tf.reduce_sum(self.attend_V * tf.tanh(hidden_feature + y),
@@ -251,7 +252,7 @@ class Model:
 
     def clfier_loss(self, clfier_cX, clfier_Y, entity_info):
         self.scores = self.inference(
-            clfier_cX, model='clfier', entity_info=entity_info, reuse=True)
+            clfier_cX, model='clfier', entity_info=entity_info, rnn_reuse=True)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self.scores, labels=clfier_Y)
         loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
@@ -267,7 +268,7 @@ class Model:
 
     def test_unary_score(self):
         P, sequence_length = self.inference(
-            self.inp_c, model='ner', reuse=True, trainMode=False)
+            self.inp_c, model='ner', rnn_reuse=True, trainMode=False)
         return P, sequence_length
 
     def test_clfier_score(self):
@@ -275,7 +276,8 @@ class Model:
             self.inp_c,
             model='clfier',
             entity_info=self.entity_info,
-            reuse=True,
+            rnn_reuse=True,
+            linear_resue=True,
             trainMode=False)
         return scores
 
