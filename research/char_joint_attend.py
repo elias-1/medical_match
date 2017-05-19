@@ -314,7 +314,7 @@ def inputs(path):
         tf.stack(whole[FLAGS.max_sentence_len:2 * FLAGS.max_sentence_len]))
 
     clfier_label = tf.transpose(
-        tf.stack(whole[ner_train_len:ner_train_len + 1], 0))
+        tf.concat(whole[ner_train_len:ner_train_len + 1], 0))
     entity_info = tf.transpose(tf.stack(whole[ner_train_len + 1:]))
     return ner_features, ner_label, clfier_features, clfier_label, entity_info
 
@@ -450,7 +450,8 @@ def main(unused_argv):
         ner_total_loss = model.ner_loss(ner_cX, ner_Y)
         ner_var_list = [
             v for v in tf.global_variables()
-            if 'Attention' not in v.name and 'Clfier_output' not in v.name
+            if 'Attention' not in v.name and 'Clfier_output' not in v.name and
+            'Linear' not in v.name
         ]
         print('ner var list:')
         print([v.name for v in ner_var_list])
@@ -477,7 +478,8 @@ def main(unused_argv):
 
         clfier_seperate_list = [
             v for v in tf.global_variables()
-            if 'Attention' in v.name or 'Clfier_output' in v.name
+            if 'Attention' in v.name or 'Clfier_output' in v.name or 'Linear'
+            in v.name
         ]
         clfier_seperate_op = train(
             ner_total_loss, var_list=clfier_seperate_list)
