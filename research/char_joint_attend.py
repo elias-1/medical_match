@@ -251,7 +251,7 @@ class Model:
         return loss + regularization_loss * FLAGS.l2_reg_lambda
 
     def clfier_loss(self, clfier_cX, clfier_Y, entity_info):
-        self.scores = self.inference(
+        self.scores, _ = self.inference(
             clfier_cX, model='clfier', entity_info=entity_info, rnn_reuse=True)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self.scores, labels=clfier_Y)
