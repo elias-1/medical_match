@@ -161,6 +161,44 @@ def do_load_data_char_attend(path, max_sentence_len):
     return np.array(cx), np.array(y), np.array(entity_info)
 
 
+def do_load_data_joint_attend(path, max_sentence_len):
+    cx = []
+    ner_y = []
+    clfier_y = []
+    entity_info = []
+    fp = open(path, "r")
+    ln = 0
+    for line in fp.readlines():
+        line = line.rstrip()
+        ln += 1
+        if not line:
+            continue
+        ss = line.split(" ")
+        if len(ss) != (max_sentence_len * 2 + 1 + MAX_COMMON_LEN):
+            print("[line:%d]len ss:%d,origin len:%d\n%s" %
+                  (ln, len(ss), len(line), line))
+        assert (len(ss) == (max_sentence_len + 1 + MAX_COMMON_LEN))
+        lcx = []
+        lentity_info = []
+        lner_y = []
+        for i in range(max_sentence_len):
+            lcx.append(int(ss[i]))
+
+        for i in range(max_sentence_len):
+            lner_y.append(int(ss[max_sentence_len + i]))
+
+        for i in xrange(MAX_COMMON_LEN):
+            lentity_info.append(int(ss[max_sentence_len * 2 + 1 + i]))
+
+        cx.append(lcx)
+        ner_y.append(lner_y)
+        entity_info.append(lentity_info)
+        clfier_y.append(int(ss[max_sentence_len * 2]))
+    fp.close()
+    return np.array(cx), np.array(ner_y), np.array(cx), np.array(
+        clfier_y), np.array(entity_info)
+
+
 def do_load_data_char_common(path, max_sentence_len):
     cx = []
     y = []

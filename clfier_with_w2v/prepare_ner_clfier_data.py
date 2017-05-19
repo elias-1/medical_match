@@ -418,7 +418,6 @@ def generate_research_attend_line(clfier_cout, char_vob, word_vob,
 
 def generate_research_char_attend_line(clfier_cout, char_vob, words_with_class,
                                        entity_location, entity_with_types):
-    char_vob_size = char_vob.GetTotalWord()
     label_id = RESEARCH_LABEL[words_with_class[0]]
 
     chars = words_with_class[1]
@@ -429,8 +428,8 @@ def generate_research_char_attend_line(clfier_cout, char_vob, words_with_class,
 
     common_index_ids = [
         str(
-            ENTITY_TYPES.index(entity_with_types[chars[entity_loc[
-                0]:entity_loc[1] + 1]]) + char_vob_size)
+            ENTITY_TYPES.index(entity_with_types[chars[
+                entity_loc[0]:entity_loc[1] + 1]]) + 1)
         for _, entity_loc in entity_location
     ]
 
