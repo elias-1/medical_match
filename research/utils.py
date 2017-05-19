@@ -177,7 +177,7 @@ def do_load_data_joint_attend(path, max_sentence_len):
         if len(ss) != (max_sentence_len * 2 + 1 + MAX_COMMON_LEN):
             print("[line:%d]len ss:%d,origin len:%d\n%s" %
                   (ln, len(ss), len(line), line))
-        assert (len(ss) == (max_sentence_len + 1 + MAX_COMMON_LEN))
+        assert (len(ss) == (max_sentence_len * 2 + 1 + MAX_COMMON_LEN))
         lcx = []
         lentity_info = []
         lner_y = []

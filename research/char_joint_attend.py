@@ -251,7 +251,7 @@ class Model:
 
     def clfier_loss(self, clfier_cX, clfier_Y, entity_info):
         self.scores = self.inference(
-            clfier_cX, model='clfier', entity_info=entity_info)
+            clfier_cX, model='clfier', entity_info=entity_info, reuse=True)
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=self.scores, labels=clfier_Y)
         loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
@@ -312,7 +312,7 @@ def inputs(path):
         tf.stack(whole[FLAGS.max_sentence_len:2 * FLAGS.max_sentence_len]))
 
     clfier_label = tf.transpose(
-        tf.concat(0, whole[ner_train_len:ner_train_len + 1]))
+        tf.stack(whole[ner_train_len:ner_train_len + 1], 0))
     entity_info = tf.transpose(tf.stack(whole[ner_train_len + 1:]))
     return ner_features, ner_label, clfier_features, clfier_label, entity_info
 
