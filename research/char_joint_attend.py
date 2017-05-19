@@ -39,6 +39,7 @@ tf.app.flags.DEFINE_integer("num_tags", 30, "num ner tags")
 tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
 tf.app.flags.DEFINE_integer("train_steps", 2000, "trainning steps")
+tf.app.flags.DEFINE_integer("joint_steps", 100, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 tf.app.flags.DEFINE_float("num_classes", 7, "Number of classes to classify")
@@ -468,6 +469,19 @@ def main(unused_argv):
         clfier_train_op = train(clfier_total_loss, var_list=clfier_var_list)
         test_clfier_score = model.test_clfier_score()
 
+        ner_seperate_list = [
+            v for v in tf.global_variables()
+            if 'Ner_output' in v.name or 'transition' in v.name
+        ]
+        ner_seperate_op = train(ner_total_loss, var_list=ner_seperate_list)
+
+        clfier_seperate_list = [
+            v for v in tf.global_variables()
+            if 'Attention' in v.name or 'Clfier_output' in v.name
+        ]
+        clfier_seperate_op = train(
+            ner_total_loss, var_list=clfier_seperate_list)
+
         sv = tf.train.Supervisor(graph=graph, logdir=FLAGS.ner_clfier_log_dir)
 
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
@@ -480,8 +494,12 @@ def main(unused_argv):
                 if sv.should_stop():
                     break
                 try:
-                    _, trainsMatrix = sess.run(
-                        [ner_train_op, model.transition_params])
+                    if step < FLAGS.joint_steps:
+                        _, trainsMatrix = sess.run(
+                            [ner_train_op, model.transition_params])
+                    else:
+                        _, trainsMatrix = sess.run(
+                            [ner_seperate_op, model.transition_params])
                     # for debugging and learning purposes, see how the loss gets decremented thru training steps
                     if (step + 1) % 10 == 0:
                         print(
@@ -497,8 +515,10 @@ def main(unused_argv):
                         clfier_test_evaluate(
                             sess, test_clfier_score, model.inp_c, entity_info,
                             clfier_tcX, clfier_tY, tentity_info)
-
-                    _ = sess.run([clfier_train_op])
+                    if step < FLAGS.joint_steps:
+                        _ = sess.run([clfier_train_op])
+                    else:
+                        _ = sess.run([clfier_seperate_op])
 
                 except KeyboardInterrupt, e:
                     sv.saver.save(

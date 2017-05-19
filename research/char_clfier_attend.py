@@ -9,7 +9,7 @@ Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017-04-02 16:11:46
 
 python char_clfier_attend.py --dropout_keep_prob=0.7 --matrix_norm=0.01 
-85.551
+85.932
 """
 
 from __future__ import absolute_import, division, print_function

@@ -474,6 +474,45 @@ def generate_clfier_normal_line(clfier_cout, char_vob, words_with_class):
     return clfier_line
 
 
+def generate_research_joint_line(clfier_cout, char_vob, words_with_class,
+                                 entity_location, entity_with_types,
+                                 ner_labels):
+
+    label_id = RESEARCH_LABEL[words_with_class[0]]
+
+    chars = words_with_class[1]
+    nl = len(chars)
+    if nl > MAX_SENTENCE_LEN:
+        nl = MAX_SENTENCE_LEN
+    chari = []
+
+    common_index_ids = [
+        str(
+            ENTITY_TYPES.index(entity_with_types[chars[
+                entity_loc[0]:entity_loc[1] + 1]]) + 1)
+        for _, entity_loc in entity_location
+    ]
+
+    for ti in xrange(nl):
+        char = chars[ti]
+        idx = char_vob.GetWordIndex(char)
+        chari.append(str(idx))
+
+    for i in xrange(nl, MAX_SENTENCE_LEN):
+        chari.append("0")
+
+    for i in xrange(len(common_index_ids), MAX_COMMON_LEN):
+        common_index_ids.append("0")
+
+    line = " ".join(chari)
+    line += " " + " ".join(ner_labels) + " "
+    clfier_line = line + label_id + " " + " ".join(
+        common_index_ids[:MAX_COMMON_LEN])
+
+    clfier_cout.write("%s\n" % (clfier_line))
+    return clfier_line
+
+
 def processLine(out, output_type, data, char_vob, word_vob):
     for row in data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
@@ -519,6 +558,10 @@ def processLine(out, output_type, data, char_vob, word_vob):
                 for_research=True)
         elif output_type == '9':
             generate_clfier_normal_line(out, char_vob, row[:2])
+        elif output_type == '10':
+            generate_research_joint_line(out, char_vob, row[:2],
+                                         entity_location, entity_with_types,
+                                         entity_labels)
         else:
             raise ValueError('output type error!')
 
@@ -534,6 +577,7 @@ output_type:
 7   research_char_clfier_attend
 8   research_char_common
 9   research_char_normal
+10  research_joint
 """
 
 
