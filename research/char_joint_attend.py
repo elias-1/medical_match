@@ -514,9 +514,10 @@ def main(unused_argv):
                             ner_test_sequence_length, trainsMatrix,
                             model.inp_c, ner_tcX, ner_tY)
                         tentity_info = entity_to_common(entity_infos)
-                        clfier_test_evaluate(
-                            sess, test_clfier_score, model.inp_c, entity_info,
-                            clfier_tcX, clfier_tY, tentity_info)
+                        clfier_test_evaluate(sess, test_clfier_score,
+                                             model.inp_c, model.entity_info,
+                                             clfier_tcX, clfier_tY,
+                                             tentity_info)
                     if step < FLAGS.joint_steps:
                         _ = sess.run([clfier_train_op])
                     else:
