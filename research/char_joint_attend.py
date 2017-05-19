@@ -451,7 +451,7 @@ def main(unused_argv):
             if 'Attention' not in v.name and 'Clfier_output' not in v.name
         ]
         print('ner var list:')
-        print(ner_var_list)
+        print([v.name for v in ner_var_list])
 
         ner_train_op = train(ner_total_loss, var_list=ner_var_list)
         ner_test_unary_score, ner_test_sequence_length = model.test_unary_score(
@@ -461,7 +461,7 @@ def main(unused_argv):
             v for v in tf.global_variables() if 'Ner_output' not in v.name
         ]
         print('clfier var list:')
-        print(clfier_var_list)
+        print([v.name for v in clfier_var_list])
 
         clfier_train_op = train(clfier_total_loss, var_list=clfier_var_list)
         test_clfier_score = model.test_clfier_score()
