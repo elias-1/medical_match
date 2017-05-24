@@ -32,8 +32,8 @@ def main(argc, argv):
         print('Usage:%s <train_dir> <test_dir> <max_sentence_len>' % (argv[0]))
         exit(1)
 
-    build_dataset(argv[1], argv[3], 'train')
-    build_dataset(argv[2], argv[3], 'test')
+    build_dataset(argv[1], int(argv[3]), 'train')
+    build_dataset(argv[2], int(argv[3]), 'test')
 
 
 if __name__ == '__main__':

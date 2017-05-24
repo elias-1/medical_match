@@ -225,8 +225,8 @@ class Model:
             y = linear(query, self.numHidden * 2, True, reuse=linear_resue)
             y = tf.reshape(y, [-1, 1, 1, self.numHidden * 2])
             # Attention mask is a softmax of v^T * tanh(...).
-            s = tf.reduce_sum(self.attend_V * tf.tanh(hidden_feature + y),
-                              [2, 3])
+            s = tf.reduce_sum(self.attend_V *
+                              tf.tanh(hidden_feature + 0.1 * y), [2, 3])
             a = tf.nn.softmax(s)
             # Now calculate the attention-weighted vector d.
             d = tf.reduce_sum(
@@ -443,7 +443,7 @@ def main(unused_argv):
         model = Model(FLAGS.num_tags, FLAGS.char2vec_path, FLAGS.num_hidden)
         print("train data path:", os.path.realpath(trainDataPath))
         ner_cX, ner_Y, clfier_cX, clfier_Y, entity_info = inputs(trainDataPath)
-        ner_tcX, ner_tY, clfier_tcX, clfier_tY, _ = do_load_data_joint_attend(
+        ner_tcX, ner_tY, clfier_tcX, clfier_tY, aa = do_load_data_joint_attend(
             FLAGS.test_data_path, FLAGS.max_sentence_len)
 
         ner_total_loss = model.ner_loss(ner_cX, ner_Y)
@@ -499,10 +499,10 @@ def main(unused_argv):
                     if step < FLAGS.joint_steps:
                         _, trainsMatrix = sess.run(
                             [ner_train_op, model.transition_params])
-                    else:
-                        _, trainsMatrix = sess.run(
-                            [ner_seperate_op, model.transition_params])
-                    # for debugging and learning purposes, see how the loss gets decremented thru training steps
+#                     else:
+#                         _, trainsMatrix = sess.run(
+#                            [ner_seperate_op, model.transition_params])
+# for debugging and learning purposes, see how the loss gets decremented thru training steps
                     if (step + 1) % 10 == 0:
                         print(
                             "[%d] NER loss: [%r]    Classification loss: [%r]"
@@ -518,11 +518,13 @@ def main(unused_argv):
                                              model.inp_c, model.entity_info,
                                              clfier_tcX, clfier_tY,
                                              tentity_info)
-                    if step < FLAGS.joint_steps:
-                        if step > 200:
-                            _ = sess.run([clfier_train_op])
-                    else:
-                        _ = sess.run([clfier_seperate_op])
+                    _ = sess.run([clfier_train_op])
+
+#                     if step < FLAGS.joint_steps:
+#                         if step > 200:
+#                             _ = sess.run([clfier_train_op])
+#                     else:
+#                         _ = sess.run([clfier_seperate_op])
 
                 except KeyboardInterrupt, e:
                     sv.saver.save(
@@ -531,7 +533,6 @@ def main(unused_argv):
                         global_step=(step + 1))
                     raise e
             sv.saver.save(sess, FLAGS.joint_log_dir + '/finnal-model')
-
 
 if __name__ == '__main__':
     tf.app.run()
