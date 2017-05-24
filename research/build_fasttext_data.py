@@ -29,7 +29,7 @@ def build_dataset(data_file, max_sentence_len, train_or_test):
 
 def main(argc, argv):
     if argc < 4:
-        print('Usage:%s <train_dir> <test_dir>' % (argv[0]))
+        print('Usage:%s <train_dir> <test_dir> <max_sentence_len>' % (argv[0]))
         exit(1)
 
     build_dataset(argv[1], argv[3], 'train')
