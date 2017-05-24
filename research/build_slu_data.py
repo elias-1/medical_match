@@ -49,7 +49,7 @@ def words2labels(words, entity_with_types):
             words = words.replace(entity, '@' * entity_len)
 
     for i, entity_loc in enumerate(entity_location):
-        entity = entity_location[0]
+        entity = entity_loc[0]
         loc = entity_loc[1]
         entity_labels[loc[0]] = 'B-' + entity
         j = 1
@@ -76,7 +76,7 @@ def output_data(data, data_dir, train_or_test):
         }
         output_intent.append(row[0])
         output_utterance.append(list(row[1]))
-        seq_out = words2labels(row[1], entity_with_types)
+        seq_out, _ = words2labels(row[1], entity_with_types)
         output_slots.append(seq_out)
 
     if not os.path.exists(data_dir):
