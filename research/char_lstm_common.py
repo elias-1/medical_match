@@ -4,7 +4,7 @@
 # Copyright (c) 2016 www.drcubic.com, Inc. All Rights Reserved
 #
 """
-File: char_clfier_common.py
+File: char_lstm_common.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017-04-02 16:11:46
 default 80.608
