@@ -22,7 +22,7 @@ def compute_accuracy(label, ground_truth, max_sentence_len):
         label_x = label_fp.readline().strip().split()
         if not label_x:
             break
-        label_x = label_x[max_sentence_len]
+        label_x = label_x[-1]
         ground_truth_x = ground_truth_fp.readline().strip()
 
         print(label_x)

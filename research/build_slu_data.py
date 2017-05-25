@@ -51,10 +51,10 @@ def words2labels(words, entity_with_types):
     for i, entity_loc in enumerate(entity_location):
         entity = entity_loc[0]
         loc = entity_loc[1]
-        entity_labels[loc[0]] = 'B-' + entity
+        entity_labels[loc[0]] = 'B-' + entity_with_types[entity]
         j = 1
         while loc[0] + j <= loc[1]:
-            entity_labels[loc[0] + j] = 'I' + entity
+            entity_labels[loc[0] + j] = 'I' + entity_with_types[entity]
             j += 1
 
     sort_index = sorted(
