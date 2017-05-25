@@ -20,7 +20,12 @@ def build_dataset(data_file, max_sentence_len, train_or_test):
         sample_x = data_fp.readline().strip().split()
         if not sample_x:
             break
-        fasttext_data_fp.write(' '.join(sample_x[:max_sentence_len]) + ' ' +
+
+        sample_x_len = 0
+        while sample_x[sample_x_len] != '0':
+            sample_x_len += 1
+
+        fasttext_data_fp.write(' '.join(sample_x[:sample_x_len]) + ' ' +
                                '__label__' + sample_x[max_sentence_len] + '\n')
 
     data_fp.close()
