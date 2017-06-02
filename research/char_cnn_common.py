@@ -279,7 +279,7 @@ def main(unused_argv):
                         accuracy = test_evaluate(sess, test_clfier_score,
                                                  model.inp_c, clfier_tcX,
                                                  clfier_tY)
-                        accuracy_stats.append(str(accuracy))
+                        accuracy_stats.append(accuracy)
                 except KeyboardInterrupt as e:
                     #     sv.saver.save(
                     #         sess,
@@ -289,10 +289,12 @@ def main(unused_argv):
                     # sv.saver.save(sess, FLAGS.clfier_log_dir + '/finnal-model')
                     clfier_saver.save(
                         sess, clfier_checkpoint_path, global_step=(step + 1))
-                    print(','.join(accuracy_stats))
+                    print(accuracy_stats)
                     raise e
             clfier_saver.save(sess, clfier_checkpoint_path)
-            print(','.join(accuracy_stats))
+            print(accuracy_stats)
+            accuracy_stats.sort()
+            print(accuracy_stats)
 
 
 if __name__ == '__main__':
