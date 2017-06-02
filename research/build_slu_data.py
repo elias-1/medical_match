@@ -13,6 +13,8 @@ import csv
 import os
 import random
 import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 SPLIT_RATE = 0.8
 
@@ -30,7 +32,7 @@ def data_shuffle(x, y=None):
 
 
 def words2labels(words, entity_with_types):
-    entity_labels = ['0'] * len(words)
+    entity_labels = ['O'] * len(words)
     entities = entity_with_types.keys()
     entities = sorted(entities, key=lambda entity: len(entity), reverse=True)
 
@@ -54,7 +56,7 @@ def words2labels(words, entity_with_types):
         entity_labels[loc[0]] = 'B-' + entity_with_types[entity]
         j = 1
         while loc[0] + j <= loc[1]:
-            entity_labels[loc[0] + j] = 'I' + entity_with_types[entity]
+            entity_labels[loc[0] + j] = 'I-' + entity_with_types[entity]
             j += 1
 
     sort_index = sorted(

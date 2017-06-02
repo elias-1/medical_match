@@ -27,3 +27,10 @@ py_binary(
     imports = ["utils"],
 )
 
+py_binary(
+    name = "prepare_research_data",
+    srcs = ["prepare_research_data.py"],
+    data = ["//utils:w2v.so"],
+    imports = ["utils"],
+)
+

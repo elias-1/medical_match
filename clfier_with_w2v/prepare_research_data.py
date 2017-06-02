@@ -82,13 +82,14 @@ def data_to_ids(input_data, char_vob):
                 entity_type = entity_with_types[entity_location[current][0]]
                 sample_common_x.append(entity_common_ids[entity_type])
                 i = entity_location[current][1][1] + 1
+                current += 1
             else:
                 idx = char_vob.GetWordIndex(tokens[i])
                 sample_common_x.append(str(idx))
                 i += 1
-            for i in range(len(sample_common_x), MAX_SENTENCE_LEN):
-                sample_common_x.append('0')
-            data_common.append(sample_common_x[:MAX_SENTENCE_LEN])
+        for i in range(len(sample_common_x), MAX_SENTENCE_LEN):
+            sample_common_x.append('0')
+        data_common.append(sample_common_x[:MAX_SENTENCE_LEN])
 
     return data, data_common, intent_labels
 

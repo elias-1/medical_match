@@ -3,15 +3,15 @@ build:cuda --crosstool_top=//third_party/gpus/crosstool
 build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true
 
 build --force_python=py2
-build --python2_path=/home/elias/code/tensorflow-env-0-12/bin/python
+build --python2_path=/home/elias/code/tensorflow-1-0/bin/python
 build --define=use_fast_cpp_protos=true
 build --define=allow_oversize_protos=true
 
-build --define PYTHON_BIN_PATH=/home/elias/code/tensorflow-env-0-12/bin/python
-test --define PYTHON_BIN_PATH=/home/elias/code/tensorflow-env-0-12/bin/python
+build --define PYTHON_BIN_PATH=/home/elias/code/tensorflow-1-0/bin/python
+test --define PYTHON_BIN_PATH=/home/elias/code/tensorflow-1-0/bin/python
 test --force_python=py2
 test --host_force_python=py2
-run --define PYTHON_BIN_PATH=/home/elias/code/tensorflow-env-0-12/bin/python
+run --define PYTHON_BIN_PATH=/home/elias/code/tensorflow-1-0/bin/python
 
 build --spawn_strategy=standalone
 test --spawn_strategy=standalone
