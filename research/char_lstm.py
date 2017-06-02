@@ -257,7 +257,9 @@ def main(unused_argv):
                     # sv.saver.save(sess, FLAGS.clfier_log_dir + '/finnal-model')
                     clfier_saver.save(
                         sess, clfier_checkpoint_path, global_step=(step + 1))
+                    print(','.join(accuracy_stats))
                     raise e
+
             clfier_saver.save(sess, clfier_checkpoint_path)
             print(','.join(accuracy_stats))
 
