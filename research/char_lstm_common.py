@@ -38,7 +38,7 @@ tf.app.flags.DEFINE_integer("embedding_char_size", 100,
                             "second embedding size")
 tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
-tf.app.flags.DEFINE_integer("train_steps", 2000, "trainning steps")
+tf.app.flags.DEFINE_integer("train_steps", 1000, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 tf.app.flags.DEFINE_float("filter_size", 20, "The clfier's conv fileter size")
@@ -250,7 +250,7 @@ def main(unused_argv):
                     if (step + 1) % 10 == 0:
                         print("[%d] loss: [%r]" %
                               (step + 1, sess.run(total_loss)))
-                    if (step + 1) % 20 == 0:
+                    if (step + 1) % 5 == 0:
                         accuracy = test_evaluate(sess, test_clfier_score,
                                                  model.inp_c, clfier_tcX,
                                                  clfier_tY)
