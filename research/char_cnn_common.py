@@ -280,7 +280,6 @@ def main(unused_argv):
                                                  model.inp_c, clfier_tcX,
                                                  clfier_tY)
                         accuracy_stats.append(str(accuracy))
-                        print(','.join(accuracy_stats))
                 except KeyboardInterrupt as e:
                     #     sv.saver.save(
                     #         sess,
