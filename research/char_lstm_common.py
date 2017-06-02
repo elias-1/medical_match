@@ -21,9 +21,9 @@ from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN,
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "char_clfier_train_common.txt",
+tf.app.flags.DEFINE_string('train_data_path', "data/common_train.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "char_clfier_test_common.txt",
+tf.app.flags.DEFINE_string('test_data_path', "data/common_test.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('clfier_log_dir', "char_clfier_common_logs",
                            'The log  dir')

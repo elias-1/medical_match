@@ -21,9 +21,9 @@ from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN,
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "char_clfier_train_common.txt",
+tf.app.flags.DEFINE_string('train_data_path', "data/common_train.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "char_clfier_test_common.txt",
+tf.app.flags.DEFINE_string('test_data_path', "data/common_test.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('clfier_log_dir', "char_cnn_clfier_common_logs",
                            'The log  dir')
@@ -37,7 +37,7 @@ tf.app.flags.DEFINE_integer("embedding_char_size", 100,
                             "second embedding size")
 tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
-tf.app.flags.DEFINE_integer("train_steps", 200, "trainning steps")
+tf.app.flags.DEFINE_integer("train_steps", 1000, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 tf.app.flags.DEFINE_string('filter_sizes', '3,4,5',
