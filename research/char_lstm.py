@@ -243,7 +243,7 @@ def main(unused_argv):
                     if (step + 1) % 10 == 0:
                         print("[%d] loss: [%r]" %
                               (step + 1, sess.run(total_loss)))
-                    if (step + 1) % 5 == 0:
+                    if (step + 1) % 2 == 0:
                         accuracy = test_evaluate(sess, test_clfier_score,
                                                  model.inp_c, clfier_tcX,
                                                  clfier_tY)
