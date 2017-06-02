@@ -37,7 +37,7 @@ tf.app.flags.DEFINE_integer("embedding_char_size", 100,
                             "second embedding size")
 tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
-tf.app.flags.DEFINE_integer("train_steps", 2000, "trainning steps")
+tf.app.flags.DEFINE_integer("train_steps", 200, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 tf.app.flags.DEFINE_string('filter_sizes', '3,4,5',
@@ -213,6 +213,7 @@ def test_evaluate(sess, test_clfier_score, inp_c, clfier_tcX, clfier_tY):
 
     accuracy = 100.0 * correct_clfier_labels / float(totalLen)
     print("Accuracy: %.3f%%" % accuracy)
+    return accuracy
 
 
 def main(unused_argv):
@@ -264,6 +265,7 @@ def main(unused_argv):
 
             # actual training loop
             training_steps = FLAGS.train_steps
+            accuracy_stats = []
             for step in range(training_steps):
                 #                 if sv.should_stop():
                 #                     break
@@ -273,10 +275,13 @@ def main(unused_argv):
                     if (step + 1) % 10 == 0:
                         print("[%d] loss: [%r]" %
                               (step + 1, sess.run(total_loss)))
-                    if (step + 1) % 20 == 0:
-                        test_evaluate(sess, test_clfier_score, model.inp_c,
-                                      clfier_tcX, clfier_tY)
-                except KeyboardInterrupt, e:
+                    if (step + 1) % 2 == 0:
+                        accuracy = test_evaluate(sess, test_clfier_score,
+                                                 model.inp_c, clfier_tcX,
+                                                 clfier_tY)
+                        accuracy_stats.append(str(accuracy))
+                        print(','.join(accuracy_stats))
+                except KeyboardInterrupt as e:
                     #     sv.saver.save(
                     #         sess,
                     #         FLAGS.clfier_log_dir + '/model',
@@ -285,8 +290,10 @@ def main(unused_argv):
                     # sv.saver.save(sess, FLAGS.clfier_log_dir + '/finnal-model')
                     clfier_saver.save(
                         sess, clfier_checkpoint_path, global_step=(step + 1))
+                    print(','.join(accuracy_stats))
                     raise e
             clfier_saver.save(sess, clfier_checkpoint_path)
+            print(','.join(accuracy_stats))
 
 
 if __name__ == '__main__':
