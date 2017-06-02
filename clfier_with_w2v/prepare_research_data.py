@@ -7,6 +7,10 @@
 File: prepare_research_data.py
 Author: shileicao(shileicao@stu.xjtu.edu.cn)
 Date: 2017/6/2 11:06
+
+bazel build :prepare_research_data
+./bazel-bin/prepare_research_data ../research/data/ chars_vec_100.txt 2 common
+
 """
 
 import csv

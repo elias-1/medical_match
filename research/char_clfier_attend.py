@@ -112,6 +112,13 @@ class Model:
         self.c2v = load_w2v(c2vPath, FLAGS.embedding_char_size)
         self.chars = tf.Variable(self.c2v, name="chars")
 
+        self.entity_embedding = tf.Variable(
+            tf.random_uniform([len(ENTITY_TYPES), FLAGS.embedding_char_size],
+                              -1.0, 1.0),
+            name="common_id_embedding")
+        self.chars_emb = tf.concat(
+            [self.chars, self.entity_embedding], 0, name='concat')
+
         self.common_id_embedding_pad = tf.constant(
             0.0, shape=[1, numHidden * 2], name="common_id_embedding_pad")
 
@@ -168,7 +175,7 @@ class Model:
 
     def inference(self, clfier_cX, entity_info, reuse=None, trainMode=True):
 
-        char_vectors = tf.nn.embedding_lookup(self.chars, clfier_cX)
+        char_vectors = tf.nn.embedding_lookup(self.chars_emb, clfier_cX)
         length = self.length(clfier_cX)
         length_64 = tf.cast(length, tf.int64)
 
