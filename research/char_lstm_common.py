@@ -38,7 +38,7 @@ tf.app.flags.DEFINE_integer("embedding_char_size", 100,
                             "second embedding size")
 tf.app.flags.DEFINE_integer("num_hidden", 100, "hidden unit number")
 tf.app.flags.DEFINE_integer("batch_size", 64, "num example per mini batch")
-tf.app.flags.DEFINE_integer("train_steps", 1000, "trainning steps")
+tf.app.flags.DEFINE_integer("train_steps", 200, "trainning steps")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 
 tf.app.flags.DEFINE_float("filter_size", 20, "The clfier's conv fileter size")
@@ -267,8 +267,6 @@ def main(unused_argv):
                     print(accuracy_stats)
                     raise e
             clfier_saver.save(sess, clfier_checkpoint_path)
-            print(accuracy_stats)
-            accuracy_stats.sort()
             print(accuracy_stats)
 
 
