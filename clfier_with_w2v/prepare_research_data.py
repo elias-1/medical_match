@@ -27,7 +27,7 @@ def get_data(data_path):
     return data
 
 
-def data_to_ids(data, char_vob):
+def data_to_ids(input_data, char_vob):
     vob_size = char_vob.GetTotalWord()
     entity_common_ids = {
         entity_type: str(vob_size + i)
@@ -36,7 +36,7 @@ def data_to_ids(data, char_vob):
     data = []
     data_common = []
     intent_labels = []
-    for row in data:
+    for row in input_data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
         intent_labels.append(row[0])
 
@@ -127,7 +127,7 @@ def process_data(data_dir, char_vob, output_type, output_name):
         test = [test_common_data, test_intent_labels]
         prepare_data_for_normal(train, test, data_dir, output_name)
     else:
-        raise ValueError('--task_type must be in [1,2]')
+        raise ValueError('--output_type must be in [1,2]')
 
 
 def main(argc, argv):
@@ -139,7 +139,7 @@ def main(argc, argv):
     char_vob = w2v.Word2vecVocab()
     char_vob.Load(argv[2])
 
-    process_data(argv[1], char_vob, argv[3], argv[4])
+    process_data(argv[1], char_vob, int(argv[3]), argv[4])
 
 
 if __name__ == '__main__':
