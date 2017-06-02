@@ -21,11 +21,12 @@ import tensorflow as tf
 from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN,
                    do_load_data_char_attend, load_w2v)
 
+MAX_SENTENCE_LEN = 30
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_data_path', "char_clfier_train_attend.txt",
+tf.app.flags.DEFINE_string('train_data_path', "data/dkgam_train.txt",
                            'Training data dir')
-tf.app.flags.DEFINE_string('test_data_path', "char_clfier_test_attend.txt",
+tf.app.flags.DEFINE_string('test_data_path', "data/dkgam_test.txt",
                            'Test data dir')
 tf.app.flags.DEFINE_string('clfier_log_dir', "char_clfier_attend_logs",
                            'The log  dir')
@@ -292,6 +293,7 @@ def test_evaluate(sess, test_clfier_score, inp_c, entity_info, clfier_tcX,
 
     accuracy = 100.0 * correct_clfier_labels / float(totalLen)
     print("Accuracy: %.3f%%" % accuracy)
+    return accuracy
 
 
 def main(unused_argv):
@@ -343,6 +345,7 @@ def main(unused_argv):
 
             # actual training loop
             training_steps = FLAGS.train_steps
+            accuracy_stats = []
             for step in range(training_steps):
                 #                 if sv.should_stop():
                 #                     break
@@ -353,10 +356,12 @@ def main(unused_argv):
                         print("[%d] loss: [%r]" %
                               (step + 1, sess.run(total_loss)))
                     if (step + 1) % 20 == 0:
-                        test_evaluate(sess, test_clfier_score, model.inp_c,
-                                      model.entity_info, clfier_tcX, clfier_tY,
-                                      tentity_info)
-                except KeyboardInterrupt, e:
+                        accuracy = test_evaluate(sess, test_clfier_score,
+                                                 model.inp_c,
+                                                 model.entity_info, clfier_tcX,
+                                                 clfier_tY, tentity_info)
+                        accuracy_stats.append(accuracy)
+                except KeyboardInterrupt as e:
                     #     sv.saver.save(
                     #         sess,
                     #         FLAGS.clfier_log_dir + '/model',
@@ -367,6 +372,8 @@ def main(unused_argv):
                         sess, clfier_checkpoint_path, global_step=(step + 1))
                     raise e
             clfier_saver.save(sess, clfier_checkpoint_path)
+            accuracy_stats.sort()
+            print(accuracy_stats)
 
 
 if __name__ == '__main__':

@@ -15,7 +15,8 @@ import sys
 
 import w2v
 
-MAX_SENTENCE_LEN = 80
+MAX_SENTENCE_LEN = 30
+MAX_COMMON_LEN = 5
 SPLIT_RATE = 0.8
 ENTITY_TYPES = ['@d@', '@s@', '@l@', '@o@', '@m@', '@dp@', '@bp@']
 
@@ -36,6 +37,7 @@ def data_to_ids(input_data, char_vob):
     data = []
     data_common = []
     intent_labels = []
+    entity_labels = []
     for row in input_data:
         row = [item.decode('utf-8') for item in row if item.strip() != '']
         intent_labels.append(row[0])
@@ -91,7 +93,15 @@ def data_to_ids(input_data, char_vob):
             sample_common_x.append('0')
         data_common.append(sample_common_x[:MAX_SENTENCE_LEN])
 
-    return data, data_common, intent_labels
+        entity_x = []
+        for entity, _ in entity_location:
+            entity_type = entity_with_types[entity]
+            entity_x.append(str(ENTITY_TYPES.index(entity_type) + 1))
+        for i in range(len(entity_x), MAX_COMMON_LEN):
+            entity_x.append('0')
+        entity_labels.append(entity_x[:MAX_COMMON_LEN])
+
+    return data, data_common, intent_labels, entity_labels
 
 
 def prepare_data_for_normal(train, test, data_dir, task_name):
@@ -110,13 +120,29 @@ def prepare_data_for_normal(train, test, data_dir, task_name):
     make_data_set(test, os.path.join(data_dir, task_name + '_test.txt'))
 
 
+def prepare_data_for_dkgam(train, test, data_dir, task_name):
+    def make_data_set(data, filename):
+        data_set = []
+        for sample_x, entity_x, intent_x in zip(data[0], data[1], data[2]):
+            data_set.append(sample_x + [
+                intent_x,
+            ] + entity_x)
+
+        with open(filename, 'w') as f:
+            for line in data_set:
+                f.write(' '.join(line) + '\n')
+
+    make_data_set(train, os.path.join(data_dir, task_name + '_train.txt'))
+    make_data_set(test, os.path.join(data_dir, task_name + '_test.txt'))
+
+
 def process_data(data_dir, char_vob, output_type, output_name):
     train = get_data(os.path.join(data_dir, 'train.txt'))
     test = get_data(os.path.join(data_dir, 'test.txt'))
-    train_data, train_common_data, train_intent_labels = data_to_ids(train,
-                                                                     char_vob)
-    test_data, test_common_data, test_intent_labels = data_to_ids(test,
-                                                                  char_vob)
+    train_data, train_common_data, train_intent_labels, train_entity_labels = data_to_ids(
+        train, char_vob)
+    test_data, test_common_data, test_intent_labels, test_entity_labels = data_to_ids(
+        test, char_vob)
 
     if output_type == 1:
         train = [train_data, train_intent_labels]
@@ -127,6 +153,10 @@ def process_data(data_dir, char_vob, output_type, output_name):
         train = [train_common_data, train_intent_labels]
         test = [test_common_data, test_intent_labels]
         prepare_data_for_normal(train, test, data_dir, output_name)
+    elif output_type == 3:
+        train = [train_common_data, train_entity_labels, train_intent_labels]
+        test = [test_common_data, test_entity_labels, test_intent_labels]
+        prepare_data_for_dkgam(train, test, data_dir, output_name)
     else:
         raise ValueError('--output_type must be in [1,2]')
 
