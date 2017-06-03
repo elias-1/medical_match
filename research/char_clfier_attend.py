@@ -197,9 +197,6 @@ class Model:
         backward_output = tf.reverse_sequence(
             backward_output_, length_64, seq_dim=1)
 
-        context = tf.reshape(
-            tf.concat([right, left], 1), [-1, 1, 1, self.numHidden * 2])
-
         output = tf.concat([forward_output, backward_output], 2)
         if trainMode:
             output = tf.nn.dropout(output, FLAGS.dropout_keep_prob)
@@ -214,8 +211,7 @@ class Model:
         y = linear(query, self.numHidden * 2, True, reuse=reuse)
         y = tf.reshape(y, [-1, 1, 1, self.numHidden * 2])
         # Attention mask is a softmax of v^T * tanh(...).
-        s = tf.reduce_sum(self.attend_V *
-                          tf.tanh(hidden_feature + y + context), [2, 3])
+        s = tf.reduce_sum(self.attend_V * tf.tanh(hidden_feature + y), [2, 3])
         a = tf.nn.softmax(s)
         # Now calculate the attention-weighted vector d.
         d = tf.reduce_sum(
