@@ -182,13 +182,13 @@ class Model:
         # if trainMode:
         #  char_vectors = tf.nn.dropout(char_vectors, FLAGS.dropout_keep_prob)
         with tf.variable_scope("rnn_fwbw", reuse=reuse) as scope:
-            forward_output, _ = tf.nn.dynamic_rnn(
+            forward_output, right = tf.nn.dynamic_rnn(
                 tf.contrib.rnn.LSTMCell(self.numHidden),
                 char_vectors,
                 dtype=tf.float32,
                 sequence_length=length,
                 scope="RNN_forward")
-            backward_output_, _ = tf.nn.dynamic_rnn(
+            backward_output_, left = tf.nn.dynamic_rnn(
                 tf.contrib.rnn.LSTMCell(self.numHidden),
                 inputs=tf.reverse_sequence(char_vectors, length_64, seq_dim=1),
                 dtype=tf.float32,
@@ -197,6 +197,8 @@ class Model:
 
         backward_output = tf.reverse_sequence(
             backward_output_, length_64, seq_dim=1)
+
+        context = tf.concat([right, left], 1)
 
         output = tf.concat([forward_output, backward_output], 2)
         if trainMode:
@@ -212,7 +214,8 @@ class Model:
         y = linear(query, self.numHidden * 2, True, reuse=reuse)
         y = tf.reshape(y, [-1, 1, 1, self.numHidden * 2])
         # Attention mask is a softmax of v^T * tanh(...).
-        s = tf.reduce_sum(self.attend_V * tf.tanh(hidden_feature + y), [2, 3])
+        s = tf.reduce_sum(self.attend_V *
+                          tf.tanh(hidden_feature + y + context), [2, 3])
         a = tf.nn.softmax(s)
         # Now calculate the attention-weighted vector d.
         d = tf.reduce_sum(
