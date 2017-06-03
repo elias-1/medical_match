@@ -21,7 +21,6 @@ import tensorflow as tf
 from utils import (ENTITY_TYPES, MAX_COMMON_LEN, MAX_SENTENCE_LEN,
                    do_load_data_char_attend, load_w2v)
 
-MAX_SENTENCE_LEN = 30
 FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string('train_data_path', "data/dkgam_train.txt",
@@ -198,7 +197,8 @@ class Model:
         backward_output = tf.reverse_sequence(
             backward_output_, length_64, seq_dim=1)
 
-        context = tf.concat([right, left], 1)
+        context = tf.reshape(
+            tf.concat([right, left], 1), [-1, 1, 1, self.numHidden * 2])
 
         output = tf.concat([forward_output, backward_output], 2)
         if trainMode:
